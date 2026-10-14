@@ -131,8 +131,374 @@ const CHANNEL_DATA = {
   guidance: { name: 'ห้องแนะแนว', icon: '🧭' }
 };
 
+// ================= STUDENT ACCOUNT & AUTH GATEWAY =================
+let currentStudentUser = null;
+
+const STORAGE_KEYS = {
+  SESSION: 'tlw_student_session',
+  FLAGS: 'tlw_remember_flags',
+  FULLNAME: 'tlw_remember_fullname',
+  IDCARD: 'tlw_remember_idcard',
+  STUDENTID: 'tlw_remember_studentid'
+};
+
+function initStudentAuth() {
+  const authGateway = document.getElementById('auth-gateway');
+  if (!authGateway) return;
+
+  const tabBtnLogin = document.getElementById('tab-btn-login');
+  const tabBtnRegister = document.getElementById('tab-btn-register');
+  const authLoginForm = document.getElementById('auth-login-form');
+  const authRegisterForm = document.getElementById('auth-register-form');
+
+  const loginStudentId = document.getElementById('login-student-id');
+  const loginIdCard = document.getElementById('login-id-card');
+  const loginFullName = document.getElementById('login-fullname');
+  const loginChkRememberStudentId = document.getElementById('login-chk-remember-student-id');
+  const loginChkRememberIdCard = document.getElementById('login-chk-remember-id-card');
+  const loginChkRememberFullName = document.getElementById('login-chk-remember-fullname');
+  const loginChkAutoLogin = document.getElementById('login-chk-auto-login');
+  const loginErrorBadge = document.getElementById('login-error-badge');
+  const btnToggleLoginId = document.getElementById('btn-toggle-login-id');
+
+  const regFullName = document.getElementById('reg-fullname');
+  const regIdCard = document.getElementById('reg-id-card');
+  const regStudentId = document.getElementById('reg-student-id');
+  const regChkRememberFullName = document.getElementById('reg-chk-remember-fullname');
+  const regChkRememberIdCard = document.getElementById('reg-chk-remember-id-card');
+  const regChkRememberStudentId = document.getElementById('reg-chk-remember-student-id');
+  const regChkAutoLogin = document.getElementById('reg-chk-auto-login');
+  const regErrorBadge = document.getElementById('reg-error-badge');
+
+  const linkGotoRegister = document.getElementById('link-goto-register');
+  const linkGotoLogin = document.getElementById('link-goto-login');
+
+  const studentAccountBadge = document.getElementById('student-account-badge');
+  const studentDisplayName = document.getElementById('student-display-name');
+  const studentDisplayId = document.getElementById('student-display-id');
+  const btnStudentLogout = document.getElementById('btn-student-logout');
+
+  // Enforce digits only on numeric inputs
+  [loginStudentId, regStudentId].forEach(el => {
+    if (!el) return;
+    el.addEventListener('input', () => {
+      el.value = el.value.replace(/\D/g, '').slice(0, 5);
+    });
+  });
+
+  [loginIdCard, regIdCard].forEach(el => {
+    if (!el) return;
+    el.addEventListener('input', () => {
+      el.value = el.value.replace(/\D/g, '').slice(0, 13);
+    });
+  });
+
+  // Toggle ID card mask on login form
+  if (btnToggleLoginId && loginIdCard) {
+    btnToggleLoginId.addEventListener('click', () => {
+      if (loginIdCard.type === 'password') {
+        loginIdCard.type = 'text';
+        btnToggleLoginId.textContent = '🔒';
+      } else {
+        loginIdCard.type = 'password';
+        btnToggleLoginId.textContent = '👁️';
+      }
+    });
+  }
+
+  // Switch Tabs
+  const switchTab = (tab) => {
+    if (tab === 'login') {
+      tabBtnLogin.classList.add('active');
+      tabBtnRegister.classList.remove('active');
+      authLoginForm.classList.remove('hidden');
+      authRegisterForm.classList.add('hidden');
+      if (loginErrorBadge) loginErrorBadge.classList.add('hidden');
+      if (loginStudentId) loginStudentId.focus();
+    } else {
+      tabBtnRegister.classList.add('active');
+      tabBtnLogin.classList.remove('active');
+      authRegisterForm.classList.remove('hidden');
+      authLoginForm.classList.add('hidden');
+      if (regErrorBadge) regErrorBadge.classList.add('hidden');
+      if (regFullName) regFullName.focus();
+    }
+    if (window.soundEngine) window.soundEngine.playClick();
+  };
+
+  if (tabBtnLogin) tabBtnLogin.addEventListener('click', () => switchTab('login'));
+  if (tabBtnRegister) tabBtnRegister.addEventListener('click', () => switchTab('register'));
+  if (linkGotoRegister) linkGotoRegister.addEventListener('click', (e) => { e.preventDefault(); switchTab('register'); });
+  if (linkGotoLogin) linkGotoLogin.addEventListener('click', (e) => { e.preventDefault(); switchTab('login'); });
+
+  // Load and apply remembered fields
+  const applyRemembered = () => {
+    let flags = { rememberStudentId: true, rememberIdCard: true, rememberFullName: true, autoLogin: true };
+    try {
+      const storedFlags = localStorage.getItem(STORAGE_KEYS.FLAGS);
+      if (storedFlags) flags = Object.assign(flags, JSON.parse(storedFlags));
+    } catch (e) {}
+
+    // Set checkboxes
+    if (loginChkRememberStudentId) loginChkRememberStudentId.checked = flags.rememberStudentId;
+    if (loginChkRememberIdCard) loginChkRememberIdCard.checked = flags.rememberIdCard;
+    if (loginChkRememberFullName) loginChkRememberFullName.checked = flags.rememberFullName;
+    if (loginChkAutoLogin) loginChkAutoLogin.checked = flags.autoLogin;
+
+    if (regChkRememberStudentId) regChkRememberStudentId.checked = flags.rememberStudentId;
+    if (regChkRememberIdCard) regChkRememberIdCard.checked = flags.rememberIdCard;
+    if (regChkRememberFullName) regChkRememberFullName.checked = flags.rememberFullName;
+    if (regChkAutoLogin) regChkAutoLogin.checked = flags.autoLogin;
+
+    // Fill inputs if remembered
+    const remStudentId = localStorage.getItem(STORAGE_KEYS.STUDENTID) || '';
+    const remIdCard = localStorage.getItem(STORAGE_KEYS.IDCARD) || '';
+    const remFullName = localStorage.getItem(STORAGE_KEYS.FULLNAME) || '';
+
+    if (flags.rememberStudentId && remStudentId) {
+      if (loginStudentId) loginStudentId.value = remStudentId;
+      if (regStudentId) regStudentId.value = remStudentId;
+    }
+    if (flags.rememberIdCard && remIdCard) {
+      if (loginIdCard) loginIdCard.value = remIdCard;
+      if (regIdCard) regIdCard.value = remIdCard;
+    }
+    if (flags.rememberFullName && remFullName) {
+      if (loginFullName) loginFullName.value = remFullName;
+      if (regFullName) regFullName.value = remFullName;
+    }
+
+    return flags;
+  };
+
+  const saveRemembered = (studentId, idCard, fullName, flags) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.FLAGS, JSON.stringify(flags));
+      if (flags.rememberStudentId && studentId) localStorage.setItem(STORAGE_KEYS.STUDENTID, studentId);
+      else localStorage.removeItem(STORAGE_KEYS.STUDENTID);
+
+      if (flags.rememberIdCard && idCard) localStorage.setItem(STORAGE_KEYS.IDCARD, idCard);
+      else localStorage.removeItem(STORAGE_KEYS.IDCARD);
+
+      if (flags.rememberFullName && fullName) localStorage.setItem(STORAGE_KEYS.FULLNAME, fullName);
+      else localStorage.removeItem(STORAGE_KEYS.FULLNAME);
+    } catch (e) {}
+  };
+
+  const setAuthenticatedUI = (user, isAutoLogin = false) => {
+    currentStudentUser = user;
+    authGateway.classList.add('hidden');
+
+    if (studentDisplayName) studentDisplayName.textContent = user.fullName;
+    if (studentDisplayId) studentDisplayId.textContent = `รหัส ${user.studentId}`;
+    if (studentAccountBadge) studentAccountBadge.classList.remove('hidden');
+
+    if (window.soundEngine && !isAutoLogin) window.soundEngine.playPublish();
+    showToast(`ยินดีต้อนรับชาว ท.ล.ว. คุณ ${user.fullName} 👋`, 'success');
+  };
+
+  // 1. Submit Login
+  authLoginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (loginErrorBadge) loginErrorBadge.classList.add('hidden');
+
+    const studentId = loginStudentId.value.trim();
+    const idCard = loginIdCard.value.trim();
+    const fullName = loginFullName ? loginFullName.value.trim() : '';
+
+    if (studentId.length !== 5) {
+      showError(loginErrorBadge, 'กรุณาระบุรหัสนักเรียนให้ครบ 5 หลัก');
+      return;
+    }
+    if (idCard.length !== 13) {
+      showError(loginErrorBadge, 'กรุณาระบุเลขประจำตัวประชาชนให้ครบ 13 หลัก');
+      return;
+    }
+
+    const flags = {
+      rememberStudentId: loginChkRememberStudentId ? loginChkRememberStudentId.checked : true,
+      rememberIdCard: loginChkRememberIdCard ? loginChkRememberIdCard.checked : true,
+      rememberFullName: loginChkRememberFullName ? loginChkRememberFullName.checked : true,
+      autoLogin: loginChkAutoLogin ? loginChkAutoLogin.checked : true
+    };
+
+    const submitBtn = document.getElementById('btn-submit-login');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ กำลังเข้าสู่ระบบ...';
+    }
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, idCard, fullName })
+      });
+      const data = await res.json();
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>🚀 เข้าสู่ระบบ TLW Connect</span>';
+      }
+
+      if (data.success && data.user) {
+        saveRemembered(studentId, idCard, data.user.fullName || fullName, flags);
+
+        if (flags.autoLogin) {
+          localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify({
+            token: data.user.token,
+            studentId: data.user.studentId,
+            fullName: data.user.fullName,
+            idCardMasked: data.user.idCardMasked
+          }));
+        } else {
+          localStorage.removeItem(STORAGE_KEYS.SESSION);
+        }
+
+        setAuthenticatedUI(data.user, false);
+      } else {
+        showError(loginErrorBadge, data.error || 'รหัสนักเรียน หรือ เลขบัตร ปชช. ไม่ถูกต้อง');
+      }
+    } catch (err) {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>🚀 เข้าสู่ระบบ TLW Connect</span>';
+      }
+      showError(loginErrorBadge, 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ โปรดลองอีกครั้ง');
+    }
+  });
+
+  // 2. Submit Register
+  authRegisterForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (regErrorBadge) regErrorBadge.classList.add('hidden');
+
+    const fullName = regFullName.value.trim();
+    const idCard = regIdCard.value.trim();
+    const studentId = regStudentId.value.trim();
+
+    if (!fullName || fullName.length < 2) {
+      showError(regErrorBadge, 'กรุณาระบุชื่อจริงและนามสกุล (อย่างน้อย 2 ตัวอักษร)');
+      return;
+    }
+    if (idCard.length !== 13) {
+      showError(regErrorBadge, 'เลขประจำตัวประชาชนต้องมี 13 หลักพอดี');
+      return;
+    }
+    if (studentId.length !== 5) {
+      showError(regErrorBadge, 'รหัสนักเรียนต้องมี 5 หลักพอดี');
+      return;
+    }
+
+    const flags = {
+      rememberFullName: regChkRememberFullName ? regChkRememberFullName.checked : true,
+      rememberIdCard: regChkRememberIdCard ? regChkRememberIdCard.checked : true,
+      rememberStudentId: regChkRememberStudentId ? regChkRememberStudentId.checked : true,
+      autoLogin: regChkAutoLogin ? regChkAutoLogin.checked : true
+    };
+
+    const submitBtn = document.getElementById('btn-submit-register');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ กำลังสร้างบัญชี...';
+    }
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, idCard, studentId })
+      });
+      const data = await res.json();
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>✨ สร้างบัญชีและเข้าสู่ระบบ</span>';
+      }
+
+      if (data.success && data.user) {
+        saveRemembered(studentId, idCard, fullName, flags);
+
+        if (flags.autoLogin) {
+          localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify({
+            token: data.user.token,
+            studentId: data.user.studentId,
+            fullName: data.user.fullName,
+            idCardMasked: data.user.idCardMasked
+          }));
+        }
+
+        setAuthenticatedUI(data.user, false);
+      } else {
+        showError(regErrorBadge, data.error || 'การสร้างบัญชีไม่สำเร็จ');
+      }
+    } catch (err) {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>✨ สร้างบัญชีและเข้าสู่ระบบ</span>';
+      }
+      showError(regErrorBadge, 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ โปรดลองอีกครั้ง');
+    }
+  });
+
+  // 3. Logout Handler
+  if (btnStudentLogout) {
+    btnStudentLogout.addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_KEYS.SESSION);
+      currentStudentUser = null;
+      authGateway.classList.remove('hidden');
+      switchTab('login');
+      applyRemembered();
+      showToast('ออกจากระบบเรียบร้อยแล้ว', 'info');
+      if (window.soundEngine) window.soundEngine.playClick();
+    });
+  }
+
+  // 4. Check Auto-Login on launch
+  const initialFlags = applyRemembered();
+  const sessionStr = localStorage.getItem(STORAGE_KEYS.SESSION);
+
+  if (sessionStr && initialFlags.autoLogin) {
+    try {
+      const session = JSON.parse(sessionStr);
+      if (session.token && session.studentId) {
+        fetch('/api/auth/verify-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: session.token, studentId: session.studentId })
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.user) {
+              setAuthenticatedUI(data.user, true);
+            } else {
+              localStorage.removeItem(STORAGE_KEYS.SESSION);
+              authGateway.classList.remove('hidden');
+            }
+          })
+          .catch(() => {
+            setAuthenticatedUI(session, true);
+          });
+        return;
+      }
+    } catch (e) {
+      localStorage.removeItem(STORAGE_KEYS.SESSION);
+    }
+  }
+
+  // Not auto-logged in: keep gateway visible
+  authGateway.classList.remove('hidden');
+}
+
+function showError(badgeEl, message) {
+  if (!badgeEl) return;
+  badgeEl.textContent = `⚠️ ${message}`;
+  badgeEl.classList.remove('hidden');
+}
+
 // ================= INITIALIZATION =================
 function initApp() {
+  initStudentAuth();
   updatePersonaDisplay();
   updateSoundIcon();
   setupSocket();

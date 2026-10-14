@@ -208,6 +208,7 @@ async function fetchOverviewData() {
     bannedUsersList = data.bannedUsers || [];
     auditLogsList = data.auditLogs || [];
     reportsList = data.reports || [];
+    registeredStudentsCount = data.registeredStudentsCount || 0;
 
     updateMetrics();
     renderPostsTable();
@@ -221,6 +222,8 @@ async function fetchOverviewData() {
   }
 }
 
+let registeredStudentsCount = 0;
+
 // ================= RENDERING =================
 function updateMetrics() {
   metricTotalPosts.textContent = currentPosts.length;
@@ -230,6 +233,8 @@ function updateMetrics() {
   metricRequestsCount.textContent = currentPosts.filter(p => p.channel === 'requests').length;
   metricVentCount.textContent = currentPosts.filter(p => p.channel === 'vent').length;
   metricBannedCount.textContent = bannedUsersList.length;
+  const metricStudentsCount = document.getElementById('metric-students-count');
+  if (metricStudentsCount) metricStudentsCount.textContent = registeredStudentsCount;
 }
 
 function renderPostsTable() {

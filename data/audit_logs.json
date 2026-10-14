@@ -1,0 +1,254 @@
+[
+  {
+    "id": "log_1791980336594",
+    "action": "USER_REGISTER",
+    "detail": "นักเรียนลงทะเบียนใหม่: นาย พีรวัฒน์ จันดาศรี (รหัส: 08497)",
+    "timestamp": 1791980336595
+  },
+  {
+    "id": "log_1791979938113",
+    "action": "USER_LOGIN",
+    "detail": "นักเรียนเข้าสู่ระบบ: สมชาย ใจดี (รหัส: 45678)",
+    "timestamp": 1791979938113
+  },
+  {
+    "id": "log_1791979894317",
+    "action": "USER_REGISTER",
+    "detail": "นักเรียนลงทะเบียนใหม่: สมชาย ใจดี (รหัส: 45678)",
+    "timestamp": 1791979894317
+  },
+  {
+    "id": "log_1791977359273",
+    "action": "ROLE_VERIFIED",
+    "detail": "Moderator role verified from IP 127.0.0.1",
+    "timestamp": 1791977359273
+  },
+  {
+    "id": "log_1791977213281",
+    "action": "ROLE_VERIFIED",
+    "detail": "Moderator role verified from IP 127.0.0.1",
+    "timestamp": 1791977213281
+  },
+  {
+    "id": "log_1791974787756",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully from 127.0.0.1",
+    "timestamp": 1791974787756
+  },
+  {
+    "id": "log_1791972591850",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully from 192.168.1.48",
+    "timestamp": 1791972591850
+  },
+  {
+    "id": "log_1791970076451",
+    "action": "DELETE_POST",
+    "detail": "Deleted post \"📢 ประกาศทางการ: กำหนดการสอบแล\" by อาจารย์ฝ่ายวิชาการ ท.ล.ว.. Reason: มีคำหยาบคาย / วาจาเกลียดชัง",
+    "timestamp": 1791970076451
+  },
+  {
+    "id": "log_1791970075198",
+    "action": "DELETE_POST",
+    "detail": "Deleted post \"ประกาศจาก รร\" by ฝ่ายบริหาร โรงเรียนท่าลี่วิทยา. Reason: มีคำหยาบคาย / วาจาเกลียดชัง",
+    "timestamp": 1791970075198
+  },
+  {
+    "id": "log_1791970047174",
+    "action": "CREATE_ANNOUNCEMENT",
+    "detail": "Created announcement \"ประกาศจาก รร\" by ฝ่ายบริหาร โรงเรียนท่าลี่วิทยา",
+    "timestamp": 1791970047174
+  },
+  {
+    "id": "log_1791970034148",
+    "action": "DELETE_POST",
+    "detail": "Deleted post \"???????????????????? Manager\" by ????????????????? ??.???????????. Reason: มีคำหยาบคาย / วาจาเกลียดชัง",
+    "timestamp": 1791970034148
+  },
+  {
+    "id": "log_1791970025452",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully from 192.168.1.53",
+    "timestamp": 1791970025452
+  },
+  {
+    "id": "log_1791969915177",
+    "action": "CREATE_ANNOUNCEMENT",
+    "detail": "Created announcement \"???????????????????? Manager\" by ????????????????? ??.???????????",
+    "timestamp": 1791969915177
+  },
+  {
+    "id": "log_1791969915086",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully from 127.0.0.1",
+    "timestamp": 1791969915086
+  },
+  {
+    "id": "log_1791969853144",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully from 127.0.0.1",
+    "timestamp": 1791969853144
+  },
+  {
+    "id": "log_1791969423976",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully from ::1",
+    "timestamp": 1791969423976
+  },
+  {
+    "id": "log_1791969283523",
+    "action": "DELETE_POST",
+    "detail": "Deleted post \"โย่\" by DarkEcho #263. Reason: มีคำหยาบคาย / วาจาเกลียดชัง",
+    "timestamp": 1791969283523
+  },
+  {
+    "id": "log_1791969241025",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully from ::1",
+    "timestamp": 1791969241025
+  },
+  {
+    "id": "log_1791969153663",
+    "action": "SECURITY_LOCKOUT",
+    "detail": "IP ::1 locked out after 5 failed login attempts",
+    "timestamp": 1791969153663
+  },
+  {
+    "id": "log_1791969117454",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully from ::1",
+    "timestamp": 1791969117454
+  },
+  {
+    "id": "log_1791969097036",
+    "action": "ROLE_VERIFIED",
+    "detail": "Teacher role verified from IP ::1",
+    "timestamp": 1791969097036
+  },
+  {
+    "id": "log_1791967681197",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully",
+    "timestamp": 1791967681197
+  },
+  {
+    "id": "log_1791967549718",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully",
+    "timestamp": 1791967549718
+  },
+  {
+    "id": "log_1791365072934",
+    "action": "DELETE_POST",
+    "detail": "Deleted post \"กระทู้ที่จะถูกลบ\" by ThaliStudent #111. Reason: ละเมิดข้อ 1",
+    "timestamp": 1791365072934
+  },
+  {
+    "id": "log_1791365072927",
+    "action": "REPORT_POST",
+    "detail": "Post \"กระทู้ที่จะถูกลบ\" reported by ThaliMentor #222. Reason: 🤝 ข้อ 1: ใช้คำหยาบ ดูหมิ่น ด่าทอ ข่มขู่ หรือโจมตีบุคคลอื่น",
+    "timestamp": 1791365072927
+  },
+  {
+    "id": "log_1791365072892",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully",
+    "timestamp": 1791365072892
+  },
+  {
+    "id": "log_1791365058713",
+    "action": "RESOLVE_REPORT",
+    "detail": "Report rep_1791365058702_y96s resolved with action: dismissed",
+    "timestamp": 1791365058713
+  },
+  {
+    "id": "log_1791365058703",
+    "action": "REPORT_POST",
+    "detail": "Post \"กระทู้ทดสอบระบบรายงานการละเมิด\" reported by ThaliSenior #555. Reason: 🚫 ข้อ 2: กลั่นแกล้ง (Bullying) ประจาน ล้อเลียน ทำให้อับอาย",
+    "timestamp": 1791365058703
+  },
+  {
+    "id": "log_1791365058664",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully",
+    "timestamp": 1791365058664
+  },
+  {
+    "id": "log_1791365042534",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully",
+    "timestamp": 1791365042534
+  },
+  {
+    "id": "log_1791364794253",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully",
+    "timestamp": 1791364794253
+  },
+  {
+    "id": "log_1791364771891",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully",
+    "timestamp": 1791364771892
+  },
+  {
+    "id": "log_1791364541398",
+    "action": "DELETE_POST",
+    "detail": "Deleted post \"ดีค้าบ\" by DarkEcho #263. Reason: มีคำหยาบคาย / วาจาเกลียดชัง",
+    "timestamp": 1791364541398
+  },
+  {
+    "id": "log_1791364509349",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully",
+    "timestamp": 1791364509349
+  },
+  {
+    "id": "log_1791363988357",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully",
+    "timestamp": 1791363988357
+  },
+  {
+    "id": "log_1791360994630",
+    "action": "DELETE_POST",
+    "detail": "Deleted post \"แนะแนว: เทคนิคการเริ่มต้นศึกษา\" by CompassGuide #203. Reason: มีคำหยาบคาย / วาจาเกลียดชัง",
+    "timestamp": 1791360994630
+  },
+  {
+    "id": "log_1791360993144",
+    "action": "DELETE_POST",
+    "detail": "Deleted post \"คำร้อง: ขอพิจารณาปรับปรุงแอร์แ\" by CareWatcher #704. Reason: มีคำหยาบคาย / วาจาเกลียดชัง",
+    "timestamp": 1791360993144
+  },
+  {
+    "id": "log_1791360991767",
+    "action": "DELETE_POST",
+    "detail": "Deleted post \"เสนอแนะ: อยากให้มีพื้นที่เงียบ\" by CreativeThinker #991. Reason: มีคำหยาบคาย / วาจาเกลียดชัง",
+    "timestamp": 1791360991767
+  },
+  {
+    "id": "log_1791360990417",
+    "action": "DELETE_POST",
+    "detail": "Deleted post \"ทดสอบระบบ\" by NeonOracle #626. Reason: มีคำหยาบคาย / วาจาเกลียดชัง",
+    "timestamp": 1791360990417
+  },
+  {
+    "id": "log_1791360986105",
+    "action": "DELETE_POST",
+    "detail": "Deleted post \"ช่วงนี้รู้สึกหมดไฟง่ายมาก พยาย\" by SilentEcho #492. Reason: มีคำหยาบคาย / วาจาเกลียดชัง",
+    "timestamp": 1791360986105
+  },
+  {
+    "id": "log_1791360969740",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully",
+    "timestamp": 1791360969740
+  },
+  {
+    "id": "log_1791360846417",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully",
+    "timestamp": 1791360846417
+  }
+]

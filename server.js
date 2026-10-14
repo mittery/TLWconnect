@@ -78,6 +78,7 @@ const SHOUTS_FILE = path.join(DATA_DIR, 'shouts.json');
 const BANNED_FILE = path.join(DATA_DIR, 'banned.json');
 const AUDIT_FILE = path.join(DATA_DIR, 'audit_logs.json');
 const REPORTS_FILE = path.join(DATA_DIR, 'reports.json');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 // Ensure data directory
 if (!fs.existsSync(DATA_DIR)) {
@@ -175,6 +176,7 @@ let shouts = [];
 let bannedUsers = [];
 let auditLogs = [];
 let reports = [];
+let users = [];
 
 // Load persisted data
 try {
@@ -235,6 +237,17 @@ try {
   reports = [];
 }
 
+try {
+  if (fs.existsSync(USERS_FILE)) {
+    users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+  } else {
+    users = [];
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  }
+} catch (e) {
+  users = [];
+}
+
 function savePosts() {
   try {
     fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
@@ -248,6 +261,14 @@ function saveReports() {
     fs.writeFileSync(REPORTS_FILE, JSON.stringify(reports, null, 2));
   } catch (err) {
     console.error('Failed to save reports:', err);
+  }
+}
+
+function saveUsers() {
+  try {
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  } catch (err) {
+    console.error('Failed to save users:', err);
   }
 }
 
@@ -386,6 +407,133 @@ app.get('/api/network-info', (req, res) => {
   });
 });
 
+// ================= STUDENT ACCOUNT & AUTHENTICATION =================
+// 1. Register New Student Account
+app.post('/api/auth/register', (req, res) => {
+  const { fullName, idCard, studentId } = req.body;
+
+  const cleanFullName = sanitizeInput((fullName || '').trim(), 80);
+  const cleanIdCard = (idCard || '').toString().replace(/\D/g, '');
+  const cleanStudentId = (studentId || '').toString().replace(/\D/g, '');
+
+  if (!cleanFullName || cleanFullName.length < 2) {
+    return res.status(400).json({ success: false, error: 'กรุณากรอกชื่อจริง-นามสกุลให้ถูกต้อง (อย่างน้อย 2 ตัวอักษร)' });
+  }
+  if (cleanIdCard.length !== 13) {
+    return res.status(400).json({ success: false, error: 'เลขบัตรประจำตัวประชาชนต้องมี 13 หลักพอดี' });
+  }
+  if (cleanStudentId.length !== 5) {
+    return res.status(400).json({ success: false, error: 'รหัสนักเรียนต้องมี 5 หลักพอดี' });
+  }
+
+  // Check duplicate
+  const existingUser = users.find(u => u.idCard === cleanIdCard || u.studentId === cleanStudentId);
+  if (existingUser) {
+    return res.status(409).json({
+      success: false,
+      error: 'เลขบัตรประจำตัวประชาชน หรือ รหัสนักเรียนนี้ได้ลงทะเบียนไว้แล้ว โปรดเลือกเข้าสู่ระบบ'
+    });
+  }
+
+  const userToken = 'stu_' + crypto.randomBytes(24).toString('hex');
+  const newUser = {
+    id: 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+    fullName: cleanFullName,
+    idCard: cleanIdCard,
+    studentId: cleanStudentId,
+    token: userToken,
+    createdAt: Date.now(),
+    lastLogin: Date.now()
+  };
+
+  users.push(newUser);
+  saveUsers();
+
+  addAuditLog('USER_REGISTER', `นักเรียนลงทะเบียนใหม่: ${cleanFullName} (รหัส: ${cleanStudentId})`);
+
+  res.json({
+    success: true,
+    message: 'สร้างบัญชีนักเรียนสำเร็จ!',
+    user: {
+      id: newUser.id,
+      fullName: newUser.fullName,
+      studentId: newUser.studentId,
+      idCardMasked: newUser.idCard.slice(0, 3) + 'xxxxxxx' + newUser.idCard.slice(10),
+      token: newUser.token
+    }
+  });
+});
+
+// 2. Student Login
+app.post('/api/auth/login', (req, res) => {
+  const { studentId, idCard, fullName } = req.body;
+
+  const cleanStudentId = (studentId || '').toString().replace(/\D/g, '');
+  const cleanIdCard = (idCard || '').toString().replace(/\D/g, '');
+
+  if (!cleanStudentId || cleanStudentId.length !== 5) {
+    return res.status(400).json({ success: false, error: 'กรุณาระบุรหัสนักเรียน 5 หลัก' });
+  }
+  if (!cleanIdCard || cleanIdCard.length !== 13) {
+    return res.status(400).json({ success: false, error: 'กรุณาระบุเลขบัตรประจำตัวประชาชน 13 หลัก' });
+  }
+
+  const user = users.find(u => u.studentId === cleanStudentId && u.idCard === cleanIdCard);
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      error: 'รหัสนักเรียน หรือ เลขบัตรประจำตัวประชาชนไม่ถูกต้อง หรือยังไม่ได้สร้างบัญชี'
+    });
+  }
+
+  user.lastLogin = Date.now();
+  if (!user.token) {
+    user.token = 'stu_' + crypto.randomBytes(24).toString('hex');
+  }
+  saveUsers();
+
+  addAuditLog('USER_LOGIN', `นักเรียนเข้าสู่ระบบ: ${user.fullName} (รหัส: ${user.studentId})`);
+
+  res.json({
+    success: true,
+    message: 'เข้าสู่ระบบสำเร็จ!',
+    user: {
+      id: user.id,
+      fullName: user.fullName,
+      studentId: user.studentId,
+      idCardMasked: user.idCard.slice(0, 3) + 'xxxxxxx' + user.idCard.slice(10),
+      token: user.token
+    }
+  });
+});
+
+// 3. Verify Session (Auto-Login check)
+app.post('/api/auth/verify-session', (req, res) => {
+  const { token, studentId } = req.body;
+  if (!token || !studentId) {
+    return res.status(400).json({ success: false, error: 'ข้อมูลเซสชันไม่ครบถ้วน' });
+  }
+
+  const user = users.find(u => u.token === token && u.studentId === studentId);
+  if (!user) {
+    return res.status(401).json({ success: false, error: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' });
+  }
+
+  user.lastLogin = Date.now();
+  saveUsers();
+
+  res.json({
+    success: true,
+    user: {
+      id: user.id,
+      fullName: user.fullName,
+      studentId: user.studentId,
+      idCardMasked: user.idCard.slice(0, 3) + 'xxxxxxx' + user.idCard.slice(10),
+      token: user.token
+    }
+  });
+});
+
 // ROLE VERIFICATION (TEACHER & MODERATOR PIN)
 app.post('/api/auth/verify-role', (req, res) => {
   const { role, pin } = req.body;
@@ -464,6 +612,7 @@ app.get('/api/manager/overview', requireAdmin, (req, res) => {
     totalPosts: posts.length,
     activeSocketsCount,
     bannedCount: bannedUsers.length,
+    registeredStudentsCount: users.length,
     pendingReportsCount: reports.filter(r => r.status === 'pending').length,
     channelsCount: {
       all: posts.length,
@@ -476,6 +625,14 @@ app.get('/api/manager/overview', requireAdmin, (req, res) => {
     posts,
     bannedUsers,
     reports,
+    users: users.map(u => ({
+      id: u.id,
+      fullName: u.fullName,
+      studentId: u.studentId,
+      idCardMasked: u.idCard.slice(0, 3) + 'xxxxxxx' + u.idCard.slice(10),
+      createdAt: u.createdAt,
+      lastLogin: u.lastLogin
+    })),
     auditLogs: auditLogs.slice(0, 30)
   });
 });

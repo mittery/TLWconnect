@@ -14,6 +14,161 @@
 <body>
   <div id="particle-canvas-container"></div>
 
+  <!-- ================= AUTH GATEWAY (LOGIN & REGISTER BEFORE ACCESS) ================= -->
+  <div id="auth-gateway" class="auth-gateway-overlay">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-crest-wrap">
+          <span class="auth-crest-icon">🏫</span>
+        </div>
+        <div class="auth-badge-pill">โรงเรียนท่าลี่วิทยา • สีเหลือง-แดง 🟡🔴</div>
+        <h2 class="auth-title">TLW<span>connect</span></h2>
+        <p class="auth-sub">กรุณาเข้าสู่ระบบ หรือ สร้างบัญชีนักเรียนก่อนเข้าใช้งานชุมชน</p>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="auth-tabs">
+        <button type="button" id="tab-btn-login" class="auth-tab-btn active">
+          <span>🔑 เข้าสู่ระบบ</span>
+        </button>
+        <button type="button" id="tab-btn-register" class="auth-tab-btn">
+          <span>✨ สร้างบัญชีนักเรียน</span>
+        </button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="auth-login-form" class="auth-form">
+        <div class="auth-input-group">
+          <label for="login-student-id">รหัสนักเรียน (5 หลัก) <span class="required">*</span></label>
+          <div class="input-with-icon">
+            <span class="input-icon">🎓</span>
+            <input type="text" id="login-student-id" maxlength="5" inputmode="numeric" placeholder="เช่น 45678" autocomplete="username" required>
+          </div>
+        </div>
+
+        <div class="auth-input-group">
+          <label for="login-id-card">เลขประจำตัวประชาชน (13 หลัก) <span class="required">*</span></label>
+          <div class="input-with-icon">
+            <span class="input-icon">🆔</span>
+            <input type="password" id="login-id-card" maxlength="13" inputmode="numeric" placeholder="ระบุเลขบัตร ปชช. 13 หลัก" autocomplete="current-password" required>
+            <button type="button" id="btn-toggle-login-id" class="btn-toggle-pwd" title="แสดง/ซ่อนเลขบัตร">👁️</button>
+          </div>
+        </div>
+
+        <div class="auth-input-group">
+          <label for="login-fullname">ชื่อ-นามสกุลจริงผู้ใช้ <span class="optional">(ไม่บังคับ/ถ้าจำได้)</span></label>
+          <div class="input-with-icon">
+            <span class="input-icon">👤</span>
+            <input type="text" id="login-fullname" placeholder="เช่น นายธนภัทร ใจดี" autocomplete="name">
+          </div>
+        </div>
+
+        <!-- REMEMBER CHECKBOXES -->
+        <div class="auth-options-grid">
+          <label class="custom-checkbox-label">
+            <input type="checkbox" id="login-chk-remember-student-id" checked>
+            <span class="custom-checkbox-box"></span>
+            <span class="checkbox-text">จำรหัสนักเรียน</span>
+          </label>
+          <label class="custom-checkbox-label">
+            <input type="checkbox" id="login-chk-remember-id-card" checked>
+            <span class="custom-checkbox-box"></span>
+            <span class="checkbox-text">จำเลขบัตร</span>
+          </label>
+          <label class="custom-checkbox-label">
+            <input type="checkbox" id="login-chk-remember-fullname" checked>
+            <span class="custom-checkbox-box"></span>
+            <span class="checkbox-text">จำชื่อผู้ใช้</span>
+          </label>
+          <label class="custom-checkbox-label auto-login-highlight">
+            <input type="checkbox" id="login-chk-auto-login" checked>
+            <span class="custom-checkbox-box"></span>
+            <span class="checkbox-text">⚡ เข้าสู่ระบบอัตโนมัติ</span>
+          </label>
+        </div>
+
+        <div id="login-error-badge" class="auth-error-badge hidden"></div>
+
+        <button type="submit" id="btn-submit-login" class="btn-auth-submit">
+          <span>🚀 เข้าสู่ระบบ TLW Connect</span>
+        </button>
+
+        <div class="auth-switch-note">
+          <span>ยังไม่มีบัญชีนักเรียน?</span>
+          <a href="#" id="link-goto-register">คลิกที่นี่เพื่อสร้างบัญชีใหม่</a>
+        </div>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="auth-register-form" class="auth-form hidden">
+        <div class="auth-input-group">
+          <label for="reg-fullname">ชื่อจริง-นามสกุล <span class="required">*</span></label>
+          <div class="input-with-icon">
+            <span class="input-icon">👤</span>
+            <input type="text" id="reg-fullname" placeholder="เช่น เด็กชาย ธนภัทร ใจดี" autocomplete="name" required>
+          </div>
+        </div>
+
+        <div class="auth-input-group">
+          <label for="reg-id-card">เลขประจำตัวประชาชน (13 หลัก) <span class="required">*</span></label>
+          <div class="input-with-icon">
+            <span class="input-icon">🆔</span>
+            <input type="text" id="reg-id-card" maxlength="13" inputmode="numeric" placeholder="ระบุเลขบัตร ปชช. 13 หลัก (ตัวเลขล้วน)" required>
+          </div>
+          <span class="input-hint">ใช้เฉพาะยืนยันความเป็นนักเรียนท่าลี่วิทยา ไม่แสดงต่อสาธารณะ</span>
+        </div>
+
+        <div class="auth-input-group">
+          <label for="reg-student-id">รหัสนักเรียน (5 หลัก) <span class="required">*</span></label>
+          <div class="input-with-icon">
+            <span class="input-icon">🎓</span>
+            <input type="text" id="reg-student-id" maxlength="5" inputmode="numeric" placeholder="เลขประจำตัวนักเรียน 5 หลัก เช่น 45678" required>
+          </div>
+        </div>
+
+        <!-- REMEMBER CHECKBOXES FOR REGISTER -->
+        <div class="auth-options-grid">
+          <label class="custom-checkbox-label">
+            <input type="checkbox" id="reg-chk-remember-fullname" checked>
+            <span class="custom-checkbox-box"></span>
+            <span class="checkbox-text">จำชื่อผู้ใช้</span>
+          </label>
+          <label class="custom-checkbox-label">
+            <input type="checkbox" id="reg-chk-remember-id-card" checked>
+            <span class="custom-checkbox-box"></span>
+            <span class="checkbox-text">จำเลขบัตร</span>
+          </label>
+          <label class="custom-checkbox-label">
+            <input type="checkbox" id="reg-chk-remember-student-id" checked>
+            <span class="custom-checkbox-box"></span>
+            <span class="checkbox-text">จำรหัสนักเรียน</span>
+          </label>
+          <label class="custom-checkbox-label auto-login-highlight">
+            <input type="checkbox" id="reg-chk-auto-login" checked>
+            <span class="custom-checkbox-box"></span>
+            <span class="checkbox-text">⚡ เข้าสู่ระบบอัตโนมัติ</span>
+          </label>
+        </div>
+
+        <div id="reg-error-badge" class="auth-error-badge hidden"></div>
+
+        <button type="submit" id="btn-submit-register" class="btn-auth-submit">
+          <span>✨ สร้างบัญชีและเข้าสู่ระบบ</span>
+        </button>
+
+        <div class="auth-switch-note">
+          <span>มีบัญชีอยู่แล้ว?</span>
+          <a href="#" id="link-goto-login">คลิกที่นี่เพื่อเข้าสู่ระบบ</a>
+        </div>
+      </form>
+
+      <div class="auth-security-pledge">
+        <span class="pledge-shield">🛡️</span>
+        <span>ข้อมูลของคุณปลอดภัยด้วยระบบ Zero-Log Privacy สำหรับชาว ท.ล.ว.</span>
+      </div>
+    </div>
+  </div>
+
   <!-- NAVIGATION HEADER -->
   <header class="app-header">
     <div class="header-inner">
@@ -50,6 +205,18 @@
         <button id="btn-sound-toggle" class="icon-btn" title="เปิด/ปิดเสียงเอฟเฟกต์">
           <span id="sound-icon">🔊</span>
         </button>
+
+        <!-- Logged-in Student Account Badge & Logout -->
+        <div class="student-account-badge" id="student-account-badge" title="บัญชีนักเรียนที่เข้าสู่ระบบ">
+          <span class="student-avatar-icon">🎓</span>
+          <div class="student-meta">
+            <span class="student-realname" id="student-display-name">นักเรียน ท.ล.ว.</span>
+            <span class="student-id-tag" id="student-display-id">รหัส ...</span>
+          </div>
+          <button id="btn-student-logout" class="btn-student-logout" title="ออกจากระบบเพื่อสลับบัญชี">
+            <span>ออกจากระบบ 🚪</span>
+          </button>
+        </div>
 
         <!-- Current Persona Badge -->
         <div class="user-persona-badge" id="btn-persona-profile" title="คลิกเพื่อสุ่มตัวตนใหม่">
