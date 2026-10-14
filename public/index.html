@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TLWconnect — Real-Time Anonymous Forum</title>
+  <meta name="description" content="TLWconnect พื้นที่สนทนานิรนามแบบเรียลไทม์ ปลอดภัย ไร้ตัวตน แชร์เรื่องราว ระบาย ส่งข้อเสนอแนะ และคำร้องได้อย่างอิสระ">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="particle-canvas-container"></div>
+
+  <!-- NAVIGATION HEADER -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <div class="brand-logo-glow">
+          <span class="brand-icon">🏫</span>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title-row">
+            <h1 class="brand-title">TLW<span>connect</span></h1>
+            <span class="school-badge-pill">ท่าลี่วิทยา</span>
+          </div>
+          <div class="brand-sub-meta">
+            <span class="school-tagline">พื้นที่สร้างสรรค์ชาว ท.ล.ว.</span>
+            <span class="meta-dot">•</span>
+            <div class="brand-live-badge">
+              <span class="live-pulse"></span>
+              <span id="header-online-count">1 Anon Online</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Input -->
+      <div class="header-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="global-search-input" placeholder="ค้นหากระทู้, คำร้อง, แฮชแท็ก..." autocomplete="off">
+        <button id="btn-clear-search" class="clear-search-btn hidden" title="ล้างการค้นหา">✕</button>
+      </div>
+
+      <!-- Action Items -->
+      <div class="header-actions">
+        <!-- Sound Toggle -->
+        <button id="btn-sound-toggle" class="icon-btn" title="เปิด/ปิดเสียงเอฟเฟกต์">
+          <span id="sound-icon">🔊</span>
+        </button>
+
+        <!-- Current Persona Badge -->
+        <div class="user-persona-badge" id="btn-persona-profile" title="คลิกเพื่อสุ่มตัวตนใหม่">
+          <div class="persona-avatar-wrap" id="header-avatar-wrap">
+            <span id="header-user-badge">👻</span>
+          </div>
+          <div class="persona-info">
+            <span class="persona-label">ตัวตนนินามของคุณ</span>
+            <span class="persona-name" id="header-user-name">PhantomEcho #402</span>
+          </div>
+          <span class="persona-edit-hint">🎲</span>
+        </div>
+
+        <!-- Mobile QR CTA -->
+        <button id="btn-open-mobile-qr-main" class="btn btn-secondary" style="border: 1px solid rgba(56,189,248,0.4); background: rgba(56,189,248,0.1); color: #7dd3fc; padding: 0.45rem 0.85rem;" title="เปิดใช้งานบนโทรศัพท์มือถือ">
+          <span>📱 เข้าบนมือถือ (QR)</span>
+        </button>
+
+        <!-- New Post CTA -->
+        <button id="btn-open-compose-modal" class="btn btn-primary glow-button">
+          <span class="btn-icon">✍️</span>
+          <span>โพสต์ใหม่</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <div class="app-layout">
+    
+    <!-- LEFT SIDEBAR: Channels & Info -->
+    <aside class="sidebar-left">
+      <div class="sidebar-section">
+        <div class="section-label">ห้องสนทนาชุมชน (5 ห้อง)</div>
+        <nav class="channel-nav" id="channel-nav-list">
+          <button class="channel-item active" data-channel="all">
+            <span class="channel-icon">🌐</span>
+            <span class="channel-name">กระทู้ทั้งหมด</span>
+            <span class="channel-badge" id="badge-count-all">...</span>
+          </button>
+          <button class="channel-item" data-channel="announcements">
+            <span class="channel-icon">📢</span>
+            <span class="channel-name">ห้องประกาศ</span>
+            <span class="channel-badge" id="badge-count-announcements">...</span>
+          </button>
+          <button class="channel-item" data-channel="vent">
+            <span class="channel-icon">🌧️</span>
+            <span class="channel-name">ห้องระบาย</span>
+            <span class="channel-badge" id="badge-count-vent">...</span>
+          </button>
+          <button class="channel-item" data-channel="suggestions">
+            <span class="channel-icon">💡</span>
+            <span class="channel-name">ห้องข้อเสนอแนะ</span>
+            <span class="channel-badge" id="badge-count-suggestions">...</span>
+          </button>
+          <button class="channel-item" data-channel="requests">
+            <span class="channel-icon">📋</span>
+            <span class="channel-name">ห้องส่งคำร้อง</span>
+            <span class="channel-badge" id="badge-count-requests">...</span>
+          </button>
+          <button class="channel-item" data-channel="guidance">
+            <span class="channel-icon">🧭</span>
+            <span class="channel-name">ห้องแนะแนว</span>
+            <span class="channel-badge" id="badge-count-guidance">...</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Privacy & Guarantee Card -->
+      <div class="privacy-guarantee-card">
+        <div class="card-icon">🛡️</div>
+        <div class="card-title">100% Zero-Log Privacy</div>
+        <div class="privacy-status-pill">
+          <span class="status-dot"></span> End-to-End Anonymous
+        </div>
+      </div>
+
+      <!-- Community Rules Button -->
+      <button class="rules-guide-btn" id="btn-open-rules" title="อ่านกฎการใช้งานชุมชน">
+        <span class="rules-icon">📜</span>
+        <div class="rules-text">
+          <span class="rules-title">กฎการใช้งาน TLW Connect</span>
+          <span class="rules-sub">10 ข้อควรปฏิบัติเพื่อความปลอดภัย</span>
+        </div>
+      </button>
+
+      <!-- Manager Portal Link -->
+      <a href="/manager.html" class="manager-access-link" title="เข้าสู่ระบบศูนย์จัดการสำหรับผู้ดูแล">
+        <span class="shield-icon">🛡️</span>
+        <span>ศูนย์ผู้ดูแล (Manager Portal)</span>
+        <span class="arrow-indicator">➔</span>
+      </a>
+    </aside>
+
+    <!-- CENTER: Main Feed -->
+    <main class="main-content">
+
+      <!-- MODERN SCHOOL HERO BANNER -->
+      <section class="school-hero-banner">
+        <div class="hero-inner">
+          <div class="hero-crest-wrap">
+            <span class="hero-crest-icon">🏫</span>
+          </div>
+          <div class="hero-text-wrap">
+            <div class="hero-badge-tag">THALIWITTAYA COMMUNITY • ท่าลี่วิทยา</div>
+            <h2 class="hero-title">ยินดีต้อนรับสู่ TLW Connect 🤝</h2>
+            <p class="hero-desc">พื้นที่ออนไลน์นิรนามสำหรับชาวท่าลี่วิทยา แลกเปลี่ยนความคิดเห็น ระบาย ส่งข้อเสนอแนะ และคำร้องได้อย่างอิสระ ปลอดภัย ไร้ตัวตน</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- QUICK COMPOSE BANNER -->
+      <section class="quick-compose-bar" id="quick-compose-trigger">
+        <div class="compose-avatar" id="quick-compose-avatar">👻</div>
+        <div class="compose-placeholder">
+          <span>มีเรื่องอะไรอยากระบายแบบไม่ต้องระบุตัวตนไหม? คลิกเพื่อเขียนกระทู้...</span>
+        </div>
+        <button class="btn btn-sm btn-subtle">เขียนโพสต์</button>
+      </section>
+
+      <!-- MOBILE HORIZONTAL CHANNELS BAR (เลื่อนแนวนอนบนโทรศัพท์) -->
+      <div class="mobile-channels-bar" id="mobile-channels-bar">
+        <button class="mobile-channel-pill active" data-channel="all">
+          <span class="pill-icon">🌐</span>
+          <span>ทั้งหมด</span>
+        </button>
+        <button class="mobile-channel-pill" data-channel="announcements">
+          <span class="pill-icon">📢</span>
+          <span>ประกาศ</span>
+        </button>
+        <button class="mobile-channel-pill" data-channel="vent">
+          <span class="pill-icon">🌧️</span>
+          <span>ห้องระบาย</span>
+        </button>
+        <button class="mobile-channel-pill" data-channel="suggestions">
+          <span class="pill-icon">💡</span>
+          <span>ข้อเสนอแนะ</span>
+        </button>
+        <button class="mobile-channel-pill" data-channel="requests">
+          <span class="pill-icon">📋</span>
+          <span>ส่งคำร้อง</span>
+        </button>
+        <button class="mobile-channel-pill" data-channel="guidance">
+          <span class="pill-icon">🧭</span>
+          <span>แนะแนว</span>
+        </button>
+      </div>
+
+      <!-- FEED FILTER / SORT BAR -->
+      <div class="feed-controls">
+        <div class="feed-current-channel">
+          <span id="active-channel-icon">🌐</span>
+          <h2 id="active-channel-title">กระทู้ทั้งหมด</h2>
+        </div>
+
+        <div class="feed-sort-tabs">
+          <button class="sort-tab active" data-sort="latest">
+            <span>⚡ ล่าสุด</span>
+          </button>
+          <button class="sort-tab" data-sort="hot">
+            <span>🔥 ยอดนิยม</span>
+          </button>
+          <button class="sort-tab" data-sort="top">
+            <span>👑 คะแนนสูงสุด</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- LIVE FEED STREAM -->
+      <section class="posts-feed" id="posts-container">
+        <!-- Post Cards will be rendered here dynamically -->
+        <div class="feed-loading-state">
+          <div class="spinner"></div>
+          <p>กำลังเชื่อมต่อสัญญาณนิรนาม...</p>
+        </div>
+      </section>
+
+      <!-- EMPTY STATE -->
+      <div id="empty-feed-state" class="empty-state hidden">
+        <div class="empty-icon">📭</div>
+        <h3>ยังไม่มีกระทู้ในห้องนี้</h3>
+        <p>เป็นคนแรกที่เปิดประเด็นสนทนาโดยไม่เปิดเผยตัวตน</p>
+        <button class="btn btn-primary" id="btn-empty-compose">เปิดกระทู้แรก</button>
+      </div>
+    </main>
+
+    <!-- RIGHT SIDEBAR: Live Realtime Shoutbox & Trending -->
+    <aside class="sidebar-right">
+      
+      <!-- REAL-TIME SHOUTBOX -->
+      <div class="shoutbox-card">
+        <div class="shoutbox-header">
+          <div class="header-left">
+            <span class="live-dot-pulse"></span>
+            <h3>Live Shoutbox</h3>
+          </div>
+          <span class="shout-sub">คุยสดสั้นๆ</span>
+        </div>
+
+        <div class="shoutbox-messages" id="shoutbox-list">
+          <!-- Live shouts stream here -->
+        </div>
+
+        <form id="shoutbox-form" class="shoutbox-input-wrap">
+          <input type="text" id="shoutbox-input" placeholder="พิมพ์ข้อความสั้น (กด Enter)..." maxlength="140" autocomplete="off" required>
+          <button type="submit" id="btn-send-shout" class="send-shout-btn" title="ส่งข้อความ">➤</button>
+        </form>
+      </div>
+
+      <!-- TRENDING TAGS -->
+      <div class="trending-tags-card">
+        <h3>แฮชแท็กยอดฮิต 🏷️</h3>
+        <div class="tags-cloud" id="tags-cloud-container">
+          <span class="tag-pill" data-tag="ระบาย">#ระบาย</span>
+          <span class="tag-pill" data-tag="ข้อเสนอแนะ">#ข้อเสนอแนะ</span>
+          <span class="tag-pill" data-tag="คำร้อง">#คำร้อง</span>
+          <span class="tag-pill" data-tag="แนะแนว">#แนะแนว</span>
+          <span class="tag-pill" data-tag="การเรียนรู้">#การเรียนรู้</span>
+          <span class="tag-pill" data-tag="สภาพแวดล้อม">#สภาพแวดล้อม</span>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+
+  <!-- MODAL: CREATE / COMPOSE POST -->
+  <div id="compose-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>สร้างกระทู้นิรนาม</h2>
+          <span class="modal-subtitle">ข้อมูลของคุณจะไม่ถูกเปิดเผยอย่างเด็ดขาด</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-compose">✕</button>
+      </div>
+
+      <form id="compose-form" class="compose-form">
+        <!-- Author Persona Preview -->
+        <div class="compose-author-bar">
+          <div class="author-tag" id="compose-author-tag">
+            <span id="compose-badge-preview">👻</span>
+            <span id="compose-name-preview">PhantomEcho #402</span>
+          </div>
+          <button type="button" id="btn-reroll-in-modal" class="btn-reroll-small">🎲 สุ่มชื่อใหม่</button>
+        </div>
+
+        <!-- Room selector (5 ห้อง) -->
+        <div class="form-group">
+          <label for="compose-channel-select">เลือกห้องสนทนา</label>
+          <select id="compose-channel-select" required>
+            <option value="vent">🌧️ ห้องระบาย (ระบายความรู้สึก / ความในใจ)</option>
+            <option value="suggestions">💡 ห้องข้อเสนอแนะ (ไอเดียและข้อเสนอแนะ)</option>
+            <option value="requests">📋 ห้องส่งคำร้อง (ส่งคำร้อง / แจ้งเรื่อง)</option>
+            <option value="guidance">🧭 ห้องแนะแนว (แนะแนวการเรียนรู้ / พัฒนาทักษะ)</option>
+            <option value="announcements" disabled>📢 ห้องประกาศ (🔒 เฉพาะผู้ดูแล Manager โพสต์ผ่านหน้าจัดการ)</option>
+          </select>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group">
+          <label for="compose-title-input">หัวข้อกระทู้</label>
+          <input type="text" id="compose-title-input" placeholder="สรุปเรื่องราวให้กระชับและดึงดูด..." maxlength="150" required>
+          <div class="char-count"><span id="title-char-count">0</span>/150</div>
+        </div>
+
+        <!-- Content -->
+        <div class="form-group">
+          <label for="compose-content-input">เนื้อหาข้อความ</label>
+          <textarea id="compose-content-input" rows="5" placeholder="เล่าเรื่องราวของคุณได้อย่างอิสระ ไม่มีใครรู้ว่าคุณคือใคร..." maxlength="3000" required></textarea>
+          <div class="char-count"><span id="content-char-count">0</span>/3000</div>
+        </div>
+
+        <!-- Tags -->
+        <div class="form-group">
+          <label for="compose-tags-input">แท็กที่เกี่ยวข้อง (คั่นด้วยวรรค หรือ Enter)</label>
+          <div class="tags-input-container">
+            <div id="composed-tags-list" class="composed-tags-list"></div>
+            <input type="text" id="compose-tags-input" placeholder="พิมพ์แท็ก เช่น #เรื่องลับ แล้วกด Enter">
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-compose">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary glow-button" id="btn-submit-post">
+            <span>🚀 โพสต์สู่ TLWconnect</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PERSONA CUSTOMIZER -->
+  <div id="persona-modal" class="modal-overlay hidden">
+    <div class="modal-card modal-small">
+      <div class="modal-header">
+        <h2>ปรับแต่งตัวตนนินาม</h2>
+        <button class="modal-close-btn" id="btn-close-persona">✕</button>
+      </div>
+
+      <div class="persona-customizer-body">
+        <div class="persona-big-preview">
+          <div class="big-avatar" id="custom-avatar-preview">👻</div>
+          <div class="big-name" id="custom-name-preview">PhantomEcho #402</div>
+          <button type="button" class="btn btn-outline" id="btn-reroll-persona-name">🎲 สุ่มชื่อใหม่</button>
+        </div>
+
+        <div class="form-group">
+          <label>เลือกอวตารของคุณ</label>
+          <div class="emoji-picker-grid" id="avatar-emoji-picker">
+            <button type="button" class="emoji-pick-btn" data-emoji="👻">👻</button>
+            <button type="button" class="emoji-pick-btn" data-emoji="🕶️">🕶️</button>
+            <button type="button" class="emoji-pick-btn" data-emoji="⚡">⚡</button>
+            <button type="button" class="emoji-pick-btn" data-emoji="🦉">🦉</button>
+            <button type="button" class="emoji-pick-btn" data-emoji="👾">👾</button>
+            <button type="button" class="emoji-pick-btn" data-emoji="🌌">🌌</button>
+            <button type="button" class="emoji-pick-btn" data-emoji="🦊">🦊</button>
+            <button type="button" class="emoji-pick-btn" data-emoji="🎭">🎭</button>
+            <button type="button" class="emoji-pick-btn" data-emoji="🤖">🤖</button>
+            <button type="button" class="emoji-pick-btn" data-emoji="💎">💎</button>
+            <button type="button" class="emoji-pick-btn" data-emoji="🐺">🐺</button>
+            <button type="button" class="emoji-pick-btn" data-emoji="🔮">🔮</button>
+          </div>
+        </div>
+
+        <!-- Role Permission Selector (Student / Teacher / Moderator) -->
+        <div class="form-group" style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; margin-top: 1rem;">
+          <label>บทบาทในโรงเรียน (Role & Status)</label>
+          <div class="role-selector-wrap" style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <button type="button" class="btn btn-sm btn-role-tab active" data-role="student" id="btn-role-student" style="flex: 1; padding: 0.45rem;">
+              <span>🎓 นักเรียน</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-role-tab" data-role="teacher" id="btn-role-teacher" style="flex: 1; padding: 0.45rem;">
+              <span>👨‍🏫 คุณครู</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-role-tab" data-role="moderator" id="btn-role-mod" style="flex: 1; padding: 0.45rem;">
+              <span>🛡️ ผู้ตรวจการ</span>
+            </button>
+          </div>
+          
+          <div id="role-pin-container" class="hidden" style="margin-top: 0.5rem; background: rgba(0,0,0,0.25); padding: 0.65rem; border-radius: var(--radius-sm); border: 1px dashed var(--border-subtle);">
+            <label for="role-pin-input" id="role-pin-label" style="font-size: 0.76rem; color: var(--accent-gold); display: block; margin-bottom: 4px;">กรอกรหัสยืนยันตัวตนคุณครู</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="password" id="role-pin-input" placeholder="กรอกรหัสผ่านเพื่อยืนยันสิทธิ์..." style="flex: 1; padding: 0.4rem 0.65rem; font-size: 0.8rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff;">
+              <button type="button" id="btn-verify-role-pin" class="btn btn-sm btn-primary" style="white-space: nowrap;">ยืนยันสิทธิ์</button>
+            </div>
+            <div id="role-verify-msg" style="font-size: 0.72rem; margin-top: 4px;" class="hidden"></div>
+          </div>
+          <div id="role-current-badge-display" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px;">
+            สถานะปัจจุบัน: <strong id="current-role-label" style="color: #38bdf8;">นักเรียน (Student)</strong>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="btn-save-persona" style="width: 100%;">ตกลง</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: COMMUNITY RULES (📜 กฎการใช้งาน TLW Connect) ================= -->
+  <div id="rules-modal" class="modal-overlay">
+    <div class="modal-card modal-rules">
+      <div class="modal-header rules-header">
+        <div class="modal-title-group">
+          <div class="rules-header-badge">
+            <span class="icon">📜</span>
+            <span>ข้อตกลงร่วมกัน</span>
+          </div>
+          <h2>กฎการใช้งาน TLW Connect</h2>
+          <span class="modal-subtitle">โปรดอ่านและทำความเข้าใจข้อตกลงเพื่อสร้างพื้นที่ปลอดภัยและสร้างสรรค์</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-rules">✕</button>
+      </div>
+
+      <div class="rules-modal-body">
+        <div class="rules-list">
+          
+          <div class="rule-card">
+            <div class="rule-num">1</div>
+            <div class="rule-content">
+              <h4>🤝 เคารพผู้อื่น</h4>
+              <p>ห้ามใช้คำหยาบ ดูหมิ่น เหยียด ด่าทอ ข่มขู่ หรือโจมตีบุคคลอื่น</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-num">2</div>
+            <div class="rule-content">
+              <h4>🚫 ห้ามกลั่นแกล้ง (Bullying)</h4>
+              <p>ห้ามโพสต์เพื่อประจาน ล้อเลียน ทำให้อับอาย หรือสร้างความเสียหายแก่ผู้อื่น ไม่ว่าจะเป็นนักเรียน ครู หรือบุคลากร</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-num">3</div>
+            <div class="rule-content">
+              <h4>🔒 เคารพความเป็นส่วนตัว</h4>
+              <p>ห้ามเผยแพร่ข้อมูลส่วนตัวของผู้อื่น เช่น เบอร์โทรศัพท์ ที่อยู่ รูปภาพ หรือข้อมูลอื่น ๆ โดยไม่ได้รับอนุญาต</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-num">4</div>
+            <div class="rule-content">
+              <h4>🗣️ แสดงความคิดเห็นอย่างสร้างสรรค์</h4>
+              <p>สามารถวิจารณ์หรือไม่เห็นด้วยได้ แต่ควรพูดถึง<strong>ปัญหาและเหตุผล</strong> ไม่โจมตีตัวบุคคล</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-num">5</div>
+            <div class="rule-content">
+              <h4>📝 ใช้ห้องให้ถูกประเภท</h4>
+              <p>โปรดตั้งกระทู้ในห้องที่ตรงกับเนื้อหา เช่น คำร้อง → ห้องคำร้อง, ข้อเสนอแนะ → ห้องข้อเสนอแนะ เพื่อให้จัดการข้อมูลได้ง่าย</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-num">6</div>
+            <div class="rule-content">
+              <h4>🚫 ห้าม Spam / Flood</h4>
+              <p>ห้ามโพสต์ข้อความซ้ำ ๆ โพสต์จำนวนมากโดยไม่มีเหตุผล หรือทำให้ระบบ/การสนทนารบกวนผู้อื่น</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-num">7</div>
+            <div class="rule-content">
+              <h4>❌ ห้ามเผยแพร่เนื้อหาไม่เหมาะสม</h4>
+              <p>ห้ามเผยแพร่เนื้อหาทางเพศ ความรุนแรง การพนัน ยาเสพติด หรือเนื้อหาที่ผิดกฎหมาย/ไม่เหมาะสมกับสถานศึกษา</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-num">8</div>
+            <div class="rule-content">
+              <h4>🎭 ห้ามแอบอ้างเป็นบุคคลอื่น</h4>
+              <p>ห้ามแอบอ้างเป็นนักเรียน ครู บุคลากร หรือบุคคลอื่นเพื่อสร้างความเข้าใจผิดหรือก่อให้เกิดความเสียหาย</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-num">9</div>
+            <div class="rule-content">
+              <h4>📰 ตรวจสอบข้อมูลก่อนโพสต์</h4>
+              <p>ห้ามจงใจเผยแพร่ข่าวลือหรือข้อมูลเท็จที่อาจสร้างความเข้าใจผิดหรือทำให้ผู้อื่นเสียหาย</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-num">10</div>
+            <div class="rule-content">
+              <h4>⚖️ เคารพการดูแลระบบ</h4>
+              <p>ผู้ดูแลมีสิทธิ์ลบ ซ่อน หรือระงับเนื้อหาที่ละเมิดกฎ และอาจจำกัดการใช้งานของบัญชีที่ทำผิดซ้ำ</p>
+            </div>
+          </div>
+
+          <!-- SCHOOL COMMUNITY PLEDGE -->
+          <div class="school-community-pledge">
+            <div class="pledge-icon">🏫</div>
+            <div class="pledge-text">
+              <h4 class="pledge-title">TLW Connect คือพื้นที่สำหรับการสื่อสารและแลกเปลี่ยนความคิดเห็นของชาวท่าลี่วิทยา</h4>
+              <p class="pledge-desc">กรุณาใช้พื้นที่นี้ด้วยความสุภาพ เคารพผู้อื่น และช่วยกันสร้าง Community ที่ปลอดภัยสำหรับทุกคน</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="rules-modal-footer">
+        <div class="rules-footer-note">
+          <span>🛡️ พื้นที่สนทนานี้ปลอดภัยและไร้ตัวตน โปรดร่วมกันรักษาบรรยากาศที่ดี</span>
+        </div>
+        <button type="button" class="btn btn-primary btn-accept-rules" id="btn-accept-rules">
+          <span>✅ รับทราบและยอมรับกฎการใช้งาน</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: REPORT POST (รายงานกระทู้ไปยังผู้ดูแล) ================= -->
+  <div id="report-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2 style="color: #f87171;">🚨 รายงานกระทู้ไปยังผู้ดูแล</h2>
+          <span class="modal-subtitle">รายงานของคุณจะเป็นความลับและส่งตรงถึงศูนย์ผู้ดูแล (Manager) ทันที</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-report-modal">✕</button>
+      </div>
+
+      <form id="report-form" class="report-form">
+        <div class="preview-box" id="report-post-preview" style="margin-bottom: 1rem; border-left-color: #ef4444; background: rgba(239, 68, 68, 0.08);">
+          <!-- Dynamically populated preview of post title & author -->
+        </div>
+
+        <div class="form-group">
+          <label for="report-reason-select">เลือกข้อที่ละเมิด (อ้างอิงกฎ TLW Connect):</label>
+          <select id="report-reason-select" required>
+            <option value="🤝 ข้อ 1: ใช้คำหยาบ ดูหมิ่น ด่าทอ ข่มขู่ หรือโจมตีบุคคลอื่น">🤝 ข้อ 1: ใช้คำหยาบ ดูหมิ่น ด่าทอ ข่มขู่ หรือโจมตีผู้อื่น</option>
+            <option value="🚫 ข้อ 2: กลั่นแกล้ง (Bullying) ประจาน ล้อเลียน ทำให้อับอาย">🚫 ข้อ 2: กลั่นแกล้ง (Bullying) ประจาน ล้อเลียน</option>
+            <option value="🔒 ข้อ 3: เผยแพร่ข้อมูลส่วนบุคคล (เบอร์/ที่อยู่/รูปภาพ)">🔒 ข้อ 3: เผยแพร่ข้อมูลส่วนบุคคลโดยไม่ได้รับอนุญาต</option>
+            <option value="🗣️ ข้อ 4: แสดงความคิดเห็นโจมตีตัวบุคคล ไม่สร้างสรรค์">🗣️ ข้อ 4: แสดงความคิดเห็นโจมตีตัวบุคคล</option>
+            <option value="📝 ข้อ 5: ใช้ห้องผิดประเภทหรือไม่ตรงเนื้อหา">📝 ข้อ 5: ใช้ห้องผิดประเภท</option>
+            <option value="🚫 ข้อ 6: Spam / Flood โพสต์ซ้ำ ๆ รบกวนผู้อื่น">🚫 ข้อ 6: Spam / Flood โพสต์ซ้ำ ๆ รบกวน</option>
+            <option value="❌ ข้อ 7: เนื้อหาไม่เหมาะสม (ความรุนแรง/เพศ/การพนัน/ยาเสพติด)">❌ ข้อ 7: เนื้อหาไม่เหมาะสมกับสถานศึกษา</option>
+            <option value="🎭 ข้อ 8: แอบอ้างเป็นบุคคลอื่น (นักเรียน/ครู/บุคลากร)">🎭 ข้อ 8: แอบอ้างเป็นบุคคลอื่น</option>
+            <option value="📰 ข้อ 9: จงใจเผยแพร่ข่าวลือหรือข้อมูลเท็จ">📰 ข้อ 9: จงใจเผยแพร่ข่าวลือหรือข้อมูลเท็จ</option>
+            <option value="⚠️ อื่นๆ ที่ไม่เหมาะสม">⚠️ อื่นๆ ที่ไม่เหมาะสม</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="report-details-input">รายละเอียดเพิ่มเติม (ไม่บังคับ):</label>
+          <textarea id="report-details-input" rows="3" placeholder="ระบุเหตุผลหรือบริบทเพิ่มเติมเพื่อให้ผู้ดูแลตรวจสอบได้เร็วขึ้น..." maxlength="500"></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-report">ยกเลิก</button>
+          <button type="submit" class="btn btn-danger" id="btn-submit-report">
+            <span>🚨 ส่งรายงานให้ผู้ดูแล</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MOBILE BOTTOM NAVIGATION BAR ================= -->
+  <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+    <button class="bottom-nav-item active" id="btn-bottom-nav-feed" title="หน้าแรก">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">หน้าแรก</span>
+    </button>
+    <button class="bottom-nav-item" id="btn-bottom-nav-shoutbox" title="คุยสด (Shoutbox)">
+      <span class="nav-icon">💬</span>
+      <span class="nav-label">คุยสด</span>
+      <span class="bottom-nav-dot hidden" id="bottom-shoutbox-dot"></span>
+    </button>
+    <button class="bottom-nav-item bottom-nav-fab" id="btn-bottom-nav-compose" title="เขียนกระทู้ใหม่">
+      <div class="fab-circle">
+        <span>✍️</span>
+      </div>
+      <span class="nav-label">โพสต์</span>
+    </button>
+    <button class="bottom-nav-item" id="btn-bottom-nav-rules" title="กฎชุมชน">
+      <span class="nav-icon">📜</span>
+      <span class="nav-label">กฎชุมชน</span>
+    </button>
+    <button class="bottom-nav-item" id="btn-bottom-nav-persona" title="ตัวตนของคุณ">
+      <span class="nav-icon" id="bottom-nav-persona-badge">👻</span>
+      <span class="nav-label">ตัวตน</span>
+    </button>
+  </nav>
+
+  <!-- ================= MOBILE SHOUTBOX DRAWER / SHEET ================= -->
+  <div id="mobile-shoutbox-drawer" class="mobile-drawer-overlay hidden">
+    <div class="mobile-drawer-card">
+      <div class="mobile-drawer-handle"></div>
+      <div class="mobile-drawer-header">
+        <div class="drawer-title-group">
+          <div class="live-dot-pulse"></div>
+          <h3>Live Shoutbox • แชทสดชาว ท.ล.ว.</h3>
+        </div>
+        <button class="drawer-close-btn" id="btn-close-mobile-shoutbox">✕</button>
+      </div>
+      <div class="mobile-drawer-body">
+        <div class="shoutbox-messages" id="mobile-shoutbox-list">
+          <!-- Live shouts stream dynamically -->
+        </div>
+      </div>
+      <form id="mobile-shoutbox-form" class="shoutbox-input-wrap mobile-shoutbox-footer">
+        <input type="text" id="mobile-shoutbox-input" placeholder="พิมพ์ข้อความสั้น... (กดส่ง)" maxlength="140" autocomplete="off" required>
+        <button type="submit" id="btn-send-mobile-shout" class="send-shout-btn" title="ส่งข้อความ">➤</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: MOBILE CONNECT & QR CODE ================= -->
+  <div id="mobile-connect-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>📱 วิธีเข้าใช้งานผ่านโทรศัพท์มือถือ</h2>
+          <span class="modal-sub">เลือกวิธีที่สะดวกเพื่อเปิดหน้าเว็บเวอร์ชันมือถือทันที</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-mobile-modal">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1rem 0;">
+        <!-- Option 1: Direct Zero-Friction Cloudflare URL (ขอแค่มีเน็ต เข้าได้ทันที ไม่มีเงื่อนไข) -->
+        <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.4); border-radius: var(--radius-md); padding: 1.15rem; margin-bottom: 1rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <div style="font-weight: 700; color: #34d399; font-size: 0.95rem;">
+              🚀 ลิงก์ออนไลน์โดยตรง (ขอแค่มีอินเทอร์เน็ต เข้าได้ทันที 100%)
+            </div>
+            <span style="font-size: 0.72rem; background: rgba(16,185,129,0.25); color: #6ee7b7; padding: 2px 8px; border-radius: 9999px; font-weight: 600;">แนะนำ • ไม่มีรหัสผ่าน</span>
+          </div>
+          <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 0.75rem;">
+            ไม่ต้องอยู่วง Wi-Fi เดียวกัน ใช้ 4G / 5G / เน็ตมือถือได้เลย ไม่ต้องกรอกรหัสใดๆ ทั้งสิ้น:
+          </p>
+          <div style="display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://closely-assure-sit-lines.trycloudflare.com" alt="Cloudflare QR" style="width: 130px; height: 130px; border-radius: 8px; background: #fff; padding: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <div style="flex: 1; min-width: 200px;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">🌐 ลิงก์ฟอรัมหลักสำหรับนักเรียน:</div>
+              <a href="https://closely-assure-sit-lines.trycloudflare.com" target="_blank" style="display: block; font-size: 0.85rem; color: #34d399; background: rgba(0,0,0,0.4); padding: 0.45rem 0.65rem; border-radius: 6px; word-break: break-all; margin-bottom: 0.5rem; font-weight: 700; text-decoration: none; border: 1px solid rgba(52,211,153,0.3);">
+                https://closely-assure-sit-lines.trycloudflare.com
+              </a>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">🛡️ ลิงก์หน้าผู้ดูแล (Manager Portal):</div>
+              <a href="https://closely-assure-sit-lines.trycloudflare.com/manager.html" target="_blank" style="display: block; font-size: 0.78rem; color: #a78bfa; background: rgba(0,0,0,0.4); padding: 0.4rem 0.6rem; border-radius: 6px; word-break: break-all; text-decoration: none; border: 1px solid rgba(167,139,250,0.3);">
+                https://closely-assure-sit-lines.trycloudflare.com/manager.html
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Option 2: Local Wi-Fi (ถ้าอยู่ในบ้าน/รร. เดียวกัน) -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem 1rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+            <div style="font-weight: 600; color: #94a3b8; font-size: 0.82rem;">
+              📶 สำรอง: ลิงก์ Wi-Fi ภายในบ้าน/โรงเรียน
+            </div>
+            <span style="font-size: 0.68rem; color: var(--text-muted);">IP ภายใน</span>
+          </div>
+          <code style="font-size: 0.78rem; color: #38bdf8;">http://192.168.1.48:3000</code>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-close-mobile-modal-footer">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING TOAST CONTAINER -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Socket.io client -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- Sound synthesizer using Web Audio API -->
+  <script src="sound.js"></script>
+  <!-- Main client application -->
+  <script src="app.js"></script>
+</body>
+</html>

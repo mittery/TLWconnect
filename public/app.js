@@ -1,0 +1,1374 @@
+// =====================================================================
+// TLWconnect — CLIENT LOGIC & REAL-TIME EVENT HANDLING
+// =====================================================================
+
+// --- Anonymous Names & Archetypes (School Community) ---
+const ADJECTIVES = ['Thali', 'Scholar', 'Campus', 'Silent', 'Cosmic', 'Bright', 'Brave', 'Kind', 'Clever', 'Junior', 'Senior', 'Neon', 'Shadow', 'Solar', 'Noble'];
+const NOUNS = ['Student', 'Fox', 'Owl', 'Panda', 'Drifter', 'Mentor', 'Hawk', 'Star', 'Wolf', 'Echo', 'Writer', 'Dreamer', 'Seeker', 'Phoenix', 'Guardian'];
+const EMOJIS = ['🎓', '🎒', '📚', '🦉', '⚡', '🌟', '🦊', '🎨', '🤖', '💎', '🌱', '🔮'];
+const COLORS = ['#2563eb', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+
+function generateRandomPersona() {
+  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+  const num = Math.floor(100 + Math.random() * 900);
+  const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+  const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+
+  return {
+    name: `${adj}${noun} #${num}`,
+    badge: emoji,
+    color: color
+  };
+}
+
+// User state
+let currentPersona = null;
+try {
+  const saved = localStorage.getItem('ghostwire_persona');
+  if (saved) {
+    currentPersona = JSON.parse(saved);
+  }
+} catch (e) {}
+
+if (!currentPersona) {
+  currentPersona = generateRandomPersona();
+  localStorage.setItem('ghostwire_persona', JSON.stringify(currentPersona));
+}
+
+// App State
+let socket = null;
+let allPosts = [];
+let allShouts = [];
+let currentChannel = 'all';
+let currentSort = 'latest';
+let searchQuery = '';
+let composedTags = [];
+let typingTimeout = null;
+
+// User votes stored in localStorage to prevent repeat voting on client
+let userVotes = {};
+try {
+  userVotes = JSON.parse(localStorage.getItem('ghostwire_votes') || '{}');
+} catch (e) {
+  userVotes = {};
+}
+
+// DOM Elements
+const postsContainer = document.getElementById('posts-container');
+const emptyFeedState = document.getElementById('empty-feed-state');
+const headerOnlineCount = document.getElementById('header-online-count');
+const headerUserName = document.getElementById('header-user-name');
+const headerUserBadge = document.getElementById('header-user-badge');
+const headerAvatarWrap = document.getElementById('header-avatar-wrap');
+const activeChannelIcon = document.getElementById('active-channel-icon');
+const activeChannelTitle = document.getElementById('active-channel-title');
+const shoutboxList = document.getElementById('shoutbox-list');
+const shoutboxForm = document.getElementById('shoutbox-form');
+const shoutboxInput = document.getElementById('shoutbox-input');
+
+// Sound Toggle
+const btnSoundToggle = document.getElementById('btn-sound-toggle');
+const soundIcon = document.getElementById('sound-icon');
+
+// Modals
+const composeModal = document.getElementById('compose-modal');
+const btnOpenCompose = document.getElementById('btn-open-compose-modal');
+const quickComposeTrigger = document.getElementById('quick-compose-trigger');
+const btnCloseCompose = document.getElementById('btn-close-compose');
+const btnCancelCompose = document.getElementById('btn-cancel-compose');
+const composeForm = document.getElementById('compose-form');
+const composeTitleInput = document.getElementById('compose-title-input');
+const composeContentInput = document.getElementById('compose-content-input');
+const composeTagsInput = document.getElementById('compose-tags-input');
+const composedTagsList = document.getElementById('composed-tags-list');
+const composeChannelSelect = document.getElementById('compose-channel-select');
+const composeBadgePreview = document.getElementById('compose-badge-preview');
+const composeNamePreview = document.getElementById('compose-name-preview');
+const btnRerollInModal = document.getElementById('btn-reroll-in-modal');
+const titleCharCount = document.getElementById('title-char-count');
+const contentCharCount = document.getElementById('content-char-count');
+
+// Persona Modal
+const personaModal = document.getElementById('persona-modal');
+const btnPersonaProfile = document.getElementById('btn-persona-profile');
+const btnClosePersona = document.getElementById('btn-close-persona');
+const btnSavePersona = document.getElementById('btn-save-persona');
+const btnRerollPersonaName = document.getElementById('btn-reroll-persona-name');
+const customAvatarPreview = document.getElementById('custom-avatar-preview');
+const customNamePreview = document.getElementById('custom-name-preview');
+
+// Search
+const globalSearchInput = document.getElementById('global-search-input');
+const btnClearSearch = document.getElementById('btn-clear-search');
+
+// Toast
+const toastContainer = document.getElementById('toast-container');
+
+// Rules Modal
+const rulesModal = document.getElementById('rules-modal');
+const btnAcceptRules = document.getElementById('btn-accept-rules');
+const btnCloseRules = document.getElementById('btn-close-rules');
+const btnOpenRules = document.getElementById('btn-open-rules');
+
+// Report Modal
+const reportModal = document.getElementById('report-modal');
+const reportForm = document.getElementById('report-form');
+const reportPostPreview = document.getElementById('report-post-preview');
+const reportReasonSelect = document.getElementById('report-reason-select');
+const reportDetailsInput = document.getElementById('report-details-input');
+const btnCloseReportModal = document.getElementById('btn-close-report-modal');
+const btnCancelReport = document.getElementById('btn-cancel-report');
+let currentReportingPost = null;
+
+// Channel Names Mapping (5 ห้องหลัก + ทั้งหมด)
+const CHANNEL_DATA = {
+  all: { name: 'กระทู้ทั้งหมด', icon: '🌐' },
+  announcements: { name: 'ห้องประกาศ', icon: '📢' },
+  vent: { name: 'ห้องระบาย', icon: '🌧️' },
+  suggestions: { name: 'ห้องข้อเสนอแนะ', icon: '💡' },
+  requests: { name: 'ห้องส่งคำร้อง', icon: '📋' },
+  guidance: { name: 'ห้องแนะแนว', icon: '🧭' }
+};
+
+// ================= INITIALIZATION =================
+function initApp() {
+  updatePersonaDisplay();
+  updateSoundIcon();
+  setupSocket();
+  setupEventListeners();
+  initAmbientParticles();
+}
+
+function updateSoundIcon() {
+  if (window.soundEngine.isMuted) {
+    soundIcon.textContent = '🔇';
+  } else {
+    soundIcon.textContent = '🔊';
+  }
+}
+
+// Mobile DOM Elements
+const mobileBottomNav = document.getElementById('mobile-bottom-nav');
+const btnBottomNavFeed = document.getElementById('btn-bottom-nav-feed');
+const btnBottomNavShoutbox = document.getElementById('btn-bottom-nav-shoutbox');
+const btnBottomNavCompose = document.getElementById('btn-bottom-nav-compose');
+const btnBottomNavRules = document.getElementById('btn-bottom-nav-rules');
+const btnBottomNavPersona = document.getElementById('btn-bottom-nav-persona');
+const bottomNavPersonaBadge = document.getElementById('bottom-nav-persona-badge');
+const bottomShoutboxDot = document.getElementById('bottom-shoutbox-dot');
+
+const mobileShoutboxDrawer = document.getElementById('mobile-shoutbox-drawer');
+const mobileShoutboxList = document.getElementById('mobile-shoutbox-list');
+const mobileShoutboxForm = document.getElementById('mobile-shoutbox-form');
+const mobileShoutboxInput = document.getElementById('mobile-shoutbox-input');
+const btnCloseMobileShoutbox = document.getElementById('btn-close-mobile-shoutbox');
+const mobileChannelsBar = document.getElementById('mobile-channels-bar');
+
+function updatePersonaDisplay() {
+  headerUserName.textContent = currentPersona.name;
+  headerUserBadge.textContent = currentPersona.badge;
+  headerAvatarWrap.style.background = `${currentPersona.color}25`;
+
+  if (bottomNavPersonaBadge) {
+    bottomNavPersonaBadge.textContent = currentPersona.badge;
+  }
+
+  const quickAvatar = document.getElementById('quick-compose-avatar');
+  if (quickAvatar) {
+    quickAvatar.textContent = currentPersona.badge;
+    quickAvatar.style.background = `${currentPersona.color}30`;
+  }
+
+  composeBadgePreview.textContent = currentPersona.badge;
+  composeNamePreview.textContent = currentPersona.name;
+  const composeAuthorTag = document.getElementById('compose-author-tag');
+  if (composeAuthorTag) {
+    composeAuthorTag.style.borderLeft = `3px solid ${currentPersona.color}`;
+  }
+
+  customAvatarPreview.textContent = currentPersona.badge;
+  customAvatarPreview.style.borderColor = currentPersona.color;
+  customAvatarPreview.style.background = `${currentPersona.color}25`;
+  customNamePreview.textContent = currentPersona.name;
+}
+
+// ================= SOCKET.IO CONNECTION =================
+function setupSocket() {
+  socket = io();
+
+  socket.on('connect', () => {
+    console.log('⚡ Connected to TLWconnect Real-time network');
+  });
+
+  socket.on('online_count', (count) => {
+    headerOnlineCount.textContent = `${count} Anon Online`;
+  });
+
+  socket.on('init_data', (data) => {
+    allPosts = data.posts || [];
+    allShouts = data.shouts || [];
+    headerOnlineCount.textContent = `${data.onlineCount || 1} Anon Online`;
+    renderShoutbox();
+    updateChannelCounts();
+    renderFeed();
+  });
+
+  socket.on('new_post', (post) => {
+    // Add to allPosts
+    allPosts.unshift(post);
+    updateChannelCounts();
+
+    // Play subtle arrival sound
+    window.soundEngine.playNotify();
+
+    // Toast
+    showToast(`มีกระทู้ใหม่: "${post.title.slice(0, 35)}..."`, 'info');
+
+    // If matches current filter, render with pulse
+    if (currentChannel === 'all' || currentChannel === post.channel) {
+      renderFeed(post.id);
+    }
+  });
+
+  socket.on('post_voted', ({ postId, upvotes, downvotes }) => {
+    const post = allPosts.find(p => p.id === postId);
+    if (post) {
+      post.upvotes = upvotes;
+      post.downvotes = downvotes;
+      // Update karma text in DOM
+      const karmaEl = document.querySelector(`[data-karma-id="${postId}"]`);
+      if (karmaEl) {
+        karmaEl.textContent = upvotes - downvotes;
+      }
+    }
+  });
+
+  socket.on('post_reacted', ({ postId, emoji, reactions }) => {
+    const post = allPosts.find(p => p.id === postId);
+    if (post) {
+      post.reactions = reactions;
+      const chipCount = document.querySelector(`[data-react-id="${postId}"][data-react-emoji="${emoji}"] .reaction-count`);
+      if (chipCount) {
+        chipCount.textContent = reactions[emoji] || 0;
+      }
+    }
+  });
+
+  socket.on('new_comment', ({ postId, comment, totalComments }) => {
+    const post = allPosts.find(p => p.id === postId);
+    if (post) {
+      if (!post.comments) post.comments = [];
+      post.comments.push(comment);
+
+      // Update comment count button
+      const commentCountEl = document.querySelector(`[data-comment-btn-id="${postId}"] .comment-count-num`);
+      if (commentCountEl) {
+        commentCountEl.textContent = totalComments;
+      }
+
+      // If comments section is open, append
+      const listEl = document.querySelector(`[data-comments-list-id="${postId}"]`);
+      if (listEl) {
+        const item = createCommentElement(comment);
+        listEl.appendChild(item);
+        listEl.scrollTop = listEl.scrollHeight;
+      }
+    }
+  });
+
+  socket.on('user_typing', ({ postId, authorName, isTyping }) => {
+    const indicatorEl = document.querySelector(`[data-typing-id="${postId}"]`);
+    if (indicatorEl) {
+      if (isTyping) {
+        indicatorEl.textContent = `${authorName} กำลังพิมพ์ตอบกลับ...`;
+        indicatorEl.classList.remove('hidden');
+      } else {
+        indicatorEl.classList.add('hidden');
+      }
+    }
+  });
+
+  socket.on('new_shout', (shout) => {
+    allShouts.push(shout);
+    if (allShouts.length > 50) allShouts.shift();
+    appendShout(shout);
+    window.soundEngine.playClick();
+  });
+
+  // Moderation: Real-time post deletion
+  socket.on('post_deleted', ({ postId, reason }) => {
+    allPosts = allPosts.filter(p => p.id !== postId);
+    updateChannelCounts();
+    const card = document.getElementById(`card-${postId}`);
+    if (card) {
+      card.style.transition = 'all 0.45s ease';
+      card.style.transform = 'scale(0.92) translateY(-12px)';
+      card.style.opacity = '0';
+      setTimeout(() => {
+        card.remove();
+        if (postsContainer.children.length === 0) {
+          emptyFeedState.classList.remove('hidden');
+        }
+      }, 450);
+    }
+    showToast(`กระทู้ถูกลบโดยผู้ดูแล (${reason || 'ละเมิดกฎ'})`, 'info');
+  });
+
+  // Moderation: Real-time comment deletion
+  socket.on('comment_deleted', ({ postId, commentId, reason }) => {
+    const post = allPosts.find(p => p.id === postId);
+    if (post && post.comments) {
+      post.comments = post.comments.filter(c => c.id !== commentId);
+      const commentEl = document.querySelector(`[data-comment-id="${commentId}"]`);
+      if (commentEl) {
+        commentEl.style.transition = 'all 0.3s ease';
+        commentEl.style.opacity = '0';
+        setTimeout(() => commentEl.remove(), 300);
+      }
+      const countEl = document.querySelector(`[data-comment-btn-id="${postId}"] .comment-count-num`);
+      if (countEl) countEl.textContent = post.comments.length;
+    }
+  });
+
+  // Moderation: User banned warning
+  socket.on('author_banned', ({ authorName, reason }) => {
+    if (currentPersona && currentPersona.name === authorName) {
+      showToast(`⚠️ ตัวตนของคุณถูกระงับสิทธิ์: ${reason || 'ละเมิดกฎ'}`, 'info');
+    }
+  });
+
+  socket.on('action_blocked', ({ message }) => {
+    showToast(`🚫 ${message || 'ไม่สามารถทำรายการได้เนื่องจากถูกระงับสิทธิ์'}`, 'info');
+  });
+}
+
+// ================= FEED RENDERING =================
+function renderFeed(newArrivalId = null) {
+  let filtered = [...allPosts];
+
+  // Channel filter
+  if (currentChannel !== 'all') {
+    filtered = filtered.filter(p => p.channel === currentChannel);
+  }
+
+  // Search filter
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(p =>
+      p.title.toLowerCase().includes(q) ||
+      p.content.toLowerCase().includes(q) ||
+      (p.tags && p.tags.some(t => t.toLowerCase().includes(q)))
+    );
+  }
+
+  // Sorting
+  if (currentSort === 'hot') {
+    filtered.sort((a, b) => (b.upvotes * 2 + (b.comments?.length || 0) * 3) - (a.upvotes * 2 + (a.comments?.length || 0) * 3));
+  } else if (currentSort === 'top') {
+    filtered.sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes));
+  } else {
+    // latest
+    filtered.sort((a, b) => b.timestamp - a.timestamp);
+  }
+
+  postsContainer.innerHTML = '';
+
+  if (filtered.length === 0) {
+    emptyFeedState.classList.remove('hidden');
+    return;
+  }
+
+  emptyFeedState.classList.add('hidden');
+
+  filtered.forEach(post => {
+    const card = createPostCard(post, post.id === newArrivalId);
+    postsContainer.appendChild(card);
+  });
+}
+
+function createPostCard(post, isNew = false) {
+  const card = document.createElement('article');
+  card.className = `post-card ${isNew ? 'new-pulse' : ''}`;
+  card.id = `card-${post.id}`;
+
+  const channelInfo = CHANNEL_DATA[post.channel] || { name: post.channel, icon: '💬' };
+  const score = (post.upvotes || 0) - (post.downvotes || 0);
+  const timeText = formatRelativeTime(post.timestamp);
+  const userVote = userVotes[post.id] || null;
+
+  // Tags HTML
+  let tagsHtml = '';
+  if (post.tags && post.tags.length > 0) {
+    tagsHtml = `<div class="post-tags-row">
+      ${post.tags.map(tag => `<span class="post-tag" data-filter-tag="${tag}">#${tag}</span>`).join('')}
+    </div>`;
+  }
+
+  // Role Badge HTML
+  let roleBadgeHtml = '';
+  if (post.author?.role === 'teacher') {
+    roleBadgeHtml = '<span class="role-pill-badge teacher-pill" style="font-size: 0.68rem; background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.5); color: #93c5fd; padding: 2px 7px; border-radius: 9999px; font-weight: 600;">👨‍🏫 คุณครู ท.ล.ว.</span>';
+  } else if (post.author?.role === 'moderator') {
+    roleBadgeHtml = '<span class="role-pill-badge mod-pill" style="font-size: 0.68rem; background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.5); color: #fde047; padding: 2px 7px; border-radius: 9999px; font-weight: 600;">🛡️ ผู้ตรวจการ</span>';
+  } else if (post.author?.role === 'admin') {
+    roleBadgeHtml = '<span class="role-pill-badge admin-pill" style="font-size: 0.68rem; background: rgba(236,72,153,0.2); border: 1px solid rgba(236,72,153,0.5); color: #f472b6; padding: 2px 7px; border-radius: 9999px; font-weight: 600;">👑 แอดมิน</span>';
+  }
+
+  const isAnnouncement = post.channel === 'announcements';
+  const announcementTagHtml = isAnnouncement ? '<div style="font-size: 0.72rem; color: #fbbf24; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;"><span>📌</span> ประกาศทางการจากโรงเรียนท่าลี่วิทยา</div>' : '';
+
+  // Reactions HTML
+  const emojiList = ['🔥', '💀', '💡', '🤫', '❤️'];
+  let reactionsHtml = '';
+  emojiList.forEach(em => {
+    const count = (post.reactions && post.reactions[em]) ? post.reactions[em] : 0;
+    reactionsHtml += `
+      <button class="reaction-chip" data-react-id="${post.id}" data-react-emoji="${em}" title="กดเพื่อส่งปฏิกิริยา ${em}">
+        <span>${em}</span>
+        <span class="reaction-count">${count}</span>
+      </button>
+    `;
+  });
+
+  const commentsCount = post.comments ? post.comments.length : 0;
+
+  card.innerHTML = `
+    <div class="post-header">
+      <div class="post-author-info">
+        <div class="author-badge" style="background: ${post.author.color || '#8b5cf6'}25; border: 1px solid ${post.author.color || '#8b5cf6'}50">
+          ${post.author.badge || '👤'}
+        </div>
+        <div class="author-meta">
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span class="author-name-text">${escapeHtml(post.author.name)}</span>
+            ${roleBadgeHtml}
+          </div>
+          <span class="post-timestamp">${timeText}</span>
+        </div>
+      </div>
+      <span class="post-channel-pill">${channelInfo.icon} ${channelInfo.name}</span>
+    </div>
+
+    ${announcementTagHtml}
+    <h3 class="post-title">${escapeHtml(post.title)}</h3>
+    <p class="post-body">${escapeHtml(post.content)}</p>
+
+    ${tagsHtml}
+
+    <div class="post-footer">
+      <div class="post-karma-wrap">
+        <button class="vote-btn ${userVote === 'up' ? 'active-up' : ''}" data-action="upvote" data-id="${post.id}" title="เห็นด้วย / Upvote">▲</button>
+        <span class="karma-count" data-karma-id="${post.id}">${score}</span>
+        <button class="vote-btn ${userVote === 'down' ? 'active-down' : ''}" data-action="downvote" data-id="${post.id}" title="ไม่เห็นด้วย / Downvote">▼</button>
+      </div>
+
+      <div class="post-reactions-bar">
+        ${reactionsHtml}
+      </div>
+
+      <button class="comments-toggle-btn" data-comment-btn-id="${post.id}">
+        <span>💬</span>
+        <span>ความคิดเห็น (<span class="comment-count-num">${commentsCount}</span>)</span>
+      </button>
+
+      <button class="post-report-btn" data-report-id="${post.id}" title="รายงานกระทู้นี้ให้ผู้ดูแลตรวจสอบ">
+        <span>🚨</span>
+        <span>รายงาน</span>
+      </button>
+    </div>
+
+    <!-- COMMENTS COLLAPSIBLE THREAD -->
+    <div class="post-comments-container hidden" id="comments-section-${post.id}">
+      <div class="comments-list" data-comments-list-id="${post.id}">
+        ${(post.comments || []).map(c => createCommentElementHtml(c)).join('')}
+      </div>
+      <div class="typing-indicator-bar hidden" data-typing-id="${post.id}"></div>
+      <form class="comment-input-form" data-comment-form-id="${post.id}">
+        <input type="text" class="comment-input-field" placeholder="แสดงความคิดเห็นแบบนิรนาม..." maxlength="500" required>
+        <button type="submit" class="btn btn-sm btn-primary">ส่ง</button>
+      </form>
+    </div>
+  `;
+
+  // Attach interactive listeners for this card
+  attachCardEvents(card, post);
+
+  return card;
+}
+
+function attachCardEvents(card, post) {
+  // Upvote / Downvote
+  const upBtn = card.querySelector('[data-action="upvote"]');
+  const downBtn = card.querySelector('[data-action="downvote"]');
+  const karmaEl = card.querySelector(`[data-karma-id="${post.id}"]`);
+
+  upBtn.addEventListener('click', () => {
+    if (userVotes[post.id] === 'up') return;
+    userVotes[post.id] = 'up';
+    localStorage.setItem('ghostwire_votes', JSON.stringify(userVotes));
+    upBtn.classList.add('active-up');
+    downBtn.classList.remove('active-down');
+
+    window.soundEngine.playUpvote();
+    socket.emit('vote_post', { postId: post.id, type: 'up' });
+  });
+
+  downBtn.addEventListener('click', () => {
+    if (userVotes[post.id] === 'down') return;
+    userVotes[post.id] = 'down';
+    localStorage.setItem('ghostwire_votes', JSON.stringify(userVotes));
+    downBtn.classList.add('active-down');
+    upBtn.classList.remove('active-up');
+
+    window.soundEngine.playClick();
+    socket.emit('vote_post', { postId: post.id, type: 'down' });
+  });
+
+  // Reaction Chips
+  card.querySelectorAll('.reaction-chip').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      const emoji = chip.dataset.reactEmoji;
+      window.soundEngine.playReaction();
+      spawnFloatingReaction(e.clientX, e.clientY, emoji);
+
+      socket.emit('react_post', {
+        postId: post.id,
+        emoji,
+        userSessionId: currentPersona.name
+      });
+    });
+  });
+
+  // Tag click to search
+  card.querySelectorAll('.post-tag').forEach(tagEl => {
+    tagEl.addEventListener('click', () => {
+      const tag = tagEl.dataset.filterTag;
+      globalSearchInput.value = tag;
+      searchQuery = tag;
+      btnClearSearch.classList.remove('hidden');
+      renderFeed();
+    });
+  });
+
+  // Toggle comments
+  const toggleBtn = card.querySelector(`[data-comment-btn-id="${post.id}"]`);
+  const commentsSec = card.querySelector(`#comments-section-${post.id}`);
+  toggleBtn.addEventListener('click', () => {
+    commentsSec.classList.toggle('hidden');
+    window.soundEngine.playClick();
+  });
+
+  // Comment input form & typing indicator
+  const commentForm = card.querySelector(`[data-comment-form-id="${post.id}"]`);
+  const commentInput = commentForm.querySelector('.comment-input-field');
+
+  commentInput.addEventListener('input', () => {
+    socket.emit('typing', {
+      postId: post.id,
+      authorName: currentPersona.name,
+      isTyping: true
+    });
+
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      socket.emit('typing', {
+        postId: post.id,
+        authorName: currentPersona.name,
+        isTyping: false
+      });
+    }, 1500);
+  });
+
+  commentForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const content = commentInput.value.trim();
+    if (!content) return;
+
+    socket.emit('add_comment', {
+      postId: post.id,
+      author: currentPersona,
+      content
+    });
+
+    commentInput.value = '';
+    socket.emit('typing', {
+      postId: post.id,
+      authorName: currentPersona.name,
+      isTyping: false
+    });
+
+    window.soundEngine.playClick();
+  });
+
+  // Report button trigger
+  const reportBtn = card.querySelector(`[data-report-id="${post.id}"]`);
+  if (reportBtn) {
+    reportBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openReportModal(post);
+    });
+  }
+}
+
+function openReportModal(post) {
+  currentReportingPost = post;
+  const channelInfo = CHANNEL_DATA[post.channel] || { name: post.channel, icon: '💬' };
+  if (reportPostPreview) {
+    reportPostPreview.innerHTML = `
+      <div style="font-size: 0.75rem; font-weight: 700; color: #f87171; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">🚨 กำลังรายงานกระทู้:</div>
+      <div style="font-weight: 700; color: #fff; font-size: 0.95rem; margin-bottom: 4px;">${escapeHtml(post.title)}</div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+        <span>ผู้โพสต์: <strong style="color: #e2e8f0;">${escapeHtml(post.author.name)}</strong></span>
+        <span>•</span>
+        <span>${channelInfo.icon} ${channelInfo.name}</span>
+      </div>
+      <div style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4; max-height: 52px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+        ${escapeHtml(post.content)}
+      </div>
+    `;
+  }
+  if (reportReasonSelect) reportReasonSelect.selectedIndex = 0;
+  if (reportDetailsInput) reportDetailsInput.value = '';
+  if (reportModal) reportModal.classList.remove('hidden');
+  if (window.soundEngine) window.soundEngine.playClick();
+}
+
+function closeReportModal() {
+  if (reportModal) reportModal.classList.add('hidden');
+  currentReportingPost = null;
+}
+
+function createCommentElementHtml(c) {
+  const time = formatRelativeTime(c.timestamp);
+  return `
+    <div class="comment-item" data-comment-id="${c.id}">
+      <div class="comment-header">
+        <span style="font-size: 0.9rem;">${c.author.badge || '💬'}</span>
+        <span class="comment-author-name">${escapeHtml(c.author.name)}</span>
+        <span class="comment-time">${time}</span>
+      </div>
+      <p class="comment-body">${escapeHtml(c.content)}</p>
+    </div>
+  `;
+}
+
+function createCommentElement(c) {
+  const div = document.createElement('div');
+  div.className = 'comment-item';
+  div.setAttribute('data-comment-id', c.id);
+
+  let commentRoleBadge = '';
+  if (c.author?.role === 'teacher') {
+    commentRoleBadge = ' <span class="role-pill-badge teacher-pill" style="font-size: 0.65rem; background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.5); color: #93c5fd; padding: 1px 6px; border-radius: 9999px; font-weight: 600;">👨‍🏫 ครู ท.ล.ว.</span>';
+  } else if (c.author?.role === 'moderator') {
+    commentRoleBadge = ' <span class="role-pill-badge mod-pill" style="font-size: 0.65rem; background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.5); color: #fde047; padding: 1px 6px; border-radius: 9999px; font-weight: 600;">🛡️ ผู้ตรวจการ</span>';
+  }
+
+  div.innerHTML = `
+    <div class="comment-header">
+      <span style="font-size: 0.9rem;">${c.author.badge || '💬'}</span>
+      <span class="comment-author-name">${escapeHtml(c.author.name)}${commentRoleBadge}</span>
+      <span class="comment-time">${formatRelativeTime(c.timestamp)}</span>
+    </div>
+    <p class="comment-body">${escapeHtml(c.content)}</p>
+  `;
+  return div;
+}
+
+// ================= SHOUTBOX =================
+function renderShoutbox() {
+  if (shoutboxList) shoutboxList.innerHTML = '';
+  if (mobileShoutboxList) mobileShoutboxList.innerHTML = '';
+  allShouts.forEach(s => appendShout(s, false));
+  if (shoutboxList) shoutboxList.scrollTop = shoutboxList.scrollHeight;
+  if (mobileShoutboxList) mobileShoutboxList.scrollTop = mobileShoutboxList.scrollHeight;
+}
+
+function appendShout(shout, autoScroll = true) {
+  const createItem = () => {
+    const item = document.createElement('div');
+    item.className = 'shout-item';
+    item.style.borderLeftColor = shout.color || '#a855f7';
+    item.innerHTML = `
+      <div class="shout-meta">
+        <span class="shout-author">${shout.badge || '👤'} ${escapeHtml(shout.author)}</span>
+        <span class="shout-time">${formatTimeShort(shout.time)}</span>
+      </div>
+      <div class="shout-text">${escapeHtml(shout.text)}</div>
+    `;
+    return item;
+  };
+
+  if (shoutboxList) {
+    shoutboxList.appendChild(createItem());
+    if (autoScroll) shoutboxList.scrollTop = shoutboxList.scrollHeight;
+  }
+
+  if (mobileShoutboxList) {
+    mobileShoutboxList.appendChild(createItem());
+    if (autoScroll) mobileShoutboxList.scrollTop = mobileShoutboxList.scrollHeight;
+  }
+}
+
+// ================= FLOATING REACTION PARTICLES =================
+function spawnFloatingReaction(clientX, clientY, emoji) {
+  const particle = document.createElement('div');
+  particle.className = 'floating-reaction-particle';
+  particle.textContent = emoji;
+  particle.style.left = `${clientX - 12}px`;
+  particle.style.top = `${clientY - 20}px`;
+
+  document.body.appendChild(particle);
+
+  setTimeout(() => {
+    particle.remove();
+  }, 1200);
+}
+
+// ================= CHANNEL STATS =================
+function updateChannelCounts() {
+  const counts = { all: allPosts.length };
+  allPosts.forEach(p => {
+    counts[p.channel] = (counts[p.channel] || 0) + 1;
+  });
+
+  const setBadge = (id, count) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = count || '0';
+  };
+
+  setBadge('badge-count-all', counts.all || 0);
+  setBadge('badge-count-announcements', counts['announcements'] || 0);
+  setBadge('badge-count-vent', counts['vent'] || 0);
+  setBadge('badge-count-suggestions', counts['suggestions'] || 0);
+  setBadge('badge-count-requests', counts['requests'] || 0);
+  setBadge('badge-count-guidance', counts['guidance'] || 0);
+}
+
+// ================= EVENT LISTENERS =================
+function setupEventListeners() {
+  // Sound Mute Toggle
+  btnSoundToggle.addEventListener('click', () => {
+    const muted = window.soundEngine.toggleMute();
+    updateSoundIcon();
+    showToast(muted ? 'ปิดเสียงเรียบร้อย' : 'เปิดเสียงเรียบร้อย', 'info');
+  });
+
+  // Channel Navigation clicks
+  document.querySelectorAll('.channel-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.channel-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentChannel = btn.dataset.channel;
+
+      const info = CHANNEL_DATA[currentChannel] || { name: 'กระทู้ทั้งหมด', icon: '🌐' };
+      activeChannelIcon.textContent = info.icon;
+      activeChannelTitle.textContent = info.name;
+
+      window.soundEngine.playClick();
+      renderFeed();
+    });
+  });
+
+  // Sort Tabs
+  document.querySelectorAll('.sort-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentSort = tab.dataset.sort;
+
+      window.soundEngine.playClick();
+      renderFeed();
+    });
+  });
+
+  // Search input
+  globalSearchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    if (searchQuery.trim()) {
+      btnClearSearch.classList.remove('hidden');
+    } else {
+      btnClearSearch.classList.add('hidden');
+    }
+    renderFeed();
+  });
+
+  btnClearSearch.addEventListener('click', () => {
+    globalSearchInput.value = '';
+    searchQuery = '';
+    btnClearSearch.classList.add('hidden');
+    renderFeed();
+  });
+
+  // Trending tag pills
+  document.querySelectorAll('.tag-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const tag = pill.dataset.tag;
+      globalSearchInput.value = tag;
+      searchQuery = tag;
+      btnClearSearch.classList.remove('hidden');
+      window.soundEngine.playClick();
+      renderFeed();
+    });
+  });
+
+  // Shoutbox Submit
+  shoutboxForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = shoutboxInput.value.trim();
+    if (!text) return;
+
+    socket.emit('send_shout', {
+      author: currentPersona,
+      text
+    });
+
+    shoutboxInput.value = '';
+    window.soundEngine.playClick();
+  });
+
+  // Compose Modal triggers
+  const openCompose = () => {
+    composeModal.classList.remove('hidden');
+    composeTitleInput.focus();
+    window.soundEngine.playClick();
+  };
+  btnOpenCompose.addEventListener('click', openCompose);
+  quickComposeTrigger.addEventListener('click', openCompose);
+  document.getElementById('btn-empty-compose')?.addEventListener('click', openCompose);
+
+  const closeCompose = () => {
+    composeModal.classList.add('hidden');
+  };
+  btnCloseCompose.addEventListener('click', closeCompose);
+  btnCancelCompose.addEventListener('click', closeCompose);
+
+  // Modal Reroll
+  btnRerollInModal.addEventListener('click', () => {
+    currentPersona = generateRandomPersona();
+    localStorage.setItem('ghostwire_persona', JSON.stringify(currentPersona));
+    updatePersonaDisplay();
+    window.soundEngine.playClick();
+  });
+
+  // Title / Content Char Counters
+  composeTitleInput.addEventListener('input', () => {
+    titleCharCount.textContent = composeTitleInput.value.length;
+  });
+  composeContentInput.addEventListener('input', () => {
+    contentCharCount.textContent = composeContentInput.value.length;
+  });
+
+  // Tag Pill Input
+  composeTagsInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = composeTagsInput.value.trim().replace(/^#/, '');
+      if (val && !composedTags.includes(val) && composedTags.length < 5) {
+        composedTags.push(val);
+        renderComposedTags();
+        composeTagsInput.value = '';
+      }
+    }
+  });
+
+  // Submit Post
+  composeForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const title = composeTitleInput.value.trim();
+    const content = composeContentInput.value.trim();
+    const channel = composeChannelSelect.value;
+
+    if (!title || !content) return;
+
+    if (channel === 'announcements' && currentPersona.role !== 'teacher' && currentPersona.role !== 'admin') {
+      showToast('📢 ห้องประกาศอนุญาตให้เฉพาะคุณครูและผู้ดูแลระบบโพสต์เท่านั้น (ยืนยันบทบาทในหน้าตัวตนของคุณ)', 'warning');
+      return;
+    }
+
+    socket.emit('create_post', {
+      title,
+      content,
+      channel,
+      tags: composedTags,
+      author: currentPersona
+    });
+
+    // Reset Form
+    composeTitleInput.value = '';
+    composeContentInput.value = '';
+    composedTags = [];
+    renderComposedTags();
+    titleCharCount.textContent = '0';
+    contentCharCount.textContent = '0';
+    closeCompose();
+
+    window.soundEngine.playPublish();
+    showToast('โพสต์ของคุณถูกส่งเรียบร้อยแล้ว!', 'success');
+  });
+
+  // Persona Modal triggers
+  btnPersonaProfile.addEventListener('click', () => {
+    personaModal.classList.remove('hidden');
+    window.soundEngine.playClick();
+  });
+
+  btnClosePersona.addEventListener('click', () => {
+    personaModal.classList.add('hidden');
+  });
+
+    btnSavePersona.addEventListener('click', () => {
+    personaModal.classList.add('hidden');
+    localStorage.setItem('ghostwire_persona', JSON.stringify(currentPersona));
+    updatePersonaDisplay();
+    showToast(`อัปเดตตัวตนเป็น ${currentPersona.name}`, 'success');
+    window.soundEngine.playClick();
+  });
+
+  // Role Selector in Persona Modal
+  let selectedPendingRole = currentPersona.role || 'student';
+  const roleButtons = document.querySelectorAll('.btn-role-tab');
+  const rolePinContainer = document.getElementById('role-pin-container');
+  const rolePinInput = document.getElementById('role-pin-input');
+  const rolePinLabel = document.getElementById('role-pin-label');
+  const btnVerifyRolePin = document.getElementById('btn-verify-role-pin');
+  const roleVerifyMsg = document.getElementById('role-verify-msg');
+  const currentRoleLabel = document.getElementById('current-role-label');
+
+  const updateRoleUI = () => {
+    roleButtons.forEach(btn => {
+      if (btn.dataset.role === (currentPersona.role || 'student')) {
+        btn.classList.add('active');
+        btn.style.background = 'var(--accent-blue)';
+        btn.style.color = '#fff';
+      } else {
+        btn.classList.remove('active');
+        btn.style.background = 'rgba(255,255,255,0.06)';
+        btn.style.color = 'var(--text-secondary)';
+      }
+    });
+
+    const roleMap = {
+      student: 'นักเรียน (Student)',
+      teacher: 'คุณครู ท.ล.ว. (Teacher) 👨‍🏫',
+      moderator: 'ผู้ตรวจการ (Moderator) 🛡️'
+    };
+    if (currentRoleLabel) {
+      currentRoleLabel.textContent = roleMap[currentPersona.role || 'student'] || 'นักเรียน';
+    }
+  };
+  updateRoleUI();
+
+  roleButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetRole = btn.dataset.role;
+      selectedPendingRole = targetRole;
+
+      if (targetRole === 'student') {
+        currentPersona.role = 'student';
+        localStorage.setItem('ghostwire_persona', JSON.stringify(currentPersona));
+        if (rolePinContainer) rolePinContainer.classList.add('hidden');
+        updateRoleUI();
+        showToast('เปลี่ยนบทบาทเป็นนักเรียนเรียบร้อย', 'info');
+      } else {
+        if (rolePinContainer) {
+          rolePinContainer.classList.remove('hidden');
+          rolePinInput.value = '';
+          rolePinInput.focus();
+          if (roleVerifyMsg) roleVerifyMsg.classList.add('hidden');
+          if (rolePinLabel) {
+            rolePinLabel.textContent = targetRole === 'teacher' ? 'กรอกรหัสผ่านยืนยันตัวตนคุณครู' : 'กรอกรหัสผ่านยืนยันผู้ตรวจการ';
+          }
+        }
+      }
+    });
+  });
+
+  if (btnVerifyRolePin && rolePinInput) {
+    btnVerifyRolePin.addEventListener('click', async () => {
+      const pin = rolePinInput.value.trim();
+      if (!pin) return;
+
+      try {
+        const res = await fetch('/api/auth/verify-role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: selectedPendingRole, pin })
+        });
+        const data = await res.json();
+        if (data.success) {
+          currentPersona.role = data.role;
+          currentPersona.verified = true;
+          localStorage.setItem('ghostwire_persona', JSON.stringify(currentPersona));
+          updateRoleUI();
+          if (rolePinContainer) rolePinContainer.classList.add('hidden');
+          showToast(`ยืนยันสิทธิ์เป็น ${data.badge} สำเร็จ!`, 'success');
+          window.soundEngine.playPublish();
+        } else {
+          if (roleVerifyMsg) {
+            roleVerifyMsg.classList.remove('hidden');
+            roleVerifyMsg.style.color = '#ef4444';
+            roleVerifyMsg.textContent = data.error || 'รหัสไม่ถูกต้อง โปรดตรวจสอบอีกครั้ง';
+          }
+        }
+      } catch (e) {
+        showToast('เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์', 'error');
+      }
+    });
+  }
+
+  btnRerollPersonaName.addEventListener('click', () => {
+    const fresh = generateRandomPersona();
+    currentPersona.name = fresh.name;
+    updatePersonaDisplay();
+    window.soundEngine.playClick();
+  });
+
+  // Emoji picker
+  document.querySelectorAll('.emoji-pick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.emoji-pick-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      currentPersona.badge = btn.dataset.emoji;
+      updatePersonaDisplay();
+      window.soundEngine.playClick();
+    });
+  });
+
+  // Color picker
+  document.querySelectorAll('.color-pick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.color-pick-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      currentPersona.color = btn.dataset.color;
+      updatePersonaDisplay();
+      window.soundEngine.playClick();
+    });
+  });
+
+  // Rules Modal Triggers
+  if (btnAcceptRules) {
+    btnAcceptRules.addEventListener('click', () => {
+      rulesModal.classList.add('hidden');
+      window.soundEngine.playPublish();
+      showToast('ยินดีต้อนรับสู่ TLW Connect — ชุมชนชาวท่าลี่วิทยา 🏫', 'success');
+    });
+  }
+
+  if (btnCloseRules) {
+    btnCloseRules.addEventListener('click', () => {
+      rulesModal.classList.add('hidden');
+      window.soundEngine.playClick();
+    });
+  }
+
+  if (btnOpenRules) {
+    btnOpenRules.addEventListener('click', () => {
+      rulesModal.classList.remove('hidden');
+      window.soundEngine.playClick();
+    });
+  }
+
+  // Report Modal Handlers
+  if (btnCloseReportModal) {
+    btnCloseReportModal.addEventListener('click', () => {
+      closeReportModal();
+      window.soundEngine.playClick();
+    });
+  }
+
+  if (btnCancelReport) {
+    btnCancelReport.addEventListener('click', () => {
+      closeReportModal();
+      window.soundEngine.playClick();
+    });
+  }
+
+  if (reportModal) {
+    reportModal.addEventListener('click', (e) => {
+      if (e.target === reportModal) closeReportModal();
+    });
+  }
+
+  if (reportForm) {
+    reportForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!currentReportingPost) return;
+
+      const reason = reportReasonSelect ? reportReasonSelect.value : 'ละเมิดกฎ';
+      const details = reportDetailsInput ? reportDetailsInput.value.trim() : '';
+
+      socket.emit('report_post', {
+        postId: currentReportingPost.id,
+        reason,
+        details,
+        reporterName: currentPersona ? currentPersona.name : 'Anon'
+      });
+
+      closeReportModal();
+      window.soundEngine.playPublish();
+      showToast('🚨 ส่งรายงานไปยังผู้ดูแลเรียบร้อยแล้ว ขอบคุณที่ช่วยดูแลความปลอดภัยของโรงเรียน', 'success');
+    });
+  }
+
+  // ================= MOBILE NAVIGATION & INTERACTIONS =================
+  const setMobileNavActive = (activeBtn) => {
+    document.querySelectorAll('.bottom-nav-item').forEach(btn => btn.classList.remove('active'));
+    if (activeBtn) activeBtn.classList.add('active');
+  };
+
+  // 1. Mobile Feed Button
+  if (btnBottomNavFeed) {
+    btnBottomNavFeed.addEventListener('click', () => {
+      setMobileNavActive(btnBottomNavFeed);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.soundEngine.playClick();
+    });
+  }
+
+  // 2. Mobile Shoutbox Drawer Toggle
+  if (btnBottomNavShoutbox) {
+    btnBottomNavShoutbox.addEventListener('click', () => {
+      setMobileNavActive(btnBottomNavShoutbox);
+      if (mobileShoutboxDrawer) {
+        mobileShoutboxDrawer.classList.remove('hidden');
+        if (mobileShoutboxList) mobileShoutboxList.scrollTop = mobileShoutboxList.scrollHeight;
+        if (mobileShoutboxInput) mobileShoutboxInput.focus();
+      }
+      if (bottomShoutboxDot) bottomShoutboxDot.classList.add('hidden');
+      window.soundEngine.playClick();
+    });
+  }
+
+  if (btnCloseMobileShoutbox) {
+    btnCloseMobileShoutbox.addEventListener('click', () => {
+      if (mobileShoutboxDrawer) mobileShoutboxDrawer.classList.add('hidden');
+      setMobileNavActive(btnBottomNavFeed);
+      window.soundEngine.playClick();
+    });
+  }
+
+  if (mobileShoutboxDrawer) {
+    mobileShoutboxDrawer.addEventListener('click', (e) => {
+      if (e.target === mobileShoutboxDrawer) {
+        mobileShoutboxDrawer.classList.add('hidden');
+        setMobileNavActive(btnBottomNavFeed);
+      }
+    });
+  }
+
+  // 3. Mobile Shoutbox Form Submit
+  if (mobileShoutboxForm && mobileShoutboxInput) {
+    mobileShoutboxForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = mobileShoutboxInput.value.trim();
+      if (!text) return;
+
+      socket.emit('send_shout', {
+        author: currentPersona,
+        text
+      });
+
+      mobileShoutboxInput.value = '';
+      window.soundEngine.playClick();
+    });
+  }
+
+  // 4. Mobile FAB Compose
+  if (btnBottomNavCompose) {
+    btnBottomNavCompose.addEventListener('click', () => {
+      composeModal.classList.remove('hidden');
+      composeTitleInput.focus();
+      window.soundEngine.playClick();
+    });
+  }
+
+  // 5. Mobile Rules Modal
+  if (btnBottomNavRules) {
+    btnBottomNavRules.addEventListener('click', () => {
+      rulesModal.classList.remove('hidden');
+      window.soundEngine.playClick();
+    });
+  }
+
+  // 6. Mobile Persona Modal
+  if (btnBottomNavPersona) {
+    btnBottomNavPersona.addEventListener('click', () => {
+      personaModal.classList.remove('hidden');
+      window.soundEngine.playClick();
+    });
+  }
+
+  // 7. Mobile Channels Bar Horizontal Pills
+  document.querySelectorAll('.mobile-channel-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.mobile-channel-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+
+      const ch = pill.dataset.channel;
+      currentChannel = ch;
+
+      // Sync desktop sidebar buttons too
+      document.querySelectorAll('.channel-item').forEach(b => {
+        if (b.dataset.channel === ch) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+
+      const info = CHANNEL_DATA[currentChannel] || { name: 'กระทู้ทั้งหมด', icon: '🌐' };
+      activeChannelIcon.textContent = info.icon;
+      activeChannelTitle.textContent = info.name;
+
+      window.soundEngine.playClick();
+      renderFeed();
+    });
+  });
+
+  // 8. Mobile QR Connect Modal
+  const mobileConnectModal = document.getElementById('mobile-connect-modal');
+  const btnOpenMobileQrMain = document.getElementById('btn-open-mobile-qr-main');
+  const btnCloseMobileModal = document.getElementById('btn-close-mobile-modal');
+  const btnCloseMobileModalFooter = document.getElementById('btn-close-mobile-modal-footer');
+
+  if (btnOpenMobileQrMain && mobileConnectModal) {
+    btnOpenMobileQrMain.addEventListener('click', () => {
+      mobileConnectModal.classList.remove('hidden');
+      window.soundEngine.playClick();
+    });
+  }
+  if (btnCloseMobileModal && mobileConnectModal) {
+    btnCloseMobileModal.addEventListener('click', () => {
+      mobileConnectModal.classList.add('hidden');
+      window.soundEngine.playClick();
+    });
+  }
+  if (btnCloseMobileModalFooter && mobileConnectModal) {
+    btnCloseMobileModalFooter.addEventListener('click', () => {
+      mobileConnectModal.classList.add('hidden');
+      window.soundEngine.playClick();
+    });
+  }
+  if (mobileConnectModal) {
+    mobileConnectModal.addEventListener('click', (e) => {
+      if (e.target === mobileConnectModal) {
+        mobileConnectModal.classList.add('hidden');
+      }
+    });
+  }
+}
+
+function renderComposedTags() {
+  composedTagsList.innerHTML = '';
+  composedTags.forEach((tag, idx) => {
+    const item = document.createElement('span');
+    item.className = 'tag-item-removable';
+    item.innerHTML = `#${tag} <span class="remove-tag-x">&times;</span>`;
+    item.querySelector('.remove-tag-x').addEventListener('click', () => {
+      composedTags.splice(idx, 1);
+      renderComposedTags();
+    });
+    composedTagsList.appendChild(item);
+  });
+}
+
+// ================= TOAST NOTIFICATION =================
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `<span>${type === 'success' ? '✅' : '📢'}</span> <span>${escapeHtml(message)}</span>`;
+
+  toastContainer.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    toast.style.transform = 'translateY(10px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+// ================= AMBIENT PARTICLES CANVAS =================
+function initAmbientParticles() {
+  const container = document.getElementById('particle-canvas-container');
+  if (!container) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.style.position = 'fixed';
+  canvas.style.top = '0';
+  canvas.style.left = '0';
+  canvas.style.width = '100vw';
+  canvas.style.height = '100vh';
+  canvas.style.pointerEvents = 'none';
+  canvas.style.zIndex = '0';
+  canvas.style.opacity = '0.35';
+  container.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+  let width = (canvas.width = window.innerWidth);
+  let height = (canvas.height = window.innerHeight);
+
+  window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+
+  const particles = [];
+  for (let i = 0; i < 40; i++) {
+    particles.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      radius: Math.random() * 2 + 1,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)]
+    });
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, width, height);
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < 0) p.x = width;
+      if (p.x > width) p.x = 0;
+      if (p.y < 0) p.y = height;
+      if (p.y > height) p.y = 0;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+    });
+    requestAnimationFrame(render);
+  }
+  render();
+}
+
+// ================= HELPERS =================
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function formatRelativeTime(timestamp) {
+  const now = Date.now();
+  const diffSec = Math.floor((now - timestamp) / 1000);
+
+  if (diffSec < 45) return 'เมื่อสักครู่';
+  if (diffSec < 60 * 60) return `${Math.floor(diffSec / 60)} นาทีที่แล้ว`;
+  if (diffSec < 60 * 60 * 24) return `${Math.floor(diffSec / 3600)} ชั่วโมงที่แล้ว`;
+  return `${Math.floor(diffSec / 86400)} วันที่แล้ว`;
+}
+
+function formatTimeShort(timestamp) {
+  const d = new Date(timestamp);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// Start
+window.addEventListener('DOMContentLoaded', initApp);
