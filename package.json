@@ -1,0 +1,17 @@
+{
+  "name": "tlwconnect",
+  "version": "1.0.0",
+  "description": "TLWconnect — Real-Time Anonymous Forum with 4 dedicated channels",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.4"
+  }
+}
