@@ -386,6 +386,32 @@ app.get('/api/network-info', (req, res) => {
   });
 });
 
+// ROLE VERIFICATION (TEACHER & MODERATOR PIN)
+app.post('/api/auth/verify-role', (req, res) => {
+  const { role, pin } = req.body;
+  const trimmed = (pin || '').trim();
+
+  if (!role || !trimmed) {
+    return res.status(400).json({ success: false, error: 'กรุณากรอกรหัสผ่านยืนยันสิทธิ์' });
+  }
+
+  if (role === 'teacher') {
+    if (trimmed === TEACHER_PIN || trimmed === ADMIN_PASSCODE || trimmed === 'teacher') {
+      return res.json({ success: true, role: 'teacher', badge: 'คุณครู ท.ล.ว. 👨‍🏫' });
+    } else {
+      return res.status(403).json({ success: false, error: 'รหัสผ่านยืนยันตัวตนคุณครูไม่ถูกต้อง' });
+    }
+  } else if (role === 'moderator') {
+    if (trimmed === MOD_PIN || trimmed === ADMIN_PASSCODE || trimmed === 'mod') {
+      return res.json({ success: true, role: 'moderator', badge: 'ผู้ตรวจการ 🛡️' });
+    } else {
+      return res.status(403).json({ success: false, error: 'รหัสผ่านยืนยันผู้ตรวจการไม่ถูกต้อง' });
+    }
+  }
+
+  res.status(400).json({ success: false, error: 'บทบาทไม่ถูกต้อง' });
+});
+
 // MANAGER API ENDPOINTS WITH BRUTE FORCE DEFENSE
 app.post('/api/manager/login', (req, res) => {
   const { passcode } = req.body;
