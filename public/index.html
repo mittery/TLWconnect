@@ -286,6 +286,11 @@
             <span class="channel-name">ห้องแนะแนว</span>
             <span class="channel-badge" id="badge-count-guidance">...</span>
           </button>
+          <button class="channel-item my-posts-channel" data-channel="my_posts" id="btn-channel-my-posts" style="border-top: 1px dashed rgba(255,255,255,0.1); margin-top: 6px; padding-top: 8px;">
+            <span class="channel-icon">📝</span>
+            <span class="channel-name" style="color: #fbbf24; font-weight: 600;">กระทู้ของฉัน</span>
+            <span class="channel-badge" id="badge-count-my-posts">0</span>
+          </button>
         </nav>
       </div>
 
@@ -360,6 +365,10 @@
         <button class="mobile-channel-pill" data-channel="guidance">
           <span class="pill-icon">🧭</span>
           <span>แนะแนว</span>
+        </button>
+        <button class="mobile-channel-pill my-posts-mobile-pill" data-channel="my_posts">
+          <span class="pill-icon">📝</span>
+          <span style="color: #fbbf24; font-weight: 600;">กระทู้ของฉัน</span>
         </button>
       </div>
 
@@ -501,6 +510,63 @@
           <button type="button" class="btn btn-secondary" id="btn-cancel-compose">ยกเลิก</button>
           <button type="submit" class="btn btn-primary glow-button" id="btn-submit-post">
             <span>🚀 โพสต์สู่ TLWconnect</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT POST -->
+  <div id="edit-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>✏️ แก้ไขกระทู้ของคุณ</h2>
+          <span class="modal-subtitle">แก้ไขเนื้อหาและแท็กของกระทู้ที่คุณสร้าง</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-edit">✕</button>
+      </div>
+
+      <form id="edit-form" class="compose-form">
+        <input type="hidden" id="edit-post-id">
+
+        <!-- Room selector (4 ห้องนักเรียน) -->
+        <div class="form-group">
+          <label for="edit-channel-select">เลือกห้องสนทนา</label>
+          <select id="edit-channel-select" required>
+            <option value="vent">🌧️ ห้องระบาย (ระบายความรู้สึก / ความในใจ)</option>
+            <option value="suggestions">💡 ห้องข้อเสนอแนะ (ไอเดียและข้อเสนอแนะ)</option>
+            <option value="requests">📋 ห้องส่งคำร้อง (ส่งคำร้อง / แจ้งเรื่อง)</option>
+            <option value="guidance">🧭 ห้องแนะแนว (แนะแนวการเรียนรู้ / พัฒนาทักษะ)</option>
+          </select>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group">
+          <label for="edit-title-input">หัวข้อกระทู้</label>
+          <input type="text" id="edit-title-input" placeholder="แก้ไขหัวข้อกระทู้..." maxlength="150" required>
+          <div class="char-count"><span id="edit-title-char-count">0</span>/150</div>
+        </div>
+
+        <!-- Content -->
+        <div class="form-group">
+          <label for="edit-content-input">เนื้อหากระทู้</label>
+          <textarea id="edit-content-input" rows="5" placeholder="แก้ไขเนื้อหาที่คุณต้องการบอกเล่า..." maxlength="3000" required></textarea>
+          <div class="char-count"><span id="edit-content-char-count">0</span>/3000</div>
+        </div>
+
+        <!-- Tags -->
+        <div class="form-group">
+          <label>แท็กหัวข้อ (ไม่เกิน 5 แท็ก คั่นด้วย Enter)</label>
+          <div class="tags-input-container" id="edit-tags-container">
+            <input type="text" id="edit-tag-input" placeholder="พิมพ์แท็กแล้วกด Enter...">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-edit">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary glow-button" id="btn-submit-edit">
+            <span>💾 บันทึกการแก้ไข</span>
           </button>
         </div>
       </form>

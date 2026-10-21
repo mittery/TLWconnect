@@ -121,15 +121,24 @@ const btnCloseReportModal = document.getElementById('btn-close-report-modal');
 const btnCancelReport = document.getElementById('btn-cancel-report');
 let currentReportingPost = null;
 
-// Channel Names Mapping (5 ห้องหลัก + ทั้งหมด)
+// Channel Names Mapping (5 ห้องหลัก + กระทู้ของฉัน + ทั้งหมด)
 const CHANNEL_DATA = {
   all: { name: 'กระทู้ทั้งหมด', icon: '🌐' },
+  my_posts: { name: 'กระทู้ของฉัน', icon: '📝' },
   announcements: { name: 'ห้องประกาศ', icon: '📢' },
   vent: { name: 'ห้องระบาย', icon: '🌧️' },
   suggestions: { name: 'ห้องข้อเสนอแนะ', icon: '💡' },
   requests: { name: 'ห้องส่งคำร้อง', icon: '📋' },
   guidance: { name: 'ห้องแนะแนว', icon: '🧭' }
 };
+
+// My Posts ownership tracking
+let myPostKeys = {};
+try {
+  const savedKeys = localStorage.getItem('tlw_my_post_keys');
+  if (savedKeys) myPostKeys = JSON.parse(savedKeys);
+} catch (e) {}
+let myPostIds = new Set();
 
 // ================= STUDENT ACCOUNT & AUTH GATEWAY =================
 let currentStudentUser = null;
@@ -569,6 +578,10 @@ function setupSocket() {
 
   socket.on('connect', () => {
     console.log('⚡ Connected to TLWconnect Real-time network');
+    socket.emit('get_my_post_ids', {
+      studentToken: currentStudentUser?.token || null,
+      localKeys: myPostKeys
+    });
   });
 
   socket.on('online_count', (count) => {
@@ -582,6 +595,11 @@ function setupSocket() {
     renderShoutbox();
     updateChannelCounts();
     renderFeed();
+
+    socket.emit('get_my_post_ids', {
+      studentToken: currentStudentUser?.token || null,
+      localKeys: myPostKeys
+    });
   });
 
   socket.on('new_post', (post) => {
@@ -712,6 +730,42 @@ function setupSocket() {
     showToast(`🚫 ${message || 'ไม่สามารถทำรายการได้เนื่องจากถูกระงับสิทธิ์'}`, 'info');
   });
 
+  // Receive verified post IDs owned by this user
+  socket.on('my_post_ids_response', ({ postIds }) => {
+    myPostIds = new Set(postIds || []);
+    updateChannelCounts();
+    if (currentChannel === 'my_posts') renderFeed();
+  });
+
+  // Receive authorKey when creating a post
+  socket.on('post_created_ack', ({ postId, authorKey }) => {
+    myPostKeys[postId] = authorKey;
+    myPostIds.add(postId);
+    try {
+      localStorage.setItem('tlw_my_post_keys', JSON.stringify(myPostKeys));
+    } catch (e) {}
+    updateChannelCounts();
+    renderFeed();
+  });
+
+  // Post edited event broadcast
+  socket.on('post_edited', ({ postId, title, content, channel, tags, editedAt }) => {
+    const post = allPosts.find(p => p.id === postId);
+    if (post) {
+      post.title = title;
+      post.content = content;
+      if (channel) post.channel = channel;
+      if (tags) post.tags = tags;
+      post.editedAt = editedAt;
+      renderFeed();
+      showToast('มีการแก้ไขกระทู้เรียบร้อยแล้ว', 'info');
+    }
+  });
+
+  socket.on('edit_post_success', () => {
+    showToast('💾 บันทึกการแก้ไขกระทู้ของคุณสำเร็จ!', 'success');
+  });
+
   // Real-time request status update
   socket.on('post_status_updated', ({ postId, status, officialResponse, statusUpdatedAt }) => {
     const post = allPosts.find(p => p.id === postId);
@@ -731,7 +785,9 @@ function renderFeed(newArrivalId = null) {
   let filtered = [...allPosts];
 
   // Channel filter
-  if (currentChannel !== 'all') {
+  if (currentChannel === 'my_posts') {
+    filtered = filtered.filter(p => myPostIds.has(p.id) || !!myPostKeys[p.id]);
+  } else if (currentChannel !== 'all') {
     filtered = filtered.filter(p => p.channel === currentChannel);
   }
 
@@ -848,6 +904,15 @@ function createPostCard(post, isNew = false) {
     `;
   }
 
+  const isMyPost = myPostIds.has(post.id) || !!myPostKeys[post.id];
+  const myPostActionsHtml = isMyPost ? `
+    <div class="post-owner-actions">
+      <button type="button" class="btn-owner-action btn-owner-edit" data-edit-id="${post.id}" title="แก้ไขกระทู้ของคุณ">✏️ แก้ไข</button>
+      <button type="button" class="btn-owner-action btn-owner-delete" data-delete-id="${post.id}" title="ลบกระทู้ของคุณ">🗑️ ลบ</button>
+    </div>
+  ` : '';
+  const editedIndicatorHtml = post.editedAt ? `<span class="post-edited-pill" title="แก้ไขแล้ว">(แก้ไขแล้ว)</span>` : '';
+
   card.innerHTML = `
     <div class="post-header">
       <div class="post-author-info">
@@ -859,10 +924,13 @@ function createPostCard(post, isNew = false) {
             <span class="author-name-text">${escapeHtml(post.author.name)}</span>
             ${roleBadgeHtml}
           </div>
-          <span class="post-timestamp">${timeText}</span>
+          <span class="post-timestamp">${timeText} ${editedIndicatorHtml}</span>
         </div>
       </div>
-      <span class="post-channel-pill">${channelInfo.icon} ${channelInfo.name}</span>
+      <div class="post-header-right">
+        <span class="post-channel-pill">${channelInfo.icon} ${channelInfo.name}</span>
+        ${myPostActionsHtml}
+      </div>
     </div>
 
     ${announcementTagHtml}
@@ -1161,6 +1229,9 @@ function updateChannelCounts() {
   setBadge('badge-count-suggestions', counts['suggestions'] || 0);
   setBadge('badge-count-requests', counts['requests'] || 0);
   setBadge('badge-count-guidance', counts['guidance'] || 0);
+
+  const myPostsCount = allPosts.filter(p => myPostIds.has(p.id) || !!myPostKeys[p.id]).length;
+  setBadge('badge-count-my-posts', myPostsCount);
 }
 
 // ================= EVENT LISTENERS =================
@@ -1325,6 +1396,144 @@ function setupEventListeners() {
 
     window.soundEngine.playPublish();
     showToast('โพสต์ของคุณถูกส่งเรียบร้อยแล้ว!', 'success');
+  });
+
+  // ================= EDIT POST MODAL LOGIC =================
+  const editModal = document.getElementById('edit-modal');
+  const editForm = document.getElementById('edit-form');
+  const editPostIdInput = document.getElementById('edit-post-id');
+  const editChannelSelect = document.getElementById('edit-channel-select');
+  const editTitleInput = document.getElementById('edit-title-input');
+  const editContentInput = document.getElementById('edit-content-input');
+  const editTagInput = document.getElementById('edit-tag-input');
+  const editTagsContainer = document.getElementById('edit-tags-container');
+  const editTitleCharCount = document.getElementById('edit-title-char-count');
+  const editContentCharCount = document.getElementById('edit-content-char-count');
+  const btnCloseEdit = document.getElementById('btn-close-edit');
+  const btnCancelEdit = document.getElementById('btn-cancel-edit');
+
+  let editedTags = [];
+
+  const renderEditedTags = () => {
+    if (!editTagsContainer) return;
+    editTagsContainer.querySelectorAll('.tag-chip').forEach(el => el.remove());
+    editedTags.forEach((t, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.innerHTML = `#${escapeHtml(t)} <button type="button" data-idx="${i}">✕</button>`;
+      chip.querySelector('button').addEventListener('click', () => {
+        editedTags.splice(i, 1);
+        renderEditedTags();
+      });
+      editTagsContainer.insertBefore(chip, editTagInput);
+    });
+  };
+
+  if (editTagInput) {
+    editTagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const val = editTagInput.value.trim().replace(/^#/, '');
+        if (val && !editedTags.includes(val) && editedTags.length < 5) {
+          editedTags.push(val);
+          renderEditedTags();
+          editTagInput.value = '';
+        }
+      }
+    });
+  }
+
+  if (editTitleInput && editTitleCharCount) {
+    editTitleInput.addEventListener('input', () => {
+      editTitleCharCount.textContent = editTitleInput.value.length;
+    });
+  }
+
+  if (editContentInput && editContentCharCount) {
+    editContentInput.addEventListener('input', () => {
+      editContentCharCount.textContent = editContentInput.value.length;
+    });
+  }
+
+  const closeEditModal = () => {
+    if (editModal) editModal.classList.add('hidden');
+  };
+
+  if (btnCloseEdit) btnCloseEdit.addEventListener('click', closeEditModal);
+  if (btnCancelEdit) btnCancelEdit.addEventListener('click', closeEditModal);
+
+  window.openEditPostModal = (post) => {
+    if (!editModal || !post) return;
+    editPostIdInput.value = post.id;
+    editChannelSelect.value = post.channel || 'vent';
+    editTitleInput.value = post.title || '';
+    editContentInput.value = post.content || '';
+    editedTags = Array.isArray(post.tags) ? [...post.tags] : [];
+    renderEditedTags();
+    if (editTitleCharCount) editTitleCharCount.textContent = editTitleInput.value.length;
+    if (editContentCharCount) editContentCharCount.textContent = editContentInput.value.length;
+    editModal.classList.remove('hidden');
+    editTitleInput.focus();
+    if (window.soundEngine) window.soundEngine.playClick();
+  };
+
+  if (editForm) {
+    editForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const postId = editPostIdInput.value;
+      const title = editTitleInput.value.trim();
+      const content = editContentInput.value.trim();
+      const channel = editChannelSelect.value;
+
+      if (!postId || !title || !content) return;
+
+      socket.emit('edit_post', {
+        postId,
+        title,
+        content,
+        channel,
+        tags: editedTags,
+        studentToken: currentStudentUser?.token || null,
+        authorKey: myPostKeys[postId] || null
+      });
+
+      closeEditModal();
+      if (window.soundEngine) window.soundEngine.playPublish();
+    });
+  }
+
+  // Event delegation for post edit and delete buttons
+  document.addEventListener('click', (e) => {
+    const editBtn = e.target.closest('.btn-owner-edit');
+    if (editBtn) {
+      const postId = editBtn.getAttribute('data-edit-id');
+      const post = allPosts.find(p => p.id === postId);
+      if (post && window.openEditPostModal) {
+        window.openEditPostModal(post);
+      }
+      return;
+    }
+
+    const deleteBtn = e.target.closest('.btn-owner-delete');
+    if (deleteBtn) {
+      const postId = deleteBtn.getAttribute('data-delete-id');
+      if (!postId) return;
+      if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบกระทู้นี้? เมื่อลบแล้วจะไม่สามารถกู้คืนได้')) {
+        socket.emit('delete_my_post', {
+          postId,
+          studentToken: currentStudentUser?.token || null,
+          authorKey: myPostKeys[postId] || null
+        });
+        delete myPostKeys[postId];
+        myPostIds.delete(postId);
+        try {
+          localStorage.setItem('tlw_my_post_keys', JSON.stringify(myPostKeys));
+        } catch (err) {}
+        updateChannelCounts();
+        if (window.soundEngine) window.soundEngine.playClick();
+      }
+      return;
+    }
   });
 
   // Persona Modal triggers
