@@ -766,14 +766,31 @@ app.get('/api/manager/overview', requireAdmin, (req, res) => {
       requests: posts.filter(p => p.channel === 'requests').length,
       guidance: posts.filter(p => p.channel === 'guidance').length
     },
-    posts,
+    posts: posts.map(p => {
+      let student = null;
+      if (p.authorInternal?.userId) {
+        student = users.find(u => u.id === p.authorInternal.userId);
+      }
+      if (!student && p.authorInternal?.studentId) {
+        student = users.find(u => u.studentId === p.authorInternal.studentId);
+      }
+      return {
+        ...p,
+        authorStudent: student ? {
+          fullName: student.fullName,
+          studentId: student.studentId
+        } : (p.authorInternal?.studentId ? {
+          fullName: 'นักเรียน ท.ล.ว.',
+          studentId: p.authorInternal.studentId
+        } : null)
+      };
+    }),
     bannedUsers,
     reports,
     users: users.map(u => ({
       id: u.id,
       fullName: u.fullName,
       studentId: u.studentId,
-      idCardMasked: u.idCardMasked || (u.idCard ? u.idCard.slice(0, 3) + 'xxxxxxx' + u.idCard.slice(10) : '142xxxxxxx000'),
       createdAt: u.createdAt,
       lastLogin: u.lastLogin
     })),
@@ -929,21 +946,28 @@ app.get('/api/manager/export-data', requireAdmin, (req, res) => {
   const exportType = req.query.type || 'posts';
 
   if (exportType === 'posts') {
-    const exportData = posts.map(p => ({
-      id: p.id,
-      channel: p.channel,
-      authorName: p.author?.name || 'Anon',
-      authorRole: p.author?.role || 'student',
-      title: p.title,
-      content: p.content,
-      tags: (p.tags || []).join('; '),
-      status: p.status || 'N/A',
-      officialResponse: p.officialResponse || '',
-      upvotes: p.upvotes || 0,
-      downvotes: p.downvotes || 0,
-      commentsCount: (p.comments || []).length,
-      createdAt: new Date(p.timestamp).toISOString()
-    }));
+    const exportData = posts.map(p => {
+      let student = null;
+      if (p.authorInternal?.userId) student = users.find(u => u.id === p.authorInternal.userId);
+      if (!student && p.authorInternal?.studentId) student = users.find(u => u.studentId === p.authorInternal.studentId);
+      return {
+        id: p.id,
+        channel: p.channel,
+        authorName: p.author?.name || 'Anon',
+        authorRole: p.author?.role || 'student',
+        studentName: student ? student.fullName : 'N/A',
+        studentId: student ? student.studentId : (p.authorInternal?.studentId || 'N/A'),
+        title: p.title,
+        content: p.content,
+        tags: (p.tags || []).join('; '),
+        status: p.status || 'N/A',
+        officialResponse: p.officialResponse || '',
+        upvotes: p.upvotes || 0,
+        downvotes: p.downvotes || 0,
+        commentsCount: (p.comments || []).length,
+        createdAt: new Date(p.timestamp).toISOString()
+      };
+    });
     return res.json({ success: true, type: 'posts', data: exportData });
   }
 
