@@ -2897,4 +2897,72 @@ body {
   }
 }
 
+/* ================= REQUEST STATUS & SCHOOL FEEDBACK ================= */
+.request-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 10px 0;
+}
+
+.request-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.request-status-badge.status-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
+}
+
+.request-status-badge.status-inprogress {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.45);
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.15);
+}
+
+.request-status-badge.status-resolved {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+}
+
+.official-response-box {
+  margin: 8px 0 12px 0;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(245, 158, 11, 0.1));
+  border-left: 3px solid #eab308;
+  border-top: 1px solid rgba(245, 158, 11, 0.2);
+  border-right: 1px solid rgba(245, 158, 11, 0.2);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 0 8px 8px 0;
+}
+
+.official-response-header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.official-response-body {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #f1f5f9;
+}
+
+
 
