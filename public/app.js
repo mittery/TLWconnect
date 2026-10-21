@@ -707,7 +707,20 @@ function setupSocket() {
   socket.on('action_blocked', ({ message }) => {
     showToast(`🚫 ${message || 'ไม่สามารถทำรายการได้เนื่องจากถูกระงับสิทธิ์'}`, 'info');
   });
+
+  // Real-time request status update
+  socket.on('post_status_updated', ({ postId, status, officialResponse, statusUpdatedAt }) => {
+    const post = allPosts.find(p => p.id === postId);
+    if (post) {
+      post.status = status;
+      post.officialResponse = officialResponse;
+      post.statusUpdatedAt = statusUpdatedAt;
+      renderFeed();
+      showToast('📌 มีการอัปเดตสถานะข้อเสนอแนะ/คำร้องเรียบร้อยแล้ว', 'info');
+    }
+  });
 }
+
 
 // ================= FEED RENDERING =================
 function renderFeed(newArrivalId = null) {
@@ -799,6 +812,38 @@ function createPostCard(post, isNew = false) {
 
   const commentsCount = post.comments ? post.comments.length : 0;
 
+  // Request Status HTML (For 'requests' channel)
+  let requestStatusHtml = '';
+  if (post.channel === 'requests') {
+    const curStatus = post.status || 'pending';
+    let badgeText = '⏳ รอตรวจสอบ';
+    let badgeClass = 'status-pending';
+    if (curStatus === 'in_progress') {
+      badgeText = '⚙️ กำลังดำเนินการ';
+      badgeClass = 'status-inprogress';
+    } else if (curStatus === 'resolved') {
+      badgeText = '✅ เสร็จสิ้น / ชี้แจงแล้ว';
+      badgeClass = 'status-resolved';
+    }
+
+    let responseBox = '';
+    if (post.officialResponse) {
+      responseBox = `
+        <div class="official-response-box">
+          <div class="official-response-header">📢 ชี้แจงจากทางโรงเรียน:</div>
+          <div class="official-response-body">${escapeHtml(post.officialResponse)}</div>
+        </div>
+      `;
+    }
+
+    requestStatusHtml = `
+      <div class="request-status-row">
+        <span class="request-status-badge ${badgeClass}">${badgeText}</span>
+      </div>
+      ${responseBox}
+    `;
+  }
+
   card.innerHTML = `
     <div class="post-header">
       <div class="post-author-info">
@@ -819,6 +864,7 @@ function createPostCard(post, isNew = false) {
     ${announcementTagHtml}
     <h3 class="post-title">${escapeHtml(post.title)}</h3>
     <p class="post-body">${escapeHtml(post.content)}</p>
+    ${requestStatusHtml}
 
     ${tagsHtml}
 
@@ -954,7 +1000,8 @@ function attachCardEvents(card, post) {
     socket.emit('add_comment', {
       postId: post.id,
       author: currentPersona,
-      content
+      content,
+      studentToken: currentStudentUser?.token || null
     });
 
     commentInput.value = '';
@@ -1187,7 +1234,8 @@ function setupEventListeners() {
 
     socket.emit('send_shout', {
       author: currentPersona,
-      text
+      text,
+      studentToken: currentStudentUser?.token || null
     });
 
     shoutboxInput.value = '';
@@ -1258,7 +1306,8 @@ function setupEventListeners() {
       content,
       channel,
       tags: composedTags,
-      author: currentPersona
+      author: currentPersona,
+      studentToken: currentStudentUser?.token || null
     });
 
     // Reset Form
@@ -1366,6 +1415,7 @@ function setupEventListeners() {
         if (data.success) {
           currentPersona.role = data.role;
           currentPersona.verified = true;
+          currentPersona.roleToken = data.roleToken || null;
           localStorage.setItem('ghostwire_persona', JSON.stringify(currentPersona));
           updateRoleUI();
           if (rolePinContainer) rolePinContainer.classList.add('hidden');
@@ -1533,7 +1583,8 @@ function setupEventListeners() {
 
       socket.emit('send_shout', {
         author: currentPersona,
-        text
+        text,
+        studentToken: currentStudentUser?.token || null
       });
 
       mobileShoutboxInput.value = '';
