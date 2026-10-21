@@ -450,6 +450,20 @@ function requireAdmin(req, res, next) {
   }
 }
 
+// Post ownership verification helper (Supports Student Account Token & Author Secret Key)
+function isPostOwner(post, { studentToken, authorKey, adminToken } = {}) {
+  if (adminToken && isValidAdminToken(adminToken)) return true;
+  if (authorKey && post.authorKey && authorKey === post.authorKey) return true;
+  if (studentToken) {
+    const student = users.find(u => u.token === studentToken);
+    if (student) {
+      if (post.authorInternal?.studentId && student.studentId === post.authorInternal.studentId) return true;
+      if (post.authorInternal?.userId && student.id === post.authorInternal.userId) return true;
+    }
+  }
+  return false;
+}
+
 // Role verification endpoint (Students, Teachers, Moderators)
 app.post('/api/auth/verify-role', (req, res) => {
   const { role, pin } = req.body;
@@ -1068,6 +1082,8 @@ io.on('connection', (socket) => {
       ? data.tags.slice(0, 5).map(t => sanitizeInput(t, 30)).filter(Boolean)
       : [];
 
+    const authorKey = 'pkey_' + crypto.randomBytes(16).toString('hex');
+
     const newPost = {
       id: 'post_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
       channel: data.channel,
@@ -1078,6 +1094,7 @@ io.on('connection', (socket) => {
         role: verifiedRole,
         official: isOfficial
       },
+      authorKey: authorKey,
       authorInternal: {
         studentId: student ? student.studentId : null,
         userId: student ? student.id : null
@@ -1097,10 +1114,112 @@ io.on('connection', (socket) => {
     posts.unshift(newPost);
     savePosts();
 
-    // Broadcast to everyone (anonymized, no studentId/userId in public socket payload)
+    // Broadcast to everyone (anonymized, no studentId/userId or authorKey in public socket payload)
     const broadcastPost = { ...newPost };
     delete broadcastPost.authorInternal;
+    delete broadcastPost.authorKey;
     io.emit('new_post', broadcastPost);
+
+    // Provide authorKey exclusively to the creator socket
+    socket.emit('post_created_ack', {
+      postId: newPost.id,
+      authorKey: authorKey
+    });
+  });
+
+  // Client edits their own post
+  socket.on('edit_post', ({ postId, title, content, channel, tags, studentToken, authorKey }) => {
+    if (!postId || !title || !content) return;
+
+    const post = posts.find(p => p.id === postId);
+    if (!post) {
+      socket.emit('action_blocked', { message: 'ไม่พบกระทู้ที่ต้องการแก้ไข' });
+      return;
+    }
+
+    // Verify ownership
+    const isOwner = isPostOwner(post, { studentToken, authorKey });
+    if (!isOwner) {
+      socket.emit('action_blocked', { message: 'คุณไม่มีสิทธิ์แก้ไขกระทู้นี้ (อนุญาตเฉพาะเจ้าของกระทู้เท่านั้น)' });
+      return;
+    }
+
+    const cleanTitle = sanitizeInput(title, 150);
+    const cleanContent = sanitizeInput(content, 3000);
+    if (!cleanTitle || !cleanContent) return;
+
+    const cleanTags = Array.isArray(tags)
+      ? tags.slice(0, 5).map(t => sanitizeInput(t, 30)).filter(Boolean)
+      : [];
+
+    post.title = cleanTitle;
+    post.content = cleanContent;
+    post.tags = cleanTags;
+    if (channel && ['vent', 'suggestions', 'requests', 'guidance'].includes(channel)) {
+      post.channel = channel;
+    }
+    post.editedAt = Date.now();
+    savePosts();
+
+    addAuditLog('USER_EDIT_POST', `เจ้าของแก้ไขกระทู้ ID: ${postId}`);
+
+    // Broadcast edit to everyone
+    io.emit('post_edited', {
+      postId: post.id,
+      title: post.title,
+      content: post.content,
+      channel: post.channel,
+      tags: post.tags,
+      editedAt: post.editedAt
+    });
+
+    socket.emit('edit_post_success', { postId: post.id });
+  });
+
+  // Client deletes their own post
+  socket.on('delete_my_post', ({ postId, studentToken, authorKey }) => {
+    if (!postId) return;
+
+    const postIndex = posts.findIndex(p => p.id === postId);
+    if (postIndex === -1) {
+      socket.emit('action_blocked', { message: 'ไม่พบกระทู้ที่ต้องการลบ' });
+      return;
+    }
+
+    const post = posts[postIndex];
+
+    // Verify ownership
+    const isOwner = isPostOwner(post, { studentToken, authorKey });
+    if (!isOwner) {
+      socket.emit('action_blocked', { message: 'คุณไม่มีสิทธิ์ลบกระทู้นี้ (อนุญาตเฉพาะเจ้าของกระทู้เท่านั้น)' });
+      return;
+    }
+
+    // Remove post
+    posts.splice(postIndex, 1);
+    savePosts();
+
+    addAuditLog('USER_DELETE_POST', `เจ้าของลบกระทู้ ID: ${postId}`);
+
+    // Broadcast to everyone
+    io.emit('post_deleted', { postId, reason: 'เจ้าของลบกระทู้' });
+  });
+
+  // Client requests list of their owned post IDs
+  socket.on('get_my_post_ids', ({ studentToken, localKeys }) => {
+    const myIds = [];
+    const student = studentToken ? users.find(u => u.token === studentToken) : null;
+    const keysMap = localKeys || {};
+
+    posts.forEach(p => {
+      let owned = false;
+      if (student && p.authorInternal?.studentId && student.studentId === p.authorInternal.studentId) owned = true;
+      if (student && p.authorInternal?.userId && student.id === p.authorInternal.userId) owned = true;
+      if (p.authorKey && keysMap[p.id] === p.authorKey) owned = true;
+      if (owned) myIds.push(p.id);
+    });
+
+    socket.emit('my_post_ids_response', { postIds: myIds });
   });
 
   // Client votes on a post
