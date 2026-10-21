@@ -6,25 +6,89 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import os from 'os';
+import cors from 'cors';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
-});
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || 'tlw2026';
 const TEACHER_PIN = process.env.TEACHER_PIN || 'tlw-teacher-2026';
 const MOD_PIN = process.env.MOD_PIN || 'tlw-mod-2026';
-const ADMIN_TOKEN_FALLBACK = 'tlw_manager_auth_token_secret_key';
-const activeTokens = new Set([ADMIN_TOKEN_FALLBACK]);
+const HASH_SALT = process.env.HASH_SALT || 'tlw_connect_secret_salt_2026';
+
+// CORS configuration for Express & Socket.IO
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://tlwconnect.onrender.com'
+];
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.trycloudflare.com') ||
+      origin.endsWith('.onrender.com') ||
+      origin.startsWith('http://192.168.') ||
+      origin.startsWith('http://10.')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Permissive during transitional phase
+  },
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+
+const io = new Server(server, {
+  cors: {
+    origin: corsOptions.origin,
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+// Secure Active Token Store (No hardcoded fallback!)
+// activeTokens: token -> { createdAt, ip, role }
+const activeTokens = new Map();
+const TOKEN_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+function isValidAdminToken(token) {
+  if (!token || typeof token !== 'string') return false;
+  const session = activeTokens.get(token);
+  if (!session) return false;
+  if (Date.now() - session.createdAt > TOKEN_TTL_MS) {
+    activeTokens.delete(token);
+    return false;
+  }
+  return true;
+}
+
+// Verified Roles Store: token -> { role, ip, verifiedAt }
+const verifiedRoles = new Map();
+const ROLE_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function isValidRoleToken(token, expectedRole) {
+  if (!token || typeof token !== 'string') return false;
+  const entry = verifiedRoles.get(token);
+  if (!entry) return false;
+  if (Date.now() - entry.verifiedAt > ROLE_TOKEN_TTL_MS) {
+    verifiedRoles.delete(token);
+    return false;
+  }
+  return entry.role === expectedRole;
+}
+
+// PDPA Compliance: Salted SHA-256 for National Citizen ID
+function hashIdCard(idCard) {
+  if (!idCard) return '';
+  return crypto.createHmac('sha256', HASH_SALT).update(idCard.toString().trim()).digest('hex');
+}
 
 // ================= SECURITY & RATE LIMITING =================
 // In-memory sliding window rate limiter
@@ -305,9 +369,13 @@ function addAuditLog(action, detail) {
   }
 }
 
-function isBanned(authorName) {
-  if (!authorName) return false;
-  return bannedUsers.some(u => u.name === authorName);
+function isBanned(authorName, studentId = null, userId = null) {
+  return bannedUsers.some(u => {
+    if (authorName && u.name && u.name.toLowerCase() === authorName.toLowerCase()) return true;
+    if (studentId && u.studentId && u.studentId === studentId) return true;
+    if (userId && u.userId && u.userId === userId) return true;
+    return false;
+  });
 }
 
 // Security HTTP headers
@@ -328,7 +396,7 @@ function requireAdmin(req, res, next) {
   if (token && token.startsWith('Bearer ')) {
     token = token.slice(7);
   }
-  if (token && activeTokens.has(token)) {
+  if (token && isValidAdminToken(token)) {
     next();
   } else {
     res.status(401).json({ error: 'Unauthorized: Invalid or expired Admin Token' });
@@ -344,16 +412,22 @@ app.post('/api/auth/verify-role', (req, res) => {
     return res.status(429).json({ success: false, error: 'พยายามตรวจสอบสิทธิ์บ่อยเกินไป กรุณารอ 1 นาที' });
   }
 
+  const trimmedPin = (pin || '').trim();
+
   if (role === 'teacher') {
-    if (pin === TEACHER_PIN) {
+    if (trimmedPin === TEACHER_PIN || trimmedPin === ADMIN_PASSCODE) {
+      const roleToken = 'role_' + crypto.randomBytes(24).toString('hex');
+      verifiedRoles.set(roleToken, { role: 'teacher', ip: clientIp, verifiedAt: Date.now() });
       addAuditLog('ROLE_VERIFIED', `Teacher role verified from IP ${clientIp}`);
-      return res.json({ success: true, role: 'teacher', badge: '👨‍🏫 ครู ท.ล.ว.', verified: true });
+      return res.json({ success: true, role: 'teacher', badge: 'คุณครู ท.ล.ว. 👨‍🏫', verified: true, roleToken });
     }
-    return res.status(403).json({ success: false, error: 'รหัสยืนยันคุณครูไม่ถูกต้อง' });
+    return res.status(403).json({ success: false, error: 'รหัสผ่านยืนยันตัวตนคุณครูไม่ถูกต้อง' });
   } else if (role === 'moderator') {
-    if (pin === MOD_PIN) {
+    if (trimmedPin === MOD_PIN || trimmedPin === ADMIN_PASSCODE) {
+      const roleToken = 'role_' + crypto.randomBytes(24).toString('hex');
+      verifiedRoles.set(roleToken, { role: 'moderator', ip: clientIp, verifiedAt: Date.now() });
       addAuditLog('ROLE_VERIFIED', `Moderator role verified from IP ${clientIp}`);
-      return res.json({ success: true, role: 'moderator', badge: '🛡️ ผู้ตรวจการ', verified: true });
+      return res.json({ success: true, role: 'moderator', badge: 'ผู้ตรวจการ 🛡️', verified: true, roleToken });
     }
     return res.status(403).json({ success: false, error: 'รหัสยืนยันผู้ตรวจการไม่ถูกต้อง' });
   } else if (role === 'student') {
@@ -408,7 +482,7 @@ app.get('/api/network-info', (req, res) => {
 });
 
 // ================= STUDENT ACCOUNT & AUTHENTICATION =================
-// 1. Register New Student Account
+// 1. Register New Student Account (PDPA Protected - Never Stores Plaintext National ID)
 app.post('/api/auth/register', (req, res) => {
   const { fullName, idCard, studentId } = req.body;
 
@@ -426,8 +500,11 @@ app.post('/api/auth/register', (req, res) => {
     return res.status(400).json({ success: false, error: 'รหัสนักเรียนต้องมี 5 หลักพอดี' });
   }
 
+  const idCardHash = hashIdCard(cleanIdCard);
+  const idCardMasked = cleanIdCard.slice(0, 3) + 'xxxxxxx' + cleanIdCard.slice(10);
+
   // Check duplicate
-  const existingUser = users.find(u => u.idCard === cleanIdCard || u.studentId === cleanStudentId);
+  const existingUser = users.find(u => (u.idCardHash ? u.idCardHash === idCardHash : u.idCard === cleanIdCard) || u.studentId === cleanStudentId);
   if (existingUser) {
     return res.status(409).json({
       success: false,
@@ -439,7 +516,8 @@ app.post('/api/auth/register', (req, res) => {
   const newUser = {
     id: 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
     fullName: cleanFullName,
-    idCard: cleanIdCard,
+    idCardHash: idCardHash,
+    idCardMasked: idCardMasked,
     studentId: cleanStudentId,
     token: userToken,
     createdAt: Date.now(),
@@ -458,7 +536,7 @@ app.post('/api/auth/register', (req, res) => {
       id: newUser.id,
       fullName: newUser.fullName,
       studentId: newUser.studentId,
-      idCardMasked: newUser.idCard.slice(0, 3) + 'xxxxxxx' + newUser.idCard.slice(10),
+      idCardMasked: newUser.idCardMasked,
       token: newUser.token
     }
   });
@@ -478,13 +556,19 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(400).json({ success: false, error: 'กรุณาระบุเลขบัตรประจำตัวประชาชน 13 หลัก' });
   }
 
-  const user = users.find(u => u.studentId === cleanStudentId && u.idCard === cleanIdCard);
+  const idCardHash = hashIdCard(cleanIdCard);
+  const user = users.find(u => u.studentId === cleanStudentId && (u.idCardHash ? u.idCardHash === idCardHash : u.idCard === cleanIdCard));
   if (!user) {
     return res.status(401).json({
       success: false,
       error: 'รหัสนักเรียน หรือ เลขบัตรประจำตัวประชาชนไม่ถูกต้อง หรือยังไม่ได้สร้างบัญชี'
     });
   }
+
+  // Seamless migration: wipe plaintext idCard if present
+  if (!user.idCardHash) user.idCardHash = idCardHash;
+  if (!user.idCardMasked) user.idCardMasked = cleanIdCard.slice(0, 3) + 'xxxxxxx' + cleanIdCard.slice(10);
+  delete user.idCard;
 
   user.lastLogin = Date.now();
   if (!user.token) {
@@ -501,7 +585,7 @@ app.post('/api/auth/login', (req, res) => {
       id: user.id,
       fullName: user.fullName,
       studentId: user.studentId,
-      idCardMasked: user.idCard.slice(0, 3) + 'xxxxxxx' + user.idCard.slice(10),
+      idCardMasked: user.idCardMasked,
       token: user.token
     }
   });
@@ -528,37 +612,12 @@ app.post('/api/auth/verify-session', (req, res) => {
       id: user.id,
       fullName: user.fullName,
       studentId: user.studentId,
-      idCardMasked: user.idCard.slice(0, 3) + 'xxxxxxx' + user.idCard.slice(10),
+      idCardMasked: user.idCardMasked || '142xxxxxxx000',
       token: user.token
     }
   });
 });
 
-// ROLE VERIFICATION (TEACHER & MODERATOR PIN)
-app.post('/api/auth/verify-role', (req, res) => {
-  const { role, pin } = req.body;
-  const trimmed = (pin || '').trim();
-
-  if (!role || !trimmed) {
-    return res.status(400).json({ success: false, error: 'กรุณากรอกรหัสผ่านยืนยันสิทธิ์' });
-  }
-
-  if (role === 'teacher') {
-    if (trimmed === TEACHER_PIN || trimmed === ADMIN_PASSCODE || trimmed === 'teacher') {
-      return res.json({ success: true, role: 'teacher', badge: 'คุณครู ท.ล.ว. 👨‍🏫' });
-    } else {
-      return res.status(403).json({ success: false, error: 'รหัสผ่านยืนยันตัวตนคุณครูไม่ถูกต้อง' });
-    }
-  } else if (role === 'moderator') {
-    if (trimmed === MOD_PIN || trimmed === ADMIN_PASSCODE || trimmed === 'mod') {
-      return res.json({ success: true, role: 'moderator', badge: 'ผู้ตรวจการ 🛡️' });
-    } else {
-      return res.status(403).json({ success: false, error: 'รหัสผ่านยืนยันผู้ตรวจการไม่ถูกต้อง' });
-    }
-  }
-
-  res.status(400).json({ success: false, error: 'บทบาทไม่ถูกต้อง' });
-});
 
 // MANAGER API ENDPOINTS WITH BRUTE FORCE DEFENSE
 app.post('/api/manager/login', (req, res) => {
@@ -582,7 +641,7 @@ app.post('/api/manager/login', (req, res) => {
 
     // Generate cryptographically random session token
     const sessionToken = 'tlw_' + crypto.randomBytes(32).toString('hex');
-    activeTokens.add(sessionToken);
+    activeTokens.set(sessionToken, { createdAt: Date.now(), ip: clientIp, role: 'manager' });
 
     addAuditLog('LOGIN', `Manager logged in successfully from ${clientIp}`);
     res.json({ success: true, token: sessionToken });
@@ -629,11 +688,11 @@ app.get('/api/manager/overview', requireAdmin, (req, res) => {
       id: u.id,
       fullName: u.fullName,
       studentId: u.studentId,
-      idCardMasked: u.idCard.slice(0, 3) + 'xxxxxxx' + u.idCard.slice(10),
+      idCardMasked: u.idCardMasked || (u.idCard ? u.idCard.slice(0, 3) + 'xxxxxxx' + u.idCard.slice(10) : '142xxxxxxx000'),
       createdAt: u.createdAt,
       lastLogin: u.lastLogin
     })),
-    auditLogs: auditLogs.slice(0, 30)
+    auditLogs: auditLogs.slice(0, 50)
   });
 });
 
@@ -750,31 +809,118 @@ app.post('/api/manager/delete-comment', requireAdmin, (req, res) => {
   res.json({ success: true, commentId });
 });
 
-app.post('/api/manager/ban-user', requireAdmin, (req, res) => {
-  const { authorName, reason } = req.body;
-  if (!authorName) return res.status(400).json({ error: 'Missing authorName' });
+// Update Request Status (Roadmap Feature for 'requests' channel)
+app.post('/api/manager/update-request-status', requireAdmin, (req, res) => {
+  const { postId, status, officialResponse } = req.body;
+  const post = posts.find(p => p.id === postId);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
 
-  if (!isBanned(authorName)) {
+  const validStatuses = ['pending', 'in_progress', 'resolved'];
+  if (status && !validStatuses.includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+
+  if (status) post.status = status;
+  if (typeof officialResponse === 'string') {
+    post.officialResponse = sanitizeInput(officialResponse, 1500);
+  }
+  post.statusUpdatedAt = Date.now();
+  savePosts();
+
+  addAuditLog('UPDATE_REQUEST_STATUS', `Updated post ${postId} status to ${post.status}`);
+
+  io.emit('post_status_updated', {
+    postId: post.id,
+    status: post.status,
+    officialResponse: post.officialResponse,
+    statusUpdatedAt: post.statusUpdatedAt
+  });
+
+  res.json({ success: true, post });
+});
+
+// Export Data Endpoint (Roadmap Feature for Manager Portal)
+app.get('/api/manager/export-data', requireAdmin, (req, res) => {
+  const exportType = req.query.type || 'posts';
+
+  if (exportType === 'posts') {
+    const exportData = posts.map(p => ({
+      id: p.id,
+      channel: p.channel,
+      authorName: p.author?.name || 'Anon',
+      authorRole: p.author?.role || 'student',
+      title: p.title,
+      content: p.content,
+      tags: (p.tags || []).join('; '),
+      status: p.status || 'N/A',
+      officialResponse: p.officialResponse || '',
+      upvotes: p.upvotes || 0,
+      downvotes: p.downvotes || 0,
+      commentsCount: (p.comments || []).length,
+      createdAt: new Date(p.timestamp).toISOString()
+    }));
+    return res.json({ success: true, type: 'posts', data: exportData });
+  }
+
+  if (exportType === 'reports') {
+    const exportReports = reports.map(r => ({
+      id: r.id,
+      postId: r.postId,
+      postTitle: r.postTitle,
+      postAuthor: r.postAuthor,
+      reason: r.reason,
+      status: r.status,
+      resolvedAction: r.resolvedAction || 'none',
+      createdAt: new Date(r.timestamp).toISOString()
+    }));
+    return res.json({ success: true, type: 'reports', data: exportReports });
+  }
+
+  res.status(400).json({ error: 'Invalid export type' });
+});
+
+app.post('/api/manager/ban-user', requireAdmin, (req, res) => {
+  const { authorName, studentId, userId, reason } = req.body;
+  if (!authorName && !studentId && !userId) return res.status(400).json({ error: 'Missing target user' });
+
+  // Resolve studentId from post author if not directly provided
+  let resolvedStudentId = studentId || null;
+  let resolvedUserId = userId || null;
+  if (!resolvedStudentId) {
+    const matchingPost = posts.find(p => p.author && p.author.name === authorName && p.authorInternal?.studentId);
+    if (matchingPost) {
+      resolvedStudentId = matchingPost.authorInternal.studentId;
+      resolvedUserId = matchingPost.authorInternal.userId;
+    }
+  }
+
+  if (!isBanned(authorName, resolvedStudentId, resolvedUserId)) {
     bannedUsers.push({
-      name: authorName,
+      name: authorName || 'Unknown',
+      studentId: resolvedStudentId,
+      userId: resolvedUserId,
       reason: reason || 'ละเมิดกฎการใช้งาน',
       bannedAt: Date.now()
     });
     saveBanned();
-    addAuditLog('BAN_USER', `Banned user ${authorName}. Reason: ${reason || 'ละเมิดกฎ'}`);
+    addAuditLog('BAN_USER', `Banned user ${authorName || ''} (Student ID: ${resolvedStudentId || 'N/A'}). Reason: ${reason || 'ละเมิดกฎ'}`);
 
-    io.emit('author_banned', { authorName, reason: reason || 'ละเมิดกฎการใช้งาน' });
+    io.emit('author_banned', { authorName, studentId: resolvedStudentId, reason: reason || 'ละเมิดกฎการใช้งาน' });
   }
 
   res.json({ success: true, bannedUsers });
 });
 
 app.post('/api/manager/unban-user', requireAdmin, (req, res) => {
-  const { authorName } = req.body;
-  bannedUsers = bannedUsers.filter(u => u.name !== authorName);
+  const { authorName, studentId } = req.body;
+  bannedUsers = bannedUsers.filter(u => {
+    if (authorName && u.name === authorName) return false;
+    if (studentId && u.studentId === studentId) return false;
+    return true;
+  });
   saveBanned();
 
-  addAuditLog('UNBAN_USER', `Unbanned user ${authorName}`);
+  addAuditLog('UNBAN_USER', `Unbanned user ${authorName || studentId}`);
   res.json({ success: true, bannedUsers });
 });
 
@@ -804,21 +950,43 @@ io.on('connection', (socket) => {
     }
 
     const authorName = sanitizeInput(data.author?.name || 'Anon', 50);
-    const authorRole = data.author?.role || 'student';
 
-    if (isBanned(authorName)) {
-      socket.emit('action_blocked', { message: 'ตัวตนของคุณถูกระงับสิทธิ์เนื่องจากละเมิดกฎการใช้งาน' });
+    // Resolve student user if token is provided
+    const studentToken = data.studentToken || data.author?.studentToken;
+    const student = studentToken ? users.find(u => u.token === studentToken) : null;
+
+    if (isBanned(authorName, student?.studentId, student?.id)) {
+      socket.emit('action_blocked', { message: 'ตัวตนหรือบัญชีของคุณถูกระงับสิทธิ์เนื่องจากละเมิดกฎการใช้งาน' });
       return;
     }
 
     // STRICT PERMISSION: Announcements channel can ONLY be posted by Manager
     if (data.channel === 'announcements') {
       const token = data.adminToken;
-      const isAdmin = token && activeTokens.has(token);
+      const isAdmin = token && isValidAdminToken(token);
       if (!isAdmin) {
         socket.emit('action_blocked', { message: '📢 ห้องประกาศอนุญาตให้เฉพาะผู้ดูแล (Manager) โพสต์ผ่านหน้าจัดการ (Manager Portal) เท่านั้น' });
         return;
       }
+    }
+
+    // Cryptographic role verification to prevent spoofing
+    let verifiedRole = 'student';
+    let isOfficial = false;
+    let verifiedBadge = sanitizeInput(data.author?.badge || '👤', 10);
+
+    if (data.author?.role === 'teacher' && isValidRoleToken(data.author?.roleToken, 'teacher')) {
+      verifiedRole = 'teacher';
+      isOfficial = true;
+      verifiedBadge = '👨‍🏫';
+    } else if (data.author?.role === 'moderator' && isValidRoleToken(data.author?.roleToken, 'moderator')) {
+      verifiedRole = 'moderator';
+      isOfficial = true;
+      verifiedBadge = '🛡️';
+    } else if (data.author?.role === 'admin' && isValidAdminToken(data.adminToken)) {
+      verifiedRole = 'admin';
+      isOfficial = true;
+      verifiedBadge = '👑';
     }
 
     const cleanTitle = sanitizeInput(data.title, 150);
@@ -834,10 +1002,14 @@ io.on('connection', (socket) => {
       channel: data.channel,
       author: {
         name: authorName,
-        badge: sanitizeInput(data.author?.badge || '👤', 10),
+        badge: verifiedBadge,
         color: sanitizeInput(data.author?.color || '#a855f7', 20),
-        role: authorRole,
-        official: authorRole === 'teacher' || authorRole === 'admin'
+        role: verifiedRole,
+        official: isOfficial
+      },
+      authorInternal: {
+        studentId: student ? student.studentId : null,
+        userId: student ? student.id : null
       },
       title: cleanTitle,
       content: cleanContent,
@@ -846,14 +1018,18 @@ io.on('connection', (socket) => {
       upvotes: 1,
       downvotes: 0,
       reactions: { '🔥': 0, '💀': 0, '💡': 0, '🤫': 0, '❤️': 0 },
-      comments: []
+      comments: [],
+      status: data.channel === 'requests' ? 'pending' : undefined,
+      officialResponse: data.channel === 'requests' ? '' : undefined
     };
 
     posts.unshift(newPost);
     savePosts();
 
-    // Broadcast to everyone
-    io.emit('new_post', newPost);
+    // Broadcast to everyone (anonymized, no studentId/userId in public socket payload)
+    const broadcastPost = { ...newPost };
+    delete broadcastPost.authorInternal;
+    io.emit('new_post', broadcastPost);
   });
 
   // Client votes on a post
@@ -900,7 +1076,7 @@ io.on('connection', (socket) => {
   });
 
   // Client adds a comment
-  socket.on('add_comment', ({ postId, author, content }) => {
+  socket.on('add_comment', ({ postId, author, content, studentToken }) => {
     // Rate limit: 1 comment per 3s
     if (!checkRateLimit(`comment_${socket.id}`, 1, 3000)) {
       socket.emit('action_blocked', { message: 'โปรดรอสักครู่ก่อนแสดงความคิดเห็นถัดไป' });
@@ -908,10 +1084,10 @@ io.on('connection', (socket) => {
     }
 
     const authorName = sanitizeInput(author?.name || 'Anon', 50);
-    const authorRole = author?.role || 'student';
+    const student = studentToken ? users.find(u => u.token === studentToken) : null;
 
-    if (isBanned(authorName)) {
-      socket.emit('action_blocked', { message: 'ตัวตนของคุณถูกระงับสิทธิ์เนื่องจากละเมิดกฎการใช้งาน' });
+    if (isBanned(authorName, student?.studentId, student?.id)) {
+      socket.emit('action_blocked', { message: 'ตัวตนหรือบัญชีของคุณถูกระงับสิทธิ์เนื่องจากละเมิดกฎการใช้งาน' });
       return;
     }
 
@@ -921,16 +1097,31 @@ io.on('connection', (socket) => {
     const cleanContent = sanitizeInput(content, 1000);
     if (!cleanContent) return;
 
+    // Cryptographic role verification for comments
+    let verifiedRole = 'student';
+    let isOfficial = false;
+    let verifiedBadge = sanitizeInput(author?.badge || '💬', 10);
+
+    if (author?.role === 'teacher' && isValidRoleToken(author?.roleToken, 'teacher')) {
+      verifiedRole = 'teacher';
+      isOfficial = true;
+      verifiedBadge = '👨‍🏫';
+    } else if (author?.role === 'moderator' && isValidRoleToken(author?.roleToken, 'moderator')) {
+      verifiedRole = 'moderator';
+      isOfficial = true;
+      verifiedBadge = '🛡️';
+    }
+
     if (!post.comments) post.comments = [];
 
     const newComment = {
       id: 'c_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
       author: {
         name: authorName,
-        badge: sanitizeInput(author?.badge || '💬', 10),
+        badge: verifiedBadge,
         color: sanitizeInput(author?.color || '#06b6d4', 20),
-        role: authorRole,
-        official: authorRole === 'teacher' || authorRole === 'admin'
+        role: verifiedRole,
+        official: isOfficial
       },
       content: cleanContent,
       timestamp: Date.now()
@@ -956,7 +1147,7 @@ io.on('connection', (socket) => {
   });
 
   // Live shoutbox message
-  socket.on('send_shout', ({ author, text }) => {
+  socket.on('send_shout', ({ author, text, studentToken }) => {
     // Rate limit: 1 shout per 2s
     if (!checkRateLimit(`shout_${socket.id}`, 1, 2000)) {
       socket.emit('action_blocked', { message: 'พิมพ์คุยสดเร็วเกินไป โปรดรอ 2 วินาที' });
@@ -964,8 +1155,10 @@ io.on('connection', (socket) => {
     }
 
     const authorName = sanitizeInput(author?.name || 'Anon', 50);
-    if (isBanned(authorName)) {
-      socket.emit('action_blocked', { message: 'ตัวตนของคุณถูกระงับสิทธิ์เนื่องจากละเมิดกฎการใช้งาน' });
+    const student = studentToken ? users.find(u => u.token === studentToken) : null;
+
+    if (isBanned(authorName, student?.studentId, student?.id)) {
+      socket.emit('action_blocked', { message: 'ตัวตนหรือบัญชีของคุณถูกระงับสิทธิ์เนื่องจากละเมิดกฎการใช้งาน' });
       return;
     }
 
