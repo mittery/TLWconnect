@@ -27,6 +27,7 @@ if (IS_PROD) {
   const missingSecrets = [];
   if (!ADMIN_PASSCODE) missingSecrets.push('ADMIN_PASSCODE');
   if (!TEACHER_PIN) missingSecrets.push('TEACHER_PIN');
+  if (!MOD_PIN) missingSecrets.push('MOD_PIN');
   if (!HASH_SALT) missingSecrets.push('HASH_SALT');
 
   if (missingSecrets.length > 0) {
@@ -37,22 +38,40 @@ if (IS_PROD) {
 }
 
 // Strict CORS configuration for Express & Socket.IO
+// Handle CLIENT_ORIGIN with trailing slash sanitization
+const clientOriginEnv = process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.trim().replace(/\/+$/, '') : null;
+
 const allowedOrigins = [
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
   'https://tlwconnect.onrender.com'
 ];
 
+if (clientOriginEnv && !allowedOrigins.includes(clientOriginEnv)) {
+  allowedOrigins.push(clientOriginEnv);
+}
+
+// In local development, add localhost origins
+if (!IS_PROD) {
+  allowedOrigins.push('http://localhost:3000', 'http://127.0.0.1:3000');
+}
+
 function isOriginAllowed(origin) {
-  if (!origin) return true; // Allow same-origin, curl, mobile apps
-  if (allowedOrigins.includes(origin)) return true;
-  if (origin.endsWith('.onrender.com')) return true;
+  // Allow requests without Origin (e.g., same-origin requests, mobile native webviews, curl, Render health checks)
+  if (!origin) return true;
+
+  const cleanOrigin = origin.trim().replace(/\/+$/, '');
+  if (allowedOrigins.includes(cleanOrigin)) return true;
+
+  // Development-only origins: local network IPs and trycloudflare tunnel (strictly disabled in production)
   if (!IS_PROD) {
-    // Only allow local network and development tunnels in dev mode
-    if (origin.endsWith('.trycloudflare.com') || origin.startsWith('http://192.168.') || origin.startsWith('http://10.')) {
+    if (cleanOrigin.endsWith('.trycloudflare.com') ||
+        cleanOrigin.startsWith('http://192.168.') ||
+        cleanOrigin.startsWith('http://10.') ||
+        cleanOrigin.startsWith('http://localhost:') ||
+        cleanOrigin.startsWith('http://127.0.0.1:')) {
       return true;
     }
   }
+
   return false;
 }
 
@@ -560,7 +579,7 @@ app.post('/api/auth/register', (req, res) => {
   users.push(newUser);
   saveUsers();
 
-  addAuditLog('USER_REGISTER', `นักเรียนลงทะเบียนใหม่: ${cleanFullName} (รหัส: ${cleanStudentId})`);
+  addAuditLog('USER_REGISTER', `นักเรียนลงทะเบียนใหม่ (รหัส: ${cleanStudentId})`);
 
   res.json({
     success: true,
@@ -615,7 +634,7 @@ app.post('/api/auth/login', (req, res) => {
   }
   saveUsers();
 
-  addAuditLog('USER_LOGIN', `นักเรียนเข้าสู่ระบบ: ${user.fullName} (รหัส: ${user.studentId})`);
+  addAuditLog('USER_LOGIN', `นักเรียนเข้าสู่ระบบ (รหัส: ${user.studentId})`);
 
   res.json({
     success: true,
