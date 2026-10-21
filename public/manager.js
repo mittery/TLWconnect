@@ -736,11 +736,25 @@ function setupEventListeners() {
     }
   });
 
-  // Logout
-  btnLogout.addEventListener('click', () => {
+  // Logout & Server-Side Token Revocation
+  btnLogout.addEventListener('click', async () => {
+    try {
+      if (authToken) {
+        await fetch('/api/manager/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + authToken
+          }
+        });
+      }
+    } catch (e) {
+      // Continue client cleanup even if network request fails
+    }
     sessionStorage.removeItem('tlw_manager_token');
     authToken = null;
     showLogin();
+    showToast('ออกจากระบบและเพิกถอนสิทธิ์เรียบร้อยแล้ว');
   });
 
   // Tabs

@@ -2732,6 +2732,26 @@ body {
   font-weight: 600;
 }
 
+.auth-shared-device-note {
+  font-size: 0.73rem;
+  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  line-height: 1.45;
+  margin-top: 0.45rem;
+}
+
+.auth-shared-device-note strong {
+  color: #fecaca;
+}
+
+.auth-shared-device-note em {
+  font-style: normal;
+  color: #fde047;
+}
+
 /* Submit Button */
 .btn-auth-submit {
   width: 100%;
