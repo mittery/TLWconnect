@@ -793,7 +793,7 @@ function createPostCard(post, isNew = false) {
   if (post.author?.role === 'teacher') {
     roleBadgeHtml = '<span class="role-pill-badge teacher-pill" style="font-size: 0.68rem; background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.5); color: #93c5fd; padding: 2px 7px; border-radius: 9999px; font-weight: 600;">👨‍🏫 คุณครู ท.ล.ว.</span>';
   } else if (post.author?.role === 'moderator') {
-    roleBadgeHtml = '<span class="role-pill-badge mod-pill" style="font-size: 0.68rem; background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.5); color: #fde047; padding: 2px 7px; border-radius: 9999px; font-weight: 600;">🛡️ ผู้ตรวจการ</span>';
+    roleBadgeHtml = '<span class="role-pill-badge mod-pill" style="font-size: 0.68rem; background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.5); color: #fde047; padding: 2px 7px; border-radius: 9999px; font-weight: 600;">🛡️ สภานักเรียน</span>';
   } else if (post.author?.role === 'admin') {
     roleBadgeHtml = '<span class="role-pill-badge admin-pill" style="font-size: 0.68rem; background: rgba(236,72,153,0.2); border: 1px solid rgba(236,72,153,0.5); color: #f472b6; padding: 2px 7px; border-radius: 9999px; font-weight: 600;">👑 แอดมิน</span>';
   }
@@ -1079,7 +1079,7 @@ function createCommentElement(c) {
   if (c.author?.role === 'teacher') {
     commentRoleBadge = ' <span class="role-pill-badge teacher-pill" style="font-size: 0.65rem; background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.5); color: #93c5fd; padding: 1px 6px; border-radius: 9999px; font-weight: 600;">👨‍🏫 ครู ท.ล.ว.</span>';
   } else if (c.author?.role === 'moderator') {
-    commentRoleBadge = ' <span class="role-pill-badge mod-pill" style="font-size: 0.65rem; background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.5); color: #fde047; padding: 1px 6px; border-radius: 9999px; font-weight: 600;">🛡️ ผู้ตรวจการ</span>';
+    commentRoleBadge = ' <span class="role-pill-badge mod-pill" style="font-size: 0.65rem; background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.5); color: #fde047; padding: 1px 6px; border-radius: 9999px; font-weight: 600;">🛡️ สภานักเรียน</span>';
   }
 
   div.innerHTML = `
@@ -1371,7 +1371,7 @@ function setupEventListeners() {
     const roleMap = {
       student: 'นักเรียน (Student)',
       teacher: 'คุณครู ท.ล.ว. (Teacher) 👨‍🏫',
-      moderator: 'ผู้ตรวจการ (Moderator) 🛡️'
+      moderator: 'สภานักเรียน (Student Council) 🛡️'
     };
     if (currentRoleLabel) {
       currentRoleLabel.textContent = roleMap[currentPersona.role || 'student'] || 'นักเรียน';
@@ -1397,7 +1397,7 @@ function setupEventListeners() {
           rolePinInput.focus();
           if (roleVerifyMsg) roleVerifyMsg.classList.add('hidden');
           if (rolePinLabel) {
-            rolePinLabel.textContent = targetRole === 'teacher' ? 'กรอกรหัสผ่านยืนยันตัวตนคุณครู' : 'กรอกรหัสผ่านยืนยันผู้ตรวจการ';
+            rolePinLabel.textContent = targetRole === 'teacher' ? 'กรอกรหัสผ่านยืนยันตัวตนคุณครู' : 'กรอกรหัสผ่านยืนยันสภานักเรียน';
           }
         }
       }

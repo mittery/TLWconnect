@@ -288,7 +288,7 @@ function renderPostsTable() {
           <div>
             <div class="author-name-sm">${escapeHtml(post.author.name)}</div>
             ${post.author.role === 'teacher' ? '<span style="color: #60a5fa; font-size: 0.65rem; font-weight: 700;">[ครู ท.ล.ว.] </span>' : ''}
-            ${post.author.role === 'moderator' ? '<span style="color: #f59e0b; font-size: 0.65rem; font-weight: 700;">[ผู้ตรวจการ] </span>' : ''}
+            ${post.author.role === 'moderator' ? '<span style="color: #f59e0b; font-size: 0.65rem; font-weight: 700;">[สภานักเรียน] </span>' : ''}
             ${isAuthorBanned ? '<span style="color: #ef4444; font-size: 0.65rem; font-weight: 700;">[BANNED]</span>' : ''}
           </div>
         </div>
