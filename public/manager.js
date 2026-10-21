@@ -317,6 +317,11 @@ function renderPostsTable() {
       </td>
       <td>
         <div class="table-actions">
+          ${post.channel === 'requests' ? `
+            <button class="action-btn btn-status" data-post-id="${post.id}" style="border-color: rgba(234, 179, 8, 0.4); color: #facc15;" title="อัปเดตสถานะคำร้อง">
+              📋 ${post.status === 'in_progress' ? 'กำลังทำ' : (post.status === 'resolved' ? 'เสร็จสิ้น' : 'รอตรวจ')}
+            </button>
+          ` : ''}
           <button class="action-btn btn-delete" data-post-id="${post.id}" data-author-name="${escapeHtml(post.author.name)}" data-post-title="${escapeHtml(post.title)}" title="ลบกระทู้">
             🗑️ ลบ
           </button>
@@ -333,6 +338,12 @@ function renderPostsTable() {
   });
 
   // Attach button events
+  moderationPostsTbody.querySelectorAll('.btn-status').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openRequestModal(btn.dataset.postId);
+    });
+  });
+
   moderationPostsTbody.querySelectorAll('.btn-delete').forEach(btn => {
     btn.addEventListener('click', () => {
       openDeleteModal(btn.dataset.postId, btn.dataset.postTitle, btn.dataset.authorName);
@@ -955,3 +966,121 @@ function formatRelativeTime(timestamp) {
   if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} ชม. ที่แล้ว`;
   return `${Math.floor(diffSec / 86400)} วันที่แล้ว`;
 }
+
+// ================= REQUEST STATUS MODAL & EXPORT CSV =================
+const updateRequestModal = document.getElementById('update-request-modal');
+const requestModalPostId = document.getElementById('request-modal-post-id');
+const requestModalPostTitle = document.getElementById('request-modal-post-title');
+const requestModalStatusSelect = document.getElementById('request-modal-status-select');
+const requestModalResponseInput = document.getElementById('request-modal-response-input');
+const btnCloseRequestModal = document.getElementById('btn-close-request-modal');
+const btnCancelRequestModal = document.getElementById('btn-cancel-request-modal');
+const btnSaveRequestModal = document.getElementById('btn-save-request-modal');
+const btnExportPosts = document.getElementById('btn-export-posts');
+
+function openRequestModal(postId) {
+  const post = currentPosts.find(p => p.id === postId);
+  if (!post) return;
+
+  requestModalPostId.value = post.id;
+  requestModalPostTitle.textContent = `"${post.title}" (ผู้โพสต์: ${post.author.name})`;
+  requestModalStatusSelect.value = post.status || 'pending';
+  requestModalResponseInput.value = post.officialResponse || '';
+  if (updateRequestModal) updateRequestModal.classList.remove('hidden');
+}
+
+function closeRequestModal() {
+  if (updateRequestModal) updateRequestModal.classList.add('hidden');
+}
+
+if (btnCloseRequestModal) btnCloseRequestModal.addEventListener('click', closeRequestModal);
+if (btnCancelRequestModal) btnCancelRequestModal.addEventListener('click', closeRequestModal);
+
+if (btnSaveRequestModal) {
+  btnSaveRequestModal.addEventListener('click', async () => {
+    const postId = requestModalPostId.value;
+    const status = requestModalStatusSelect.value;
+    const officialResponse = requestModalResponseInput.value.trim();
+
+    try {
+      const res = await fetch('/api/manager/update-request-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + authToken
+        },
+        body: JSON.stringify({ postId, status, officialResponse })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const post = currentPosts.find(p => p.id === postId);
+        if (post) {
+          post.status = status;
+          post.officialResponse = officialResponse;
+        }
+        renderPostsTable();
+        closeRequestModal();
+        showToast('✅ อัปเดตสถานะและตอบกลับคำร้องสำเร็จแล้ว');
+      } else {
+        showToast('เกิดข้อผิดพลาด: ' + (data.error || 'ไม่สามารถอัปเดตได้'));
+      }
+    } catch (err) {
+      showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+    }
+  });
+}
+
+// Export CSV Functionality
+if (btnExportPosts) {
+  btnExportPosts.addEventListener('click', async () => {
+    try {
+      showToast('⏳ กำลังรวบรวมข้อมูลรายงาน...');
+      const res = await fetch('/api/manager/export-data?type=posts', {
+        headers: {
+          'Authorization': 'Bearer ' + authToken
+        }
+      });
+      const result = await res.json();
+      if (result.success && Array.isArray(result.data)) {
+        const headers = ['ID', 'ห้อง', 'ผู้โพสต์', 'บทบาท', 'หัวข้อ', 'เนื้อหา', 'แท็ก', 'สถานะ', 'คำชี้แจงจากโรงเรียน', 'Upvotes', 'Downvotes', 'คอมเมนต์', 'วันที่สร้าง'];
+        const csvRows = [headers.join(',')];
+
+        result.data.forEach(item => {
+          const escapeCsv = (str) => `"${(str || '').toString().replace(/"/g, '""')}"`;
+          csvRows.push([
+            escapeCsv(item.id),
+            escapeCsv(item.channel),
+            escapeCsv(item.authorName),
+            escapeCsv(item.authorRole),
+            escapeCsv(item.title),
+            escapeCsv(item.content),
+            escapeCsv(item.tags),
+            escapeCsv(item.status),
+            escapeCsv(item.officialResponse),
+            item.upvotes,
+            item.downvotes,
+            item.commentsCount,
+            escapeCsv(item.createdAt)
+          ].join(','));
+        });
+
+        const csvContent = '\uFEFF' + csvRows.join('\r\n'); // BOM for Thai Excel
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tlwconnect_report_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('📥 ดาวน์โหลดรายงานสรุป CSV เรียบร้อยแล้ว');
+      } else {
+        showToast('ไม่สามารถดาวน์โหลดข้อมูลได้: ' + (result.error || ''));
+      }
+    } catch (e) {
+      showToast('เกิดข้อผิดพลาดในการส่งออกรายงาน');
+    }
+  });
+}
+
