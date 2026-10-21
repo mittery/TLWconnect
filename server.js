@@ -15,30 +15,53 @@ const app = express();
 const server = http.createServer(app);
 
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || 'tlw2026';
-const TEACHER_PIN = process.env.TEACHER_PIN || 'tlw-teacher-2026';
-const MOD_PIN = process.env.MOD_PIN || 'tlw-mod-2026';
-const HASH_SALT = process.env.HASH_SALT || 'tlw_connect_secret_salt_2026';
+const IS_PROD = process.env.NODE_ENV === 'production';
 
-// CORS configuration for Express & Socket.IO
+// Strict Environment Variables Check for Production
+const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || (IS_PROD ? null : 'tlw2026');
+const TEACHER_PIN = process.env.TEACHER_PIN || (IS_PROD ? null : 'tlw-teacher-2026');
+const MOD_PIN = process.env.MOD_PIN || (IS_PROD ? null : 'tlw-mod-2026');
+const HASH_SALT = process.env.HASH_SALT || (IS_PROD ? null : 'tlw_connect_secret_salt_2026');
+
+if (IS_PROD) {
+  const missingSecrets = [];
+  if (!ADMIN_PASSCODE) missingSecrets.push('ADMIN_PASSCODE');
+  if (!TEACHER_PIN) missingSecrets.push('TEACHER_PIN');
+  if (!HASH_SALT) missingSecrets.push('HASH_SALT');
+
+  if (missingSecrets.length > 0) {
+    console.error(`[CRITICAL SECURITY ERROR] Missing mandatory environment variables in production: ${missingSecrets.join(', ')}`);
+    console.error('[CRITICAL] Server startup aborted to prevent using insecure defaults. Please set these variables in Render Dashboard.');
+    process.exit(1);
+  }
+}
+
+// Strict CORS configuration for Express & Socket.IO
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'https://tlwconnect.onrender.com'
 ];
+
+function isOriginAllowed(origin) {
+  if (!origin) return true; // Allow same-origin, curl, mobile apps
+  if (allowedOrigins.includes(origin)) return true;
+  if (origin.endsWith('.onrender.com')) return true;
+  if (!IS_PROD) {
+    // Only allow local network and development tunnels in dev mode
+    if (origin.endsWith('.trycloudflare.com') || origin.startsWith('http://192.168.') || origin.startsWith('http://10.')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (
-      allowedOrigins.includes(origin) ||
-      origin.endsWith('.trycloudflare.com') ||
-      origin.endsWith('.onrender.com') ||
-      origin.startsWith('http://192.168.') ||
-      origin.startsWith('http://10.')
-    ) {
+    if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
-    return callback(null, true); // Permissive during transitional phase
+    return callback(new Error('CORS policy: This origin is not allowed access.'));
   },
   credentials: true
 };
@@ -47,7 +70,12 @@ app.use(cors(corsOptions));
 
 const io = new Server(server, {
   cors: {
-    origin: corsOptions.origin,
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Socket.IO CORS policy: Access denied.'));
+    },
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -415,7 +443,7 @@ app.post('/api/auth/verify-role', (req, res) => {
   const trimmedPin = (pin || '').trim();
 
   if (role === 'teacher') {
-    if (trimmedPin === TEACHER_PIN || trimmedPin === ADMIN_PASSCODE) {
+    if (trimmedPin === TEACHER_PIN) {
       const roleToken = 'role_' + crypto.randomBytes(24).toString('hex');
       verifiedRoles.set(roleToken, { role: 'teacher', ip: clientIp, verifiedAt: Date.now() });
       addAuditLog('ROLE_VERIFIED', `Teacher role verified from IP ${clientIp}`);
@@ -423,7 +451,7 @@ app.post('/api/auth/verify-role', (req, res) => {
     }
     return res.status(403).json({ success: false, error: 'รหัสผ่านยืนยันตัวตนคุณครูไม่ถูกต้อง' });
   } else if (role === 'moderator') {
-    if (trimmedPin === MOD_PIN || trimmedPin === ADMIN_PASSCODE) {
+    if (trimmedPin === MOD_PIN) {
       const roleToken = 'role_' + crypto.randomBytes(24).toString('hex');
       verifiedRoles.set(roleToken, { role: 'moderator', ip: clientIp, verifiedAt: Date.now() });
       addAuditLog('ROLE_VERIFIED', `Moderator role verified from IP ${clientIp}`);
@@ -470,20 +498,25 @@ app.get('/api/shouts', (req, res) => {
   res.json(shouts.slice(-30));
 });
 
-app.get('/api/network-info', (req, res) => {
+// Restricted: Only authenticated Admin can view network diagnostics
+app.get('/api/network-info', requireAdmin, (req, res) => {
   const localIp = getLocalIp();
   res.json({
-    localIp,
+    localIp: IS_PROD ? 'restricted' : localIp,
     port: PORT,
-    localUrl: `http://${localIp}:${PORT}`,
-    tunnelUrl: 'https://closely-assure-sit-lines.trycloudflare.com',
-    tunnelPassword: ''
+    localUrl: IS_PROD ? 'https://tlwconnect.onrender.com' : `http://${localIp}:${PORT}`
   });
 });
 
 // ================= STUDENT ACCOUNT & AUTHENTICATION =================
 // 1. Register New Student Account (PDPA Protected - Never Stores Plaintext National ID)
 app.post('/api/auth/register', (req, res) => {
+  const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+  // Rate limit: Max 5 registrations per 15 minutes per IP
+  if (!checkRateLimit(`reg_${clientIp}`, 5, 15 * 60 * 1000)) {
+    return res.status(429).json({ success: false, error: 'คุณลงทะเบียนบัญชีบ่อยเกินไป กรุณารอ 15 นาที' });
+  }
+
   const { fullName, idCard, studentId } = req.body;
 
   const cleanFullName = sanitizeInput((fullName || '').trim(), 80);
@@ -544,6 +577,12 @@ app.post('/api/auth/register', (req, res) => {
 
 // 2. Student Login
 app.post('/api/auth/login', (req, res) => {
+  const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+  // Rate limit: Max 10 login attempts per minute per IP
+  if (!checkRateLimit(`student_login_${clientIp}`, 10, 60 * 1000)) {
+    return res.status(429).json({ success: false, error: 'เข้าสู่ระบบบ่อยเกินไป กรุณารอ 1 นาที' });
+  }
+
   const { studentId, idCard, fullName } = req.body;
 
   const cleanStudentId = (studentId || '').toString().replace(/\D/g, '');
@@ -664,6 +703,19 @@ app.post('/api/manager/login', (req, res) => {
       });
     }
   }
+});
+
+// Manager Logout & Token Revocation
+app.post('/api/manager/logout', requireAdmin, (req, res) => {
+  let token = req.headers['authorization'] || req.body?.token || req.query?.token;
+  if (token && token.startsWith('Bearer ')) {
+    token = token.slice(7);
+  }
+  if (token && activeTokens.has(token)) {
+    activeTokens.delete(token);
+    addAuditLog('LOGOUT', `Manager token revoked on logout from IP ${req.ip || 'unknown'}`);
+  }
+  res.json({ success: true, message: 'Logged out and token revoked' });
 });
 
 app.get('/api/manager/overview', requireAdmin, (req, res) => {
