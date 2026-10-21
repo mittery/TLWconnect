@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TLWconnect — ศูนย์จัดการสำหรับผู้ดูแล (Manager Portal)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="manager.css">
+</head>
+<body>
+
+  <!-- ================= AUTH LOGIN SCREEN ================= -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-card">
+      <div class="login-icon-wrap">
+        <span>🛡️</span>
+      </div>
+      <h2>TLWconnect Manager</h2>
+      <p class="login-sub">ศูนย์ควบคุมและตรวจสอบการละเมิดกฎระเบียบ</p>
+
+      <form id="manager-login-form" class="login-form">
+        <div class="input-group">
+          <label for="passcode-input">Master Passcode</label>
+          <input type="password" id="passcode-input" placeholder="กรอกรหัสผ่านผู้ดูแล..." autocomplete="current-password" required autofocus>
+
+        </div>
+        <div id="login-error-msg" class="login-error hidden">รหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง</div>
+        <button type="submit" id="btn-login" class="btn btn-primary" style="width: 100%;">
+          <span>🔓 เข้าสู่ระบบจัดการ</span>
+        </button>
+      </form>
+      <div class="login-footer">
+        <a href="/" class="back-link">← กลับไปยังหน้าฟอรัมหลัก</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN MANAGER DASHBOARD ================= -->
+  <div id="dashboard-app" class="dashboard-app hidden">
+    
+    <!-- TOP NAVIGATION -->
+    <header class="dash-header">
+      <div class="dash-header-inner">
+        <div class="header-brand-group">
+          <div class="brand-badge">🛡️</div>
+          <div class="brand-text">
+            <h1>TLW<span>connect</span> <span class="badge-role">Manager Portal</span></h1>
+            <div class="live-status-pill">
+              <span class="live-dot"></span>
+              <span id="dash-online-status">ระบบ Real-time ออนไลน์</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button id="btn-open-mobile-connect" class="btn btn-sm btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); border: none; box-shadow: 0 2px 10px rgba(16,185,129,0.3);">
+            <span>📱 สแกนเข้าบนมือถือ (QR)</span>
+          </button>
+          <a href="/" target="_blank" class="btn btn-outline btn-sm">
+            <span>🌐 ดูหน้าเว็บจริง</span>
+          </a>
+          <button id="btn-logout" class="btn btn-secondary btn-sm">
+            <span>🚪 ออกจากระบบ</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="dash-layout">
+
+      <!-- TOP METRIC CARDS -->
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(139, 92, 246, 0.2); color: #c4b5fd;">📝</div>
+          <div class="metric-data">
+            <span class="metric-label">กระทู้ทั้งหมดในระบบ</span>
+            <span class="metric-value" id="metric-total-posts">0</span>
+          </div>
+        </div>
+
+        <div class="metric-card" style="border-color: rgba(239, 68, 68, 0.28);">
+          <div class="metric-icon" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">🚨</div>
+          <div class="metric-data">
+            <span class="metric-label">รายงานที่รอดำเนินการ</span>
+            <span class="metric-value" id="metric-pending-reports-count" style="color: #f87171;">0</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(245, 158, 11, 0.2); color: #fcd34d;">📋</div>
+          <div class="metric-data">
+            <span class="metric-label">ห้องส่งคำร้อง</span>
+            <span class="metric-value" id="metric-requests-count">0</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(6, 182, 212, 0.2); color: #67e8f9;">🌧️</div>
+          <div class="metric-data">
+            <span class="metric-label">ห้องระบาย</span>
+            <span class="metric-value" id="metric-vent-count">0</span>
+          </div>
+        </div>
+
+        <div class="metric-card" style="border-color: rgba(245, 158, 11, 0.35);">
+          <div class="metric-icon" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">🎓</div>
+          <div class="metric-data">
+            <span class="metric-label">นักเรียนที่ลงทะเบียน</span>
+            <span class="metric-value" id="metric-students-count" style="color: #fbbf24;">0</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(100, 116, 139, 0.2); color: #94a3b8;">🚫</div>
+          <div class="metric-data">
+            <span class="metric-label">ผู้ใช้ที่ถูกแบน</span>
+            <span class="metric-value" id="metric-banned-count">0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- NAVIGATION TABS -->
+      <div class="dash-nav-tabs">
+        <button class="nav-tab active" data-tab="posts">
+          <span>📝 ตรวจสอบและลบกระทู้ (Posts Queue)</span>
+        </button>
+        <button class="nav-tab" data-tab="announcements">
+          <span>📢 โพสต์ประกาศโรงเรียน (Announcements)</span>
+        </button>
+        <button class="nav-tab" data-tab="reports">
+          <span>🚨 รายงานการละเมิด (<span id="metric-reports-tab-badge">0</span>)</span>
+        </button>
+        <button class="nav-tab" data-tab="banned">
+          <span>🚫 รายชื่อผู้ถูกแบน (Banned Users)</span>
+        </button>
+        <button class="nav-tab" data-tab="audit">
+          <span>📜 ประวัติการจัดการ (Audit Log)</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: POST MODERATION QUEUE -->
+      <section id="tab-posts-view" class="tab-view active">
+        <!-- Filter and Search Bar -->
+        <div class="table-controls-bar">
+          <div class="filter-group">
+            <label for="filter-channel-select">กรองตามห้อง:</label>
+            <select id="filter-channel-select">
+              <option value="all">🌐 ทุกห้องสนทนา</option>
+              <option value="announcements">📢 ห้องประกาศ</option>
+              <option value="requests">📋 ห้องส่งคำร้อง</option>
+              <option value="vent">🌧️ ห้องระบาย</option>
+              <option value="suggestions">💡 ห้องข้อเสนอแนะ</option>
+              <option value="guidance">🧭 ห้องแนะแนว</option>
+            </select>
+          </div>
+
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="filter-search-input" placeholder="ค้นหาข้อความ, ชื่อ Anon, คำต้องสงสัย...">
+          </div>
+
+          <button id="btn-refresh-posts" class="btn btn-outline btn-sm" title="รีเฟรชข้อมูล">
+            <span>🔄 รีเฟรช</span>
+          </button>
+          <button id="btn-export-posts" class="btn btn-sm btn-outline" style="border-color: rgba(245, 158, 11, 0.4); color: #fbbf24;" title="ส่งออกข้อมูลเป็น CSV">
+            <span>📥 ส่งออกรายงาน CSV</span>
+          </button>
+        </div>
+
+        <!-- Posts Moderation Table -->
+        <div class="table-container">
+          <table class="moderation-table">
+            <thead>
+              <tr>
+                <th style="width: 130px;">ห้องสนทนา</th>
+                <th style="width: 170px;">ผู้โพสต์ (Anon)</th>
+                <th>หัวข้อและเนื้อหากระทู้</th>
+                <th style="width: 90px; text-align: center;">คะแนน</th>
+                <th style="width: 100px; text-align: center;">คอมเมนต์</th>
+                <th style="width: 120px;">เวลา</th>
+                <th style="width: 150px; text-align: center;">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="moderation-posts-tbody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+          <div id="posts-empty-message" class="empty-table hidden">
+            <span>ไม่พบกระทู้ที่ตรงกับเงื่อนไขการค้นหา</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: REPORTS MODERATION QUEUE -->
+      <section id="tab-reports-view" class="tab-view hidden">
+        <div class="section-title-bar">
+          <h3>🚨 รายการรายงานการละเมิดกฎ TLW Connect (Reports Queue)</h3>
+          <p>รายงานจากนักเรียนและผู้ใช้ในระบบ เพื่อให้ผู้ดูแลตรวจสอบ พิจารณาลบกระทู้ ระงับสิทธิ์ หรือยกเลิกรายงาน</p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="table-controls-bar">
+          <div class="filter-group">
+            <label for="filter-report-status">สถานะรายงาน:</label>
+            <select id="filter-report-status">
+              <option value="pending">⏳ รอดำเนินการ (Pending)</option>
+              <option value="all">🌐 รายงานทั้งหมด (All)</option>
+              <option value="resolved">✅ ดำเนินการแล้ว (Resolved)</option>
+            </select>
+          </div>
+
+          <button id="btn-refresh-reports" class="btn btn-outline btn-sm" title="รีเฟรชข้อมูลรายงาน">
+            <span>🔄 รีเฟรช</span>
+          </button>
+        </div>
+
+        <!-- Reports Table -->
+        <div class="table-container">
+          <table class="moderation-table">
+            <thead>
+              <tr>
+                <th style="width: 120px;">สถานะ</th>
+                <th style="width: 140px;">ห้องสนทนา</th>
+                <th style="width: 260px;">กระทู้ที่ถูกรายงาน</th>
+                <th>ข้อที่ละเมิดและรายละเอียด</th>
+                <th style="width: 150px;">ผู้รายงาน / เวลา</th>
+                <th style="width: 220px; text-align: center;">การดำเนินการ</th>
+              </tr>
+            </thead>
+            <tbody id="reports-tbody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+          <div id="reports-empty-message" class="empty-table hidden">
+            <span>🎉 ไม่มีรายงานที่รอดำเนินการในขณะนี้</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: BANNED USERS -->
+      <section id="tab-banned-view" class="tab-view hidden">
+        <div class="section-title-bar">
+          <h3>รายชื่อตัวตนนินามที่ถูกระงับสิทธิ์ (Banned Users)</h3>
+          <p>ผู้ใช้ในรายชื่อนี้จะไม่สามารถโพสต์กระทู้ใหม่ คอมเมนต์ หรือส่งข้อความ shoutbox ได้</p>
+        </div>
+
+        <div class="table-container">
+          <table class="moderation-table">
+            <thead>
+              <tr>
+                <th>ชื่อนิรนาม (Persona)</th>
+                <th>เหตุผลการแบน</th>
+                <th>เวลาที่แบน</th>
+                <th style="width: 120px; text-align: center;">การดำเนินการ</th>
+              </tr>
+            </thead>
+            <tbody id="banned-users-tbody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+          <div id="banned-empty-message" class="empty-table hidden">
+            <span>ไม่มีผู้ใช้ที่ถูกแบนในขณะนี้</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: AUDIT LOG -->
+      <section id="tab-audit-view" class="tab-view hidden">
+        <div class="section-title-bar">
+          <h3>ประวัติการดำเนินการของผู้ดูแล (Audit Log)</h3>
+          <p>บันทึกการลบกระทู้ ลบคอมเมนต์ และการแบนผู้ใช้</p>
+        </div>
+
+        <div class="table-container">
+          <table class="moderation-table">
+            <thead>
+              <tr style="background: rgba(22, 30, 49, 0.8);">
+                <th style="width: 140px;">ประเภทคำสั่ง</th>
+                <th>รายละเอียด</th>
+                <th style="width: 170px;">วันและเวลา</th>
+              </tr>
+            </thead>
+            <tbody id="audit-logs-tbody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB: ANNOUNCEMENTS MANAGER -->
+      <section id="tab-announcements-view" class="tab-view hidden">
+        <div class="section-title-bar">
+          <h3>📢 เผยแพร่ประกาศทางการของโรงเรียน (School Announcements)</h3>
+          <p>โพสต์นี้จะขึ้นใน "ห้องประกาศ" โดยอัตโนมัติ และได้รับตราประทับประกาศทางการที่ไม่มีผู้ใช้อื่นสามารถปลอมแปลงได้</p>
+        </div>
+
+        <div class="announcement-compose-card" style="background: rgba(18, 25, 43, 0.75); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 8px 32px rgba(0,0,0,0.45); backdrop-filter: blur(12px);">
+          <form id="manager-announcement-form">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+              <div class="form-group">
+                <label for="announce-title-input" style="display: block; font-size: 0.82rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem;">หัวข้อประกาศโรงเรียน *</label>
+                <input type="text" id="announce-title-input" placeholder="เช่น แจ้งกำหนดการปิดภาคเรียน หรือกิจกรรมวันวิชาการ..." required style="width: 100%; padding: 0.65rem 0.85rem; font-size: 0.85rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff;">
+              </div>
+              <div class="form-group">
+                <label for="announce-author-input" style="display: block; font-size: 0.82rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem;">นามผู้ประกาศ / หน่วยงาน *</label>
+                <input type="text" id="announce-author-input" value="ฝ่ายบริหาร โรงเรียนท่าลี่วิทยา" required style="width: 100%; padding: 0.65rem 0.85rem; font-size: 0.85rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff;">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label for="announce-content-input" style="display: block; font-size: 0.82rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem;">เนื้อหาประกาศอย่างละเอียด *</label>
+              <textarea id="announce-content-input" rows="4" placeholder="พิมพ์รายละเอียดข้อความประกาศที่ต้องการสื่อสารกับนักเรียนและบุคลากร..." required style="width: 100%; padding: 0.65rem 0.85rem; font-size: 0.85rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+              <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label for="announce-tags-input" style="display: block; font-size: 0.82rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem;">แท็ก (คั่นด้วยจุลภาค เช่น ประกาศโรงเรียน, สอบ, กิจกรรม)</label>
+                <input type="text" id="announce-tags-input" value="ประกาศโรงเรียน, วิชาการ" style="width: 100%; padding: 0.65rem 0.85rem; font-size: 0.82rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: #fff;">
+              </div>
+              <button type="submit" id="btn-publish-announcement" class="btn btn-primary glow-button" style="padding: 0.7rem 1.6rem; height: 42px;">
+                <span>📢 เผยแพร่ประกาศทันที</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="section-title-bar">
+          <h3>รายการประกาศปัจจุบันในระบบ (<span id="announcements-count">0</span>)</h3>
+        </div>
+
+        <div class="table-container">
+          <table class="moderation-table">
+            <thead>
+              <tr>
+                <th style="width: 180px;">ผู้ประกาศ</th>
+                <th>หัวข้อประกาศและเนื้อหา</th>
+                <th style="width: 120px; text-align: center;">คะแนน / คอมเมนต์</th>
+                <th style="width: 140px;">เวลาที่ประกาศ</th>
+                <th style="width: 110px; text-align: center;">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="announcements-tbody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+          <div id="announcements-empty-message" class="empty-table hidden">
+            <span>ยังไม่มีประกาศทางการในระบบ</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CONFIRM DELETE POST ================= -->
+  <div id="delete-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2 style="color: #f87171;">🗑️ ยืนยันการลบกระทู้</h2>
+          <span class="modal-sub">กระทู้นี้จะถูกลบออกจากฟีดของผู้ใช้ทุกคนทันทีแบบเรียลไทม์</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-delete-modal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="preview-box" id="delete-preview-content"></div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+          <label for="delete-reason-select">เลือกเหตุผลในการลบ:</label>
+          <select id="delete-reason-select" class="form-select">
+            <option value="มีคำหยาบคาย / วาจาเกลียดชัง">🤬 มีคำหยาบคาย / วาจาเกลียดชัง (Hate Speech)</option>
+            <option value="คุกคาม / กลั่นแกล้งผู้อื่น">⚠️ คุกคาม / กลั่นแกล้งผู้อื่น (Harassment)</option>
+            <option value="เปิดเผยข้อมูลส่วนบุคคล">🔒 เปิดเผยข้อมูลส่วนบุคคล (Privacy Violation)</option>
+            <option value="สแปม / โฆษณา">📢 สแปม / โฆษณาไม่ได้รับอนุญาต (Spam)</option>
+            <option value="ข้อมูลเท็จ / สร้างความเข้าใจผิด">❌ ข้อมูลเท็จ / บิดเบือน</option>
+            <option value="ละเมิดกฎระเบียบของระบบ">📜 ละเมิดกฎระเบียบทั่วไปของระบบ</option>
+          </select>
+        </div>
+
+        <div class="checkbox-group" style="margin-top: 0.85rem;">
+          <label>
+            <input type="checkbox" id="check-ban-author-too">
+            <span style="color: #fca5a5; font-weight: 600;">🚫 แบนตัวตนผู้โพสต์คนนี้ด้วย (ห้ามโพสต์/ส่งข้อความอีก)</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-delete">ยกเลิก</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete">
+          <span>🗑️ ลบกระทู้ทันที</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: COMMENTS INSPECTION ================= -->
+  <div id="comments-modal" class="modal-overlay hidden">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>💬 ตรวจสอบคอมเมนต์ในกระทู้</h2>
+          <span class="modal-sub" id="comments-modal-post-title"></span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-comments-modal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div id="modal-comments-list" class="comments-manage-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-done-comments">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: MOBILE CONNECT & QR CODE ================= -->
+  <div id="mobile-connect-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>📱 วิธีเข้าใช้งานผ่านโทรศัพท์มือถือ</h2>
+          <span class="modal-sub">เลือกวิธีที่สะดวกเพื่อเปิดหน้าเว็บเวอร์ชันมือถือทันที</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-mobile-modal">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1rem 0;">
+        <!-- Option 1: Direct Zero-Friction Cloudflare URL (ขอแค่มีเน็ต เข้าได้ทันที ไม่มีเงื่อนไข) -->
+        <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.4); border-radius: var(--radius-md); padding: 1.15rem; margin-bottom: 1rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <div style="font-weight: 700; color: #34d399; font-size: 0.95rem;">
+              🚀 ลิงก์ออนไลน์โดยตรง (ขอแค่มีอินเทอร์เน็ต เข้าได้ทันที 100%)
+            </div>
+            <span style="font-size: 0.72rem; background: rgba(16,185,129,0.25); color: #6ee7b7; padding: 2px 8px; border-radius: 9999px; font-weight: 600;">แนะนำ • ไม่มีรหัสผ่าน</span>
+          </div>
+          <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 0.75rem;">
+            ไม่ต้องอยู่วง Wi-Fi เดียวกัน ใช้ 4G / 5G / เน็ตมือถือได้เลย ไม่ต้องกรอกรหัสใดๆ ทั้งสิ้น:
+          </p>
+          <div style="display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://closely-assure-sit-lines.trycloudflare.com/manager.html" alt="Cloudflare QR" style="width: 130px; height: 130px; border-radius: 8px; background: #fff; padding: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <div style="flex: 1; min-width: 200px;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">🛡️ ลิงก์เปิดหน้า Manager บนมือถือ:</div>
+              <a href="https://closely-assure-sit-lines.trycloudflare.com/manager.html" target="_blank" style="display: block; font-size: 0.82rem; color: #34d399; background: rgba(0,0,0,0.4); padding: 0.45rem 0.65rem; border-radius: 6px; word-break: break-all; margin-bottom: 0.5rem; font-weight: 700; text-decoration: none; border: 1px solid rgba(52,211,153,0.3);">
+                https://closely-assure-sit-lines.trycloudflare.com/manager.html
+              </a>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">🌐 ลิงก์ฟอรัมหลัก (นักเรียน):</div>
+              <a href="https://closely-assure-sit-lines.trycloudflare.com" target="_blank" style="display: block; font-size: 0.78rem; color: #a78bfa; background: rgba(0,0,0,0.4); padding: 0.4rem 0.6rem; border-radius: 6px; word-break: break-all; text-decoration: none; border: 1px solid rgba(167,139,250,0.3);">
+                https://closely-assure-sit-lines.trycloudflare.com
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Option 2: Local Wi-Fi (ถ้าอยู่ในบ้าน/รร. เดียวกัน) -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem 1rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+            <div style="font-weight: 600; color: #94a3b8; font-size: 0.82rem;">
+              📶 สำรอง: ลิงก์ Wi-Fi ภายในบ้าน/โรงเรียน
+            </div>
+            <span style="font-size: 0.68rem; color: var(--text-muted);">IP ภายใน</span>
+          </div>
+          <code style="font-size: 0.78rem; color: #38bdf8;">http://192.168.1.48:3000/manager.html</code>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-close-mobile-modal-footer">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: UPDATE REQUEST STATUS ================= -->
+  <div id="update-request-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>📋 อัปเดตสถานะและตอบกลับคำร้อง</h2>
+          <span class="modal-sub" id="request-modal-post-title"></span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-request-modal">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1rem 0;">
+        <input type="hidden" id="request-modal-post-id">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="request-modal-status-select" style="font-weight: 600; font-size: 0.85rem; color: #f1f5f9; display: block; margin-bottom: 0.4rem;">
+            สถานะการดำเนินงาน:
+          </label>
+          <select id="request-modal-status-select" style="width: 100%; padding: 0.65rem; border-radius: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: #fff; font-size: 0.88rem;">
+            <option value="pending">⏳ รอตรวจสอบ (Pending)</option>
+            <option value="in_progress">⚙️ กำลังดำเนินการ (In Progress)</option>
+            <option value="resolved">✅ เสร็จสิ้น / ชี้แจงแล้ว (Resolved)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="request-modal-response-input" style="font-weight: 600; font-size: 0.85rem; color: #f1f5f9; display: block; margin-bottom: 0.4rem;">
+            ข้อความชี้แจง / ตอบกลับจากโรงเรียน (จะแสดงในกล่องสีทองบนหน้าเว็บ):
+          </label>
+          <textarea id="request-modal-response-input" rows="4" style="width: 100%; padding: 0.65rem; border-radius: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: #fff; font-size: 0.88rem; resize: vertical;" placeholder="พิมพ์คำชี้แจงหรือแนวทางแก้ไขปัญหาของโรงเรียน..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-request-modal">ยกเลิก</button>
+        <button type="button" class="btn btn-primary" id="btn-save-request-modal" style="background: linear-gradient(135deg, #eab308, #ca8a04); color: #000; font-weight: 700; border: none;">บันทึกสถานะ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="manager-toast" class="manager-toast hidden"></div>
+
+  <!-- Socket.io -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- Manager Logic -->
+  <script src="manager.js"></script>
+</body>
+</html>
