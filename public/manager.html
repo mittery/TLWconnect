@@ -164,6 +164,9 @@
           <button id="btn-refresh-posts" class="btn btn-outline btn-sm" title="รีเฟรชข้อมูล">
             <span>🔄 รีเฟรช</span>
           </button>
+          <button id="btn-export-posts" class="btn btn-sm btn-outline" style="border-color: rgba(245, 158, 11, 0.4); color: #fbbf24;" title="ส่งออกข้อมูลเป็น CSV">
+            <span>📥 ส่งออกรายงาน CSV</span>
+          </button>
         </div>
 
         <!-- Posts Moderation Table -->
@@ -469,6 +472,45 @@
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="btn-close-mobile-modal-footer">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: UPDATE REQUEST STATUS ================= -->
+  <div id="update-request-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>📋 อัปเดตสถานะและตอบกลับคำร้อง</h2>
+          <span class="modal-sub" id="request-modal-post-title"></span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-request-modal">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1rem 0;">
+        <input type="hidden" id="request-modal-post-id">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="request-modal-status-select" style="font-weight: 600; font-size: 0.85rem; color: #f1f5f9; display: block; margin-bottom: 0.4rem;">
+            สถานะการดำเนินงาน:
+          </label>
+          <select id="request-modal-status-select" style="width: 100%; padding: 0.65rem; border-radius: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: #fff; font-size: 0.88rem;">
+            <option value="pending">⏳ รอตรวจสอบ (Pending)</option>
+            <option value="in_progress">⚙️ กำลังดำเนินการ (In Progress)</option>
+            <option value="resolved">✅ เสร็จสิ้น / ชี้แจงแล้ว (Resolved)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="request-modal-response-input" style="font-weight: 600; font-size: 0.85rem; color: #f1f5f9; display: block; margin-bottom: 0.4rem;">
+            ข้อความชี้แจง / ตอบกลับจากโรงเรียน (จะแสดงในกล่องสีทองบนหน้าเว็บ):
+          </label>
+          <textarea id="request-modal-response-input" rows="4" style="width: 100%; padding: 0.65rem; border-radius: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: #fff; font-size: 0.88rem; resize: vertical;" placeholder="พิมพ์คำชี้แจงหรือแนวทางแก้ไขปัญหาของโรงเรียน..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-request-modal">ยกเลิก</button>
+        <button type="button" class="btn btn-primary" id="btn-save-request-modal" style="background: linear-gradient(135deg, #eab308, #ca8a04); color: #000; font-weight: 700; border: none;">บันทึกสถานะ</button>
       </div>
     </div>
   </div>
