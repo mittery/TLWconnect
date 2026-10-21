@@ -3,6 +3,17 @@ cloudflared.exe
 .DS_Store
 *.log
 npm-debug.log*
+
+# Environment variables & secrets
 .env
 .env.*
+!.env.example
+
+# Runtime & user data
 data/users.json
+data/audit_logs.json
+data/banned.json
+data/reports.json
+data/shouts.json
+data/posts.json
+users.json
