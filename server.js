@@ -474,9 +474,9 @@ app.post('/api/auth/verify-role', (req, res) => {
       const roleToken = 'role_' + crypto.randomBytes(24).toString('hex');
       verifiedRoles.set(roleToken, { role: 'moderator', ip: clientIp, verifiedAt: Date.now() });
       addAuditLog('ROLE_VERIFIED', `Moderator role verified from IP ${clientIp}`);
-      return res.json({ success: true, role: 'moderator', badge: 'ผู้ตรวจการ 🛡️', verified: true, roleToken });
+      return res.json({ success: true, role: 'moderator', badge: 'สภานักเรียน 🛡️', verified: true, roleToken });
     }
-    return res.status(403).json({ success: false, error: 'รหัสยืนยันผู้ตรวจการไม่ถูกต้อง' });
+    return res.status(403).json({ success: false, error: 'รหัสยืนยันสภานักเรียนไม่ถูกต้อง' });
   } else if (role === 'student') {
     return res.json({ success: true, role: 'student', badge: '🎓 นักเรียน', verified: true });
   }
