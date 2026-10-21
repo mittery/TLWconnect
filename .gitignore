@@ -3,3 +3,6 @@ cloudflared.exe
 .DS_Store
 *.log
 npm-debug.log*
+.env
+.env.*
+data/users.json
