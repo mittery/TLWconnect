@@ -233,35 +233,37 @@ function initStudentAuth() {
 
   // Load and apply remembered fields
   const applyRemembered = () => {
-    let flags = { rememberStudentId: true, rememberIdCard: true, rememberFullName: true, autoLogin: true };
+    // PDPA Protection: Immediately purge any previously stored full citizen ID
+    try {
+      localStorage.removeItem(STORAGE_KEYS.IDCARD);
+    } catch (e) {}
+
+    let flags = { rememberStudentId: true, rememberIdCard: false, rememberFullName: true, autoLogin: true };
     try {
       const storedFlags = localStorage.getItem(STORAGE_KEYS.FLAGS);
       if (storedFlags) flags = Object.assign(flags, JSON.parse(storedFlags));
     } catch (e) {}
+    // Enforce rememberIdCard false by default for student privacy
+    flags.rememberIdCard = false;
 
     // Set checkboxes
     if (loginChkRememberStudentId) loginChkRememberStudentId.checked = flags.rememberStudentId;
-    if (loginChkRememberIdCard) loginChkRememberIdCard.checked = flags.rememberIdCard;
+    if (loginChkRememberIdCard) loginChkRememberIdCard.checked = false;
     if (loginChkRememberFullName) loginChkRememberFullName.checked = flags.rememberFullName;
     if (loginChkAutoLogin) loginChkAutoLogin.checked = flags.autoLogin;
 
     if (regChkRememberStudentId) regChkRememberStudentId.checked = flags.rememberStudentId;
-    if (regChkRememberIdCard) regChkRememberIdCard.checked = flags.rememberIdCard;
+    if (regChkRememberIdCard) regChkRememberIdCard.checked = false;
     if (regChkRememberFullName) regChkRememberFullName.checked = flags.rememberFullName;
     if (regChkAutoLogin) regChkAutoLogin.checked = flags.autoLogin;
 
-    // Fill inputs if remembered
+    // Fill inputs if remembered (NEVER prefill ID card)
     const remStudentId = localStorage.getItem(STORAGE_KEYS.STUDENTID) || '';
-    const remIdCard = localStorage.getItem(STORAGE_KEYS.IDCARD) || '';
     const remFullName = localStorage.getItem(STORAGE_KEYS.FULLNAME) || '';
 
     if (flags.rememberStudentId && remStudentId) {
       if (loginStudentId) loginStudentId.value = remStudentId;
       if (regStudentId) regStudentId.value = remStudentId;
-    }
-    if (flags.rememberIdCard && remIdCard) {
-      if (loginIdCard) loginIdCard.value = remIdCard;
-      if (regIdCard) regIdCard.value = remIdCard;
     }
     if (flags.rememberFullName && remFullName) {
       if (loginFullName) loginFullName.value = remFullName;
@@ -273,12 +275,14 @@ function initStudentAuth() {
 
   const saveRemembered = (studentId, idCard, fullName, flags) => {
     try {
-      localStorage.setItem(STORAGE_KEYS.FLAGS, JSON.stringify(flags));
+      // Never persist rememberIdCard as true
+      const safeFlags = { ...flags, rememberIdCard: false };
+      localStorage.setItem(STORAGE_KEYS.FLAGS, JSON.stringify(safeFlags));
       if (flags.rememberStudentId && studentId) localStorage.setItem(STORAGE_KEYS.STUDENTID, studentId);
       else localStorage.removeItem(STORAGE_KEYS.STUDENTID);
 
-      if (flags.rememberIdCard && idCard) localStorage.setItem(STORAGE_KEYS.IDCARD, idCard);
-      else localStorage.removeItem(STORAGE_KEYS.IDCARD);
+      // CRITICAL PDPA SAFETY: NEVER store full citizen ID in browser localStorage
+      localStorage.removeItem(STORAGE_KEYS.IDCARD);
 
       if (flags.rememberFullName && fullName) localStorage.setItem(STORAGE_KEYS.FULLNAME, fullName);
       else localStorage.removeItem(STORAGE_KEYS.FULLNAME);
