@@ -517,6 +517,12 @@ function initApp() {
   setupSocket();
   setupEventListeners();
   initAmbientParticles();
+
+  // ── Notification system ──
+  if (window.tlwNotify) {
+    window.tlwNotify.setupBellButton();
+    window.tlwNotify.maybePromptPermission(10000); // prompt after 10s
+  }
 }
 
 function updateSoundIcon() {
@@ -607,11 +613,22 @@ function setupSocket() {
     allPosts.unshift(post);
     updateChannelCounts();
 
-    // Play subtle arrival sound
-    window.soundEngine.playNotify();
+    // Notification system: banner + push if announcement
+    if (window.tlwNotify) {
+      window.tlwNotify.onNewPost(post);
+    }
 
-    // Toast
-    showToast(`มีกระทู้ใหม่: "${post.title.slice(0, 35)}..."`, 'info');
+    // Play subtle arrival sound (only for non-announcements; banner has its own feel)
+    if (post.channel !== 'announcements') {
+      window.soundEngine.playNotify();
+    } else {
+      window.soundEngine.playPublish();
+    }
+
+    // Toast for non-announcement posts only (announcement has banner)
+    if (post.channel !== 'announcements') {
+      showToast(`มีกระทู้ใหม่: "${post.title.slice(0, 35)}..."`, 'info');
+    }
 
     // If matches current filter, render with pulse
     if (currentChannel === 'all' || currentChannel === post.channel) {
@@ -1258,6 +1275,15 @@ function setupEventListeners() {
       renderFeed();
     });
   });
+
+  // Expose switchChannel globally (used by notify banner "View" button)
+  window.switchChannel = (channel) => {
+    const btn = document.querySelector(`.channel-item[data-channel="${channel}"]`);
+    if (btn) {
+      btn.click();
+      btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
 
   // Sort Tabs
   document.querySelectorAll('.sort-tab').forEach(tab => {

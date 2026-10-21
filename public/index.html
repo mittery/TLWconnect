@@ -214,6 +214,9 @@
           <span id="sound-icon">🔊</span>
         </button>
 
+        <!-- Notification Bell (inserted by notify.js, placeholder ensures ordering) -->
+        <div id="notify-bell-slot"></div>
+
         <!-- Logged-in Student Account Badge & Logout -->
         <div class="student-account-badge" id="student-account-badge" title="บัญชีนักเรียนที่เข้าสู่ระบบ">
           <span class="student-avatar-icon">🎓</span>
@@ -918,6 +921,8 @@
   <script src="/socket.io/socket.io.js"></script>
   <!-- Sound synthesizer using Web Audio API -->
   <script src="sound.js"></script>
+  <!-- Notification system (banners + browser push) -->
+  <script src="notify.js"></script>
   <!-- Main client application -->
   <script src="app.js"></script>
 </body>
