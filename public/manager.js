@@ -1014,7 +1014,12 @@ function renderAnnouncementsTable() {
       const postId = btn.dataset.postId;
       const targetPost = currentPosts.find(p => p.id === postId);
       if (targetPost) {
-        promptDeletePost(targetPost);
+        // openDeleteModal(postId, postTitle, authorName)
+        openDeleteModal(
+          targetPost.id,
+          targetPost.title || 'ประกาศ',
+          targetPost.author?.name || 'ฝ่ายบริหาร'
+        );
       }
     });
   });

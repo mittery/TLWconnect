@@ -520,7 +520,8 @@ function initApp() {
 
   // ── Notification system ──
   if (window.tlwNotify) {
-    window.tlwNotify.setupBellButton();
+    window.tlwNotify.setupBellButton();       // Desktop header bell
+    window.tlwNotify.setupMobileBell();       // Mobile bottom nav bell
     window.tlwNotify.maybePromptPermission(10000); // prompt after 10s
   }
 }

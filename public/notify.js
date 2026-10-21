@@ -253,6 +253,65 @@ class TLWNotify {
 
       /* ── TAB FLASH INDICATOR ── */
       /* (handled in JS by title change) */
+
+      /* ── MOBILE RESPONSIVE ── */
+      @media (max-width: 768px) {
+        .tlw-banner-inner {
+          margin: 8px 10px 0;
+          padding: 10px 12px 10px 14px;
+          gap: 10px;
+          border-radius: 12px;
+        }
+        .tlw-banner-icon { font-size: 1.3rem; }
+        .tlw-banner-label { font-size: 0.6rem; }
+        .tlw-banner-title { font-size: 0.82rem; }
+        .tlw-banner-sub   { font-size: 0.68rem; }
+        .tlw-banner-btn-view {
+          padding: 6px 10px;
+          font-size: 0.72rem;
+        }
+        .tlw-banner-btn-close {
+          width: 28px; height: 28px;
+          font-size: 0.85rem;
+        }
+        /* Permission toast sits above mobile bottom nav (70px tall) */
+        #tlw-notify-permission-toast {
+          bottom: 80px;
+        }
+        /* Mobile bell in bottom nav */
+        #btn-notify-bell-mobile {
+          background: transparent;
+          border: none;
+          color: #94a3b8;
+          font-size: 1.2rem;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%; height: 100%;
+          cursor: pointer;
+          transition: color 0.2s;
+        }
+        #btn-notify-bell-mobile.enabled { color: #4ade80; }
+        #btn-notify-bell-mobile.denied  { color: #f87171; opacity: 0.6; }
+        .mobile-bell-badge {
+          position: absolute;
+          top: 2px; right: calc(50% - 18px);
+          background: #ef4444;
+          color: #fff;
+          border-radius: 9999px;
+          font-size: 0.52rem;
+          font-weight: 800;
+          min-width: 14px; height: 14px;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          padding: 0 3px;
+          border: 1.5px solid #0f172a;
+          animation: bell-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .mobile-bell-badge.visible { display: flex; }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -362,35 +421,58 @@ class TLWNotify {
   }
 
   _updateBellUI() {
+    // Desktop
     const btn = document.getElementById('btn-notify-bell');
     const icon = document.getElementById('bell-icon');
-    if (!btn) return;
-    btn.classList.remove('enabled', 'denied');
-    if (this._permissionState === 'granted') {
-      btn.classList.add('enabled');
-      btn.title = 'การแจ้งเตือนเปิดอยู่ ✅';
-      if (icon) icon.textContent = '🔔';
-    } else if (this._permissionState === 'denied') {
-      btn.classList.add('denied');
-      btn.title = 'การแจ้งเตือนถูกบล็อก — คลิกเพื่อดูวิธีแก้ไข';
-      if (icon) icon.textContent = '🔕';
-    } else {
-      btn.title = 'คลิกเพื่อเปิดรับการแจ้งเตือนประกาศโรงเรียน';
-      if (icon) icon.textContent = '🔔';
+    if (btn) {
+      btn.classList.remove('enabled', 'denied');
+      if (this._permissionState === 'granted') {
+        btn.classList.add('enabled');
+        btn.title = 'การแจ้งเตือนเปิดอยู่ ✅';
+        if (icon) icon.textContent = '🔔';
+      } else if (this._permissionState === 'denied') {
+        btn.classList.add('denied');
+        btn.title = 'การแจ้งเตือนถูกบล็อก — คลิกเพื่อดูวิธีแก้ไข';
+        if (icon) icon.textContent = '🔕';
+      } else {
+        btn.title = 'คลิกเพื่อเปิดรับการแจ้งเตือนประกาศโรงเรียน';
+        if (icon) icon.textContent = '🔔';
+      }
+    }
+    // Mobile
+    const mobileBtn = document.getElementById('btn-notify-bell-mobile');
+    if (mobileBtn) {
+      mobileBtn.classList.remove('enabled', 'denied');
+      if (this._permissionState === 'granted') {
+        mobileBtn.classList.add('enabled');
+        mobileBtn.title = 'การแจ้งเตือนเปิดอยู่ ✅';
+      } else if (this._permissionState === 'denied') {
+        mobileBtn.classList.add('denied');
+      }
     }
   }
 
   _showBadge(count = '') {
+    // Desktop bell badge
     const badge = document.getElementById('bell-badge');
-    if (!badge) return;
-    badge.textContent = count || '';
-    badge.classList.add('visible');
+    if (badge) {
+      badge.textContent = count || '';
+      badge.classList.add('visible');
+    }
+    // Mobile bell badge
+    const mobileBadge = document.getElementById('mobile-bell-badge');
+    if (mobileBadge) {
+      mobileBadge.textContent = count || '';
+      mobileBadge.classList.add('visible');
+    }
     this._shakeBell();
   }
 
   _clearBadge() {
     const badge = document.getElementById('bell-badge');
     if (badge) badge.classList.remove('visible');
+    const mobileBadge = document.getElementById('mobile-bell-badge');
+    if (mobileBadge) mobileBadge.classList.remove('visible');
   }
 
   // ---------------------------------------------------------------
@@ -559,6 +641,35 @@ class TLWNotify {
       this.onAnnouncement(post);
     }
     // No banner for regular posts – existing toast/sound is enough
+  }
+  // ---------------------------------------------------------------
+  // MOBILE BELL BUTTON (call after DOM is ready)
+  // ---------------------------------------------------------------
+  setupMobileBell(slotId = 'notify-mobile-bell-slot') {
+    const slot = document.getElementById(slotId);
+    if (!slot || document.getElementById('btn-notify-bell-mobile')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'btn-notify-bell-mobile';
+    btn.title = 'การแจ้งเตือนประกาศ';
+    btn.innerHTML = `
+      <span id="mobile-bell-icon">🔔</span>
+      <span class="mobile-bell-badge" id="mobile-bell-badge"></span>
+    `;
+    slot.appendChild(btn);
+
+    btn.addEventListener('click', () => {
+      this._clearBadge();
+      if (this._permissionState === 'granted') {
+        if (window.showToast) showToast('✅ เปิดรับการแจ้งเตือนอยู่แล้ว', 'success');
+      } else if (this._permissionState === 'denied') {
+        if (window.showToast) showToast('🚫 ถูกบล็อก — ไปยกเลิกในการตั้งค่าเบราว์เซอร์', 'info');
+      } else {
+        this.requestPermission();
+      }
+    });
+
+    this._updateBellUI();
   }
 }
 
