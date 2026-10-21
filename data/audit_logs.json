@@ -1,5 +1,53 @@
 [
   {
+    "id": "log_1792557040384",
+    "action": "LOGOUT",
+    "detail": "Manager token revoked on logout from IP 127.0.0.1",
+    "timestamp": 1792557040384
+  },
+  {
+    "id": "log_1792557040371",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully from 127.0.0.1",
+    "timestamp": 1792557040371
+  },
+  {
+    "id": "log_1792557040368",
+    "action": "ROLE_VERIFIED",
+    "detail": "Teacher role verified from IP 127.0.0.1",
+    "timestamp": 1792557040368
+  },
+  {
+    "id": "log_1792557007538",
+    "action": "ROLE_VERIFIED",
+    "detail": "Teacher role verified from IP 127.0.0.1",
+    "timestamp": 1792557007538
+  },
+  {
+    "id": "log_1792553625701",
+    "action": "ROLE_VERIFIED",
+    "detail": "Teacher role verified from IP 127.0.0.1",
+    "timestamp": 1792553625701
+  },
+  {
+    "id": "log_1792553625696",
+    "action": "USER_LOGIN",
+    "detail": "นักเรียนเข้าสู่ระบบ: นาย พีรวัฒน์ จันดาศรี (รหัส: 08497)",
+    "timestamp": 1792553625696
+  },
+  {
+    "id": "log_1792553625678",
+    "action": "LOGIN",
+    "detail": "Manager logged in successfully from 127.0.0.1",
+    "timestamp": 1792553625679
+  },
+  {
+    "id": "log_1791980712220",
+    "action": "USER_LOGIN",
+    "detail": "นักเรียนเข้าสู่ระบบ: นาย พีรวัฒน์ จันดาศรี (รหัส: 08497)",
+    "timestamp": 1791980712220
+  },
+  {
     "id": "log_1791980336594",
     "action": "USER_REGISTER",
     "detail": "นักเรียนลงทะเบียนใหม่: นาย พีรวัฒน์ จันดาศรี (รหัส: 08497)",
