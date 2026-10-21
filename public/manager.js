@@ -8,6 +8,7 @@ let currentPosts = [];
 let bannedUsersList = [];
 let auditLogsList = [];
 let reportsList = [];
+let usersList = [];
 
 let activeTab = 'posts';
 let selectedChannel = 'all';
@@ -42,6 +43,11 @@ const tabAnnouncementsView = document.getElementById('tab-announcements-view');
 const tabReportsView = document.getElementById('tab-reports-view');
 const tabBannedView = document.getElementById('tab-banned-view');
 const tabAuditView = document.getElementById('tab-audit-view');
+const tabStudentsView = document.getElementById('tab-students-view');
+const studentsTbody = document.getElementById('students-tbody');
+const studentsEmptyMessage = document.getElementById('students-empty-message');
+const studentsViewCount = document.getElementById('students-view-count');
+const metricStudentsTabBadge = document.getElementById('metric-students-tab-badge');
 
 // Announcements elements
 const managerAnnouncementForm = document.getElementById('manager-announcement-form');
@@ -208,7 +214,8 @@ async function fetchOverviewData() {
     bannedUsersList = data.bannedUsers || [];
     auditLogsList = data.auditLogs || [];
     reportsList = data.reports || [];
-    registeredStudentsCount = data.registeredStudentsCount || 0;
+    usersList = data.users || [];
+    registeredStudentsCount = data.registeredStudentsCount || usersList.length;
 
     updateMetrics();
     renderPostsTable();
@@ -216,6 +223,7 @@ async function fetchOverviewData() {
     renderReportsTable();
     renderBannedTable();
     renderAuditLogsTable();
+    renderStudentsTable();
   } catch (err) {
     console.error('Error fetching overview:', err);
     showToast('เกิดข้อผิดพลาดในการโหลดข้อมูล');
@@ -235,6 +243,8 @@ function updateMetrics() {
   metricBannedCount.textContent = bannedUsersList.length;
   const metricStudentsCount = document.getElementById('metric-students-count');
   if (metricStudentsCount) metricStudentsCount.textContent = registeredStudentsCount;
+  if (metricStudentsTabBadge) metricStudentsTabBadge.textContent = registeredStudentsCount;
+  if (studentsViewCount) studentsViewCount.textContent = registeredStudentsCount;
 }
 
 function renderPostsTable() {
@@ -250,6 +260,10 @@ function renderPostsTable() {
       p.title.toLowerCase().includes(q) ||
       p.content.toLowerCase().includes(q) ||
       p.author.name.toLowerCase().includes(q) ||
+      (p.authorStudent && (
+        p.authorStudent.fullName.toLowerCase().includes(q) ||
+        p.authorStudent.studentId.toLowerCase().includes(q)
+      )) ||
       (p.tags && p.tags.some(t => t.toLowerCase().includes(q)))
     );
   }
@@ -292,6 +306,22 @@ function renderPostsTable() {
             ${isAuthorBanned ? '<span style="color: #ef4444; font-size: 0.65rem; font-weight: 700;">[BANNED]</span>' : ''}
           </div>
         </div>
+      </td>
+      <td>
+        ${post.authorStudent ? `
+          <div class="student-identity-cell" style="display: flex; flex-direction: column; gap: 3px;">
+            <div style="font-size: 0.82rem; font-weight: 600; color: #f8fafc; display: flex; align-items: center; gap: 4px;">
+              <span>👤</span><span>${escapeHtml(post.authorStudent.fullName)}</span>
+            </div>
+            <div style="font-size: 0.73rem; color: #fbbf24; font-family: var(--font-mono); font-weight: 500;">
+              🎓 รหัส ${escapeHtml(post.authorStudent.studentId)}
+            </div>
+          </div>
+        ` : `
+          <span style="font-size: 0.72rem; color: var(--text-muted); font-style: italic;">
+            ${post.author?.role === 'admin' ? '🛡️ ผู้ดูแลระบบ' : (post.author?.role === 'teacher' ? '👨‍🏫 คุณครู' : '(ไม่ได้ผูกบัญชีนักเรียน)')}
+          </span>
+        `}
       </td>
       <td>
         <div class="post-cell-content">
@@ -368,9 +398,11 @@ function renderPostsTable() {
       navTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'reports'));
       activeTab = 'reports';
       tabPostsView.classList.add('hidden');
+      if (tabAnnouncementsView) tabAnnouncementsView.classList.add('hidden');
       tabReportsView.classList.remove('hidden');
       tabBannedView.classList.add('hidden');
       tabAuditView.classList.add('hidden');
+      if (tabStudentsView) tabStudentsView.classList.add('hidden');
       if (filterReportStatusSelect) {
         filterReportStatusSelect.value = 'pending';
         filterReportStatus = 'pending';
@@ -555,6 +587,36 @@ function renderAuditLogsTable() {
       <td style="font-size: 0.78rem; color: var(--text-muted);">${new Date(log.timestamp).toLocaleString('th-TH')}</td>
     `;
     auditLogsTbody.appendChild(tr);
+  });
+}
+
+function renderStudentsTable() {
+  if (!studentsTbody) return;
+  studentsTbody.innerHTML = '';
+
+  if (!usersList || usersList.length === 0) {
+    if (studentsEmptyMessage) studentsEmptyMessage.classList.remove('hidden');
+    return;
+  }
+  if (studentsEmptyMessage) studentsEmptyMessage.classList.add('hidden');
+
+  usersList.forEach(u => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-family: var(--font-mono); font-weight: 700; color: #fbbf24; font-size: 0.88rem;">
+        🎓 ${escapeHtml(u.studentId)}
+      </td>
+      <td style="font-weight: 600; color: #f8fafc;">
+        👤 ${escapeHtml(u.fullName)}
+      </td>
+      <td style="font-size: 0.75rem; color: var(--text-muted);">
+        ${u.createdAt ? new Date(u.createdAt).toLocaleString('th-TH') : '-'}
+      </td>
+      <td style="font-size: 0.75rem; color: var(--text-muted);">
+        ${u.lastLogin ? formatRelativeTime(u.lastLogin) : '-'}
+      </td>
+    `;
+    studentsTbody.appendChild(tr);
   });
 }
 
@@ -769,9 +831,13 @@ function setupEventListeners() {
       tabReportsView.classList.toggle('hidden', activeTab !== 'reports');
       tabBannedView.classList.toggle('hidden', activeTab !== 'banned');
       tabAuditView.classList.toggle('hidden', activeTab !== 'audit');
+      if (tabStudentsView) tabStudentsView.classList.toggle('hidden', activeTab !== 'students');
 
       if (activeTab === 'announcements') {
         renderAnnouncementsTable();
+      }
+      if (activeTab === 'students') {
+        renderStudentsTable();
       }
     });
   });
