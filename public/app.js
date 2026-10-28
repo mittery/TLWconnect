@@ -530,6 +530,11 @@ function initApp() {
   setupEventListeners();
   initAmbientParticles();
 
+  // ── Rules Modal on first visit ──
+  if (rulesModal && !localStorage.getItem('tlw_accepted_rules')) {
+    rulesModal.classList.remove('hidden');
+  }
+
   // ── Notification system ──
   if (window.tlwNotify) {
     window.tlwNotify.setupBellButton();       // Desktop header bell
@@ -1465,19 +1470,19 @@ function setupEventListeners() {
 
   // Compose Modal triggers
   const openCompose = () => {
-    composeModal.classList.remove('hidden');
-    composeTitleInput.focus();
-    window.soundEngine.playClick();
+    if (composeModal) composeModal.classList.remove('hidden');
+    if (composeTitleInput) composeTitleInput.focus();
+    if (window.soundEngine) window.soundEngine.playClick();
   };
-  btnOpenCompose.addEventListener('click', openCompose);
-  quickComposeTrigger.addEventListener('click', openCompose);
+  if (btnOpenCompose) btnOpenCompose.addEventListener('click', openCompose);
+  if (quickComposeTrigger) quickComposeTrigger.addEventListener('click', openCompose);
   document.getElementById('btn-empty-compose')?.addEventListener('click', openCompose);
 
   const closeCompose = () => {
-    composeModal.classList.add('hidden');
+    if (composeModal) composeModal.classList.add('hidden');
   };
-  btnCloseCompose.addEventListener('click', closeCompose);
-  btnCancelCompose.addEventListener('click', closeCompose);
+  if (btnCloseCompose) btnCloseCompose.addEventListener('click', closeCompose);
+  if (btnCancelCompose) btnCancelCompose.addEventListener('click', closeCompose);
 
   // Modal Reroll
   btnRerollInModal.addEventListener('click', () => {
@@ -1825,23 +1830,33 @@ function setupEventListeners() {
   // Rules Modal Triggers
   if (btnAcceptRules) {
     btnAcceptRules.addEventListener('click', () => {
-      rulesModal.classList.add('hidden');
-      window.soundEngine.playPublish();
+      if (rulesModal) rulesModal.classList.add('hidden');
+      localStorage.setItem('tlw_accepted_rules', 'true');
+      if (window.soundEngine) window.soundEngine.playPublish();
       showToast('ยินดีต้อนรับสู่ TLW Connect — ชุมชนชาวท่าลี่วิทยา 🏫', 'success');
     });
   }
 
   if (btnCloseRules) {
     btnCloseRules.addEventListener('click', () => {
-      rulesModal.classList.add('hidden');
-      window.soundEngine.playClick();
+      if (rulesModal) rulesModal.classList.add('hidden');
+      if (window.soundEngine) window.soundEngine.playClick();
     });
   }
 
   if (btnOpenRules) {
     btnOpenRules.addEventListener('click', () => {
-      rulesModal.classList.remove('hidden');
-      window.soundEngine.playClick();
+      if (rulesModal) rulesModal.classList.remove('hidden');
+      if (window.soundEngine) window.soundEngine.playClick();
+    });
+  }
+
+  // Click outside rules modal to close
+  if (rulesModal) {
+    rulesModal.addEventListener('click', (e) => {
+      if (e.target === rulesModal) {
+        rulesModal.classList.add('hidden');
+      }
     });
   }
 
