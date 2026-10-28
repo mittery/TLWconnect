@@ -201,10 +201,11 @@ class TLWNotify {
         width: 38px; height: 38px;
         display: flex; align-items: center; justify-content: center;
         cursor: pointer;
-        font-size: 1.1rem;
         position: relative;
         transition: border-color 0.2s, color 0.2s, background 0.2s;
       }
+      #btn-notify-bell svg { width: 20px; height: 20px; }
+      #bell-icon { display: inline-flex; align-items: center; justify-content: center; }
       #btn-notify-bell:hover {
         border-color: rgba(56,189,248,0.4);
         color: #38bdf8;
@@ -393,7 +394,7 @@ class TLWNotify {
     const btn = document.createElement('button');
     btn.id = 'btn-notify-bell';
     btn.title = 'การแจ้งเตือนประกาศโรงเรียน';
-    btn.innerHTML = `<span id="bell-icon">🔔</span><span class="bell-badge" id="bell-badge"></span>`;
+    btn.innerHTML = `<span id="bell-icon" class="tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span class="bell-badge" id="bell-badge"></span>`;
     slot.appendChild(btn);
 
     btn.addEventListener('click', () => {
@@ -424,19 +425,21 @@ class TLWNotify {
     // Desktop
     const btn = document.getElementById('btn-notify-bell');
     const icon = document.getElementById('bell-icon');
+    const bellSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
+    const bellOffSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
     if (btn) {
       btn.classList.remove('enabled', 'denied');
       if (this._permissionState === 'granted') {
         btn.classList.add('enabled');
         btn.title = 'การแจ้งเตือนเปิดอยู่ ✅';
-        if (icon) icon.textContent = '🔔';
+        if (icon) icon.innerHTML = bellSVG;
       } else if (this._permissionState === 'denied') {
         btn.classList.add('denied');
         btn.title = 'การแจ้งเตือนถูกบล็อก — คลิกเพื่อดูวิธีแก้ไข';
-        if (icon) icon.textContent = '🔕';
+        if (icon) icon.innerHTML = bellOffSVG;
       } else {
         btn.title = 'คลิกเพื่อเปิดรับการแจ้งเตือนประกาศโรงเรียน';
-        if (icon) icon.textContent = '🔔';
+        if (icon) icon.innerHTML = bellSVG;
       }
     }
     // Mobile
@@ -447,14 +450,14 @@ class TLWNotify {
       if (this._permissionState === 'granted') {
         mobileBtn.classList.add('enabled');
         mobileBtn.title = 'การแจ้งเตือนเปิดอยู่ ✅';
-        if (mobileIcon) mobileIcon.textContent = '🔔';
+        if (mobileIcon) mobileIcon.innerHTML = bellSVG;
       } else if (this._permissionState === 'denied') {
         mobileBtn.classList.add('denied');
         mobileBtn.title = 'การแจ้งเตือนถูกบล็อก — คลิกเพื่อดูวิธีแก้ไข';
-        if (mobileIcon) mobileIcon.textContent = '🔕';
+        if (mobileIcon) mobileIcon.innerHTML = bellOffSVG;
       } else {
         mobileBtn.title = 'คลิกเพื่อเปิดรับการแจ้งเตือนประกาศ';
-        if (mobileIcon) mobileIcon.textContent = '🔔';
+        if (mobileIcon) mobileIcon.innerHTML = bellSVG;
       }
     }
   }

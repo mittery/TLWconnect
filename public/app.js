@@ -134,14 +134,35 @@ const btnCancelReport = document.getElementById('btn-cancel-report');
 let currentReportingPost = null;
 
 // Channel Names Mapping (5 ห้องหลัก + กระทู้ของฉัน + ทั้งหมด)
+function getChannelSvg(key) {
+  if (window.TLWIcons) {
+    const iconMap = {
+      all: window.TLWIcons.globe,
+      my_posts: window.TLWIcons.myPosts,
+      announcements: window.TLWIcons.megaphone,
+      vent: window.TLWIcons.cloud,
+      suggestions: window.TLWIcons.lightbulb,
+      requests: window.TLWIcons.clipboard,
+      guidance: window.TLWIcons.compass
+    };
+    if (iconMap[key]) {
+      return iconMap[key];
+    }
+  }
+  const fallback = {
+    all: '🌐', my_posts: '📝', announcements: '📢', vent: '🌧️', suggestions: '💡', requests: '📋', guidance: '🧭'
+  };
+  return fallback[key] || '💬';
+}
+
 const CHANNEL_DATA = {
-  all: { name: 'กระทู้ทั้งหมด', icon: '🌐' },
-  my_posts: { name: 'กระทู้ของฉัน', icon: '📝' },
-  announcements: { name: 'ห้องประกาศ', icon: '📢' },
-  vent: { name: 'ห้องระบาย', icon: '🌧️' },
-  suggestions: { name: 'ห้องข้อเสนอแนะ', icon: '💡' },
-  requests: { name: 'ห้องส่งคำร้อง', icon: '📋' },
-  guidance: { name: 'ห้องแนะแนว', icon: '🧭' }
+  get all() { return { name: 'กระทู้ทั้งหมด', icon: getChannelSvg('all') }; },
+  get my_posts() { return { name: 'กระทู้ของฉัน', icon: getChannelSvg('my_posts') }; },
+  get announcements() { return { name: 'ห้องประกาศ', icon: getChannelSvg('announcements') }; },
+  get vent() { return { name: 'ห้องระบาย', icon: getChannelSvg('vent') }; },
+  get suggestions() { return { name: 'ห้องข้อเสนอแนะ', icon: getChannelSvg('suggestions') }; },
+  get requests() { return { name: 'ห้องส่งคำร้อง', icon: getChannelSvg('requests') }; },
+  get guidance() { return { name: 'ห้องแนะแนว', icon: getChannelSvg('guidance') }; }
 };
 
 // My Posts ownership tracking
@@ -544,10 +565,11 @@ function initApp() {
 }
 
 function updateSoundIcon() {
+  if (!soundIcon) return;
   if (window.soundEngine.isMuted) {
-    soundIcon.textContent = '🔇';
+    soundIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
   } else {
-    soundIcon.textContent = '🔊';
+    soundIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
   }
 }
 
@@ -1023,8 +1045,18 @@ function createPostCard(post, isNew = false) {
   const isMyPost = myPostIds.has(post.id) || !!myPostKeys[post.id];
   const myPostActionsHtml = isMyPost ? `
     <div class="post-owner-actions">
-      <button type="button" class="btn-owner-action btn-owner-edit" data-edit-id="${post.id}" title="แก้ไขกระทู้ของคุณ">✏️ แก้ไข</button>
-      <button type="button" class="btn-owner-action btn-owner-delete" data-delete-id="${post.id}" title="ลบกระทู้ของคุณ">🗑️ ลบ</button>
+      <button type="button" class="btn-owner-action btn-owner-edit" data-edit-id="${post.id}" title="แก้ไขกระทู้ของคุณ">
+        <span class="tlw-icon" style="display:inline-flex;align-items:center;margin-right:3px">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </span>
+        แก้ไข
+      </button>
+      <button type="button" class="btn-owner-action btn-owner-delete" data-delete-id="${post.id}" title="ลบกระทู้ของคุณ">
+        <span class="tlw-icon" style="display:inline-flex;align-items:center;margin-right:3px">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </span>
+        ลบ
+      </button>
     </div>
   ` : '';
   const editedIndicatorHtml = post.editedAt ? `<span class="post-edited-pill" title="แก้ไขแล้ว">(แก้ไขแล้ว)</span>` : '';
@@ -1044,7 +1076,7 @@ function createPostCard(post, isNew = false) {
         </div>
       </div>
       <div class="post-header-right">
-        <span class="post-channel-pill">${channelInfo.icon} ${channelInfo.name}</span>
+        <span class="post-channel-pill"><span class="post-channel-icon tlw-icon" style="display:inline-flex;align-items:center;margin-right:4px;width:13px;height:13px">${channelInfo.icon}</span> ${channelInfo.name}</span>
         ${myPostActionsHtml}
       </div>
     </div>
@@ -1058,9 +1090,13 @@ function createPostCard(post, isNew = false) {
 
     <div class="post-footer">
       <div class="post-karma-wrap">
-        <button class="vote-btn ${userVote === 'up' ? 'active-up' : ''}" data-action="upvote" data-id="${post.id}" title="เห็นด้วย / Upvote">▲</button>
+        <button class="vote-btn ${userVote === 'up' ? 'active-up' : ''}" data-action="upvote" data-id="${post.id}" title="เห็นด้วย / Upvote">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
         <span class="karma-count" data-karma-id="${post.id}">${score}</span>
-        <button class="vote-btn ${userVote === 'down' ? 'active-down' : ''}" data-action="downvote" data-id="${post.id}" title="ไม่เห็นด้วย / Downvote">▼</button>
+        <button class="vote-btn ${userVote === 'down' ? 'active-down' : ''}" data-action="downvote" data-id="${post.id}" title="ไม่เห็นด้วย / Downvote">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
       </div>
 
       <div class="post-reactions-bar">
@@ -1068,12 +1104,16 @@ function createPostCard(post, isNew = false) {
       </div>
 
       <button class="comments-toggle-btn" data-comment-btn-id="${post.id}">
-        <span>💬</span>
+        <span class="tlw-icon" style="display:inline-flex;align-items:center;margin-right:5px">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
         <span>ความคิดเห็น (<span class="comment-count-num">${commentsCount}</span>)</span>
       </button>
 
       <button class="post-report-btn" data-report-id="${post.id}" title="รายงานกระทู้นี้ให้ผู้ดูแลตรวจสอบ">
-        <span>🚨</span>
+        <span class="tlw-icon" style="display:inline-flex;align-items:center;margin-right:5px">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        </span>
         <span>รายงาน</span>
       </button>
     </div>
@@ -1217,12 +1257,15 @@ function openReportModal(post) {
   const channelInfo = CHANNEL_DATA[post.channel] || { name: post.channel, icon: '💬' };
   if (reportPostPreview) {
     reportPostPreview.innerHTML = `
-      <div style="font-size: 0.75rem; font-weight: 700; color: #f87171; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">🚨 กำลังรายงานกระทู้:</div>
+      <div style="font-size: 0.75rem; font-weight: 700; color: #f87171; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; display:flex; align-items:center; gap:5px">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>กำลังรายงานกระทู้:</span>
+      </div>
       <div style="font-weight: 700; color: #fff; font-size: 0.95rem; margin-bottom: 4px;">${escapeHtml(post.title)}</div>
       <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
         <span>ผู้โพสต์: <strong style="color: #e2e8f0;">${escapeHtml(post.author.name)}</strong></span>
         <span>•</span>
-        <span>${channelInfo.icon} ${channelInfo.name}</span>
+        <span style="display:inline-flex;align-items:center;gap:4px">${channelInfo.icon} ${channelInfo.name}</span>
       </div>
       <div style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4; max-height: 52px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
         ${escapeHtml(post.content)}
@@ -1366,8 +1409,8 @@ function setupEventListeners() {
       btn.classList.add('active');
       currentChannel = btn.dataset.channel;
 
-      const info = CHANNEL_DATA[currentChannel] || { name: 'กระทู้ทั้งหมด', icon: '🌐' };
-      activeChannelIcon.textContent = info.icon;
+      const info = CHANNEL_DATA[currentChannel] || { name: 'กระทู้ทั้งหมด', icon: getChannelSvg('all') };
+      activeChannelIcon.innerHTML = info.icon;
       activeChannelTitle.textContent = info.name;
 
       visiblePostsCount = POSTS_PER_PAGE;
@@ -2006,8 +2049,8 @@ function setupEventListeners() {
         else b.classList.remove('active');
       });
 
-      const info = CHANNEL_DATA[currentChannel] || { name: 'กระทู้ทั้งหมด', icon: '🌐' };
-      activeChannelIcon.textContent = info.icon;
+      const info = CHANNEL_DATA[currentChannel] || { name: 'กระทู้ทั้งหมด', icon: getChannelSvg('all') };
+      activeChannelIcon.innerHTML = info.icon;
       activeChannelTitle.textContent = info.name;
 
       visiblePostsCount = POSTS_PER_PAGE;

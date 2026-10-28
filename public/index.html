@@ -30,10 +30,12 @@
       <!-- Tab Switcher -->
       <div class="auth-tabs">
         <button type="button" id="tab-btn-login" class="auth-tab-btn active">
-          <span>🔑 เข้าสู่ระบบ</span>
+          <span class="tlw-icon" style="margin-right:6px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-2-2"/></svg></span>
+          <span>เข้าสู่ระบบ</span>
         </button>
         <button type="button" id="tab-btn-register" class="auth-tab-btn">
-          <span>✨ สร้างบัญชีนักเรียน</span>
+          <span class="tlw-icon" style="margin-right:6px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+          <span>สร้างบัญชีนักเรียน</span>
         </button>
       </div>
 
@@ -42,7 +44,7 @@
         <div class="auth-input-group">
           <label for="login-student-id">รหัสนักเรียน (5 หลัก) <span class="required">*</span></label>
           <div class="input-with-icon">
-            <span class="input-icon">🎓</span>
+            <span class="input-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
             <input type="text" id="login-student-id" maxlength="5" inputmode="numeric" placeholder="เช่น 45678" autocomplete="username" required>
           </div>
         </div>
@@ -50,16 +52,16 @@
         <div class="auth-input-group">
           <label for="login-id-card">เลขประจำตัวประชาชน (13 หลัก) <span class="required">*</span></label>
           <div class="input-with-icon">
-            <span class="input-icon">🆔</span>
+            <span class="input-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h6"/></svg></span>
             <input type="password" id="login-id-card" maxlength="13" inputmode="numeric" placeholder="ระบุเลขบัตร ปชช. 13 หลัก" autocomplete="current-password" required>
-            <button type="button" id="btn-toggle-login-id" class="btn-toggle-pwd" title="แสดง/ซ่อนเลขบัตร">👁️</button>
+            <button type="button" id="btn-toggle-login-id" class="btn-toggle-pwd tlw-icon" title="แสดง/ซ่อนเลขบัตร"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
           </div>
         </div>
 
         <div class="auth-input-group">
           <label for="login-fullname">ชื่อ-นามสกุลจริงผู้ใช้ <span class="optional">(ไม่บังคับ/ถ้าจำได้)</span></label>
           <div class="input-with-icon">
-            <span class="input-icon">👤</span>
+            <span class="input-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
             <input type="text" id="login-fullname" placeholder="เช่น นายธนภัทร ใจดี" autocomplete="name">
           </div>
         </div>
@@ -84,18 +86,25 @@
           <label class="custom-checkbox-label auto-login-highlight">
             <input type="checkbox" id="login-chk-auto-login" checked>
             <span class="custom-checkbox-box"></span>
-            <span class="checkbox-text">⚡ เข้าสู่ระบบอัตโนมัติ</span>
+            <span class="checkbox-text" style="display:inline-flex;align-items:center;gap:4px">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;color:var(--accent-gold)"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              เข้าสู่ระบบอัตโนมัติ
+            </span>
           </label>
         </div>
 
         <div class="auth-shared-device-note">
-          ⚠️ <strong>คำแนะนำความปลอดภัย:</strong> หากใช้งานบนเครื่องคอมพิวเตอร์ส่วนรวม (ห้องสมุด/ห้องคอมฯ) ไม่ควรติ๊ก <em>"จำเลขบัตร"</em> หรือ <em>"เข้าสู่ระบบอัตโนมัติ"</em>
+          <span class="tlw-icon" style="color:#f59e0b;display:inline-flex;vertical-align:middle;margin-right:4px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+          <strong>คำแนะนำความปลอดภัย:</strong> หากใช้งานบนเครื่องคอมพิวเตอร์ส่วนรวม (ห้องสมุด/ห้องคอมฯ) ไม่ควรติ๊ก <em>"จำเลขบัตร"</em> หรือ <em>"เข้าสู่ระบบอัตโนมัติ"</em>
         </div>
 
         <div id="login-error-badge" class="auth-error-badge hidden"></div>
 
         <button type="submit" id="btn-submit-login" class="btn-auth-submit">
-          <span>🚀 เข้าสู่ระบบ TLW Connect</span>
+          <span style="display:inline-flex;align-items:center;gap:6px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            เข้าสู่ระบบ TLW Connect
+          </span>
         </button>
 
         <div class="auth-switch-note">
@@ -109,7 +118,7 @@
         <div class="auth-input-group">
           <label for="reg-fullname">ชื่อจริง-นามสกุล <span class="required">*</span></label>
           <div class="input-with-icon">
-            <span class="input-icon">👤</span>
+            <span class="input-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
             <input type="text" id="reg-fullname" placeholder="เช่น เด็กชาย ธนภัทร ใจดี" autocomplete="name" required>
           </div>
         </div>
@@ -117,7 +126,7 @@
         <div class="auth-input-group">
           <label for="reg-id-card">เลขประจำตัวประชาชน (13 หลัก) <span class="required">*</span></label>
           <div class="input-with-icon">
-            <span class="input-icon">🆔</span>
+            <span class="input-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h6"/></svg></span>
             <input type="text" id="reg-id-card" maxlength="13" inputmode="numeric" placeholder="ระบุเลขบัตร ปชช. 13 หลัก (ตัวเลขล้วน)" required>
           </div>
           <span class="input-hint">ใช้เฉพาะยืนยันความเป็นนักเรียนท่าลี่วิทยา ไม่แสดงต่อสาธารณะ</span>
@@ -126,7 +135,7 @@
         <div class="auth-input-group">
           <label for="reg-student-id">รหัสนักเรียน (5 หลัก) <span class="required">*</span></label>
           <div class="input-with-icon">
-            <span class="input-icon">🎓</span>
+            <span class="input-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
             <input type="text" id="reg-student-id" maxlength="5" inputmode="numeric" placeholder="เลขประจำตัวนักเรียน 5 หลัก เช่น 45678" required>
           </div>
         </div>
@@ -151,18 +160,25 @@
           <label class="custom-checkbox-label auto-login-highlight">
             <input type="checkbox" id="reg-chk-auto-login" checked>
             <span class="custom-checkbox-box"></span>
-            <span class="checkbox-text">⚡ เข้าสู่ระบบอัตโนมัติ</span>
+            <span class="checkbox-text" style="display:inline-flex;align-items:center;gap:4px">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;color:var(--accent-gold)"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              เข้าสู่ระบบอัตโนมัติ
+            </span>
           </label>
         </div>
 
         <div class="auth-shared-device-note">
-          ⚠️ <strong>คำแนะนำความปลอดภัย:</strong> หากใช้งานบนเครื่องคอมพิวเตอร์ส่วนรวม (ห้องสมุด/ห้องคอมฯ) ไม่ควรติ๊ก <em>"จำเลขบัตร"</em> หรือ <em>"เข้าสู่ระบบอัตโนมัติ"</em>
+          <span class="tlw-icon" style="color:#f59e0b;display:inline-flex;vertical-align:middle;margin-right:4px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+          <strong>คำแนะนำความปลอดภัย:</strong> หากใช้งานบนเครื่องคอมพิวเตอร์ส่วนรวม (ห้องสมุด/ห้องคอมฯ) ไม่ควรติ๊ก <em>"จำเลขบัตร"</em> หรือ <em>"เข้าสู่ระบบอัตโนมัติ"</em>
         </div>
 
         <div id="reg-error-badge" class="auth-error-badge hidden"></div>
 
         <button type="submit" id="btn-submit-register" class="btn-auth-submit">
-          <span>✨ สร้างบัญชีและเข้าสู่ระบบ</span>
+          <span style="display:inline-flex;align-items:center;gap:6px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            สร้างบัญชีและเข้าสู่ระบบ
+          </span>
         </button>
 
         <div class="auth-switch-note">
@@ -172,7 +188,7 @@
       </form>
 
       <div class="auth-security-pledge">
-        <span class="pledge-shield">🛡️</span>
+        <span class="pledge-shield tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></span>
         <span>ข้อมูลของคุณปลอดภัยด้วยระบบ Zero-Log Privacy สำหรับชาว ท.ล.ว.</span>
       </div>
     </div>
@@ -183,7 +199,9 @@
     <div class="header-inner">
       <div class="header-brand">
         <div class="brand-logo-glow">
-          <span class="brand-icon">🏫</span>
+          <span class="brand-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="brand-svg-icon"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </span>
         </div>
         <div class="brand-text">
           <div class="brand-title-row">
@@ -203,16 +221,22 @@
 
       <!-- Search Input -->
       <div class="header-search">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon tlw-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </span>
         <input type="text" id="global-search-input" placeholder="ค้นหากระทู้, คำร้อง, แฮชแท็ก..." autocomplete="off">
-        <button id="btn-clear-search" class="clear-search-btn hidden" title="ล้างการค้นหา">✕</button>
+        <button id="btn-clear-search" class="clear-search-btn hidden" title="ล้างการค้นหา">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
 
       <!-- Action Items -->
       <div class="header-actions">
         <!-- Sound Toggle -->
-        <button id="btn-sound-toggle" class="icon-btn" title="เปิด/ปิดเสียงเอฟเฟกต์">
-          <span id="sound-icon">🔊</span>
+        <button id="btn-sound-toggle" class="icon-btn tlw-icon-btn" title="เปิด/ปิดเสียงเอฟเฟกต์">
+          <span id="sound-icon" class="tlw-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          </span>
         </button>
 
         <!-- Notification Bell (inserted by notify.js, placeholder ensures ordering) -->
@@ -220,13 +244,14 @@
 
         <!-- Logged-in Student Account Badge & Logout -->
         <div class="student-account-badge" id="student-account-badge" title="บัญชีนักเรียนที่เข้าสู่ระบบ">
-          <span class="student-avatar-icon">🎓</span>
+          <span class="student-avatar-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
           <div class="student-meta">
             <span class="student-realname" id="student-display-name">นักเรียน ท.ล.ว.</span>
             <span class="student-id-tag" id="student-display-id">รหัส ...</span>
           </div>
           <button id="btn-student-logout" class="btn-student-logout" title="ออกจากระบบเพื่อสลับบัญชี">
-            <span>ออกจากระบบ 🚪</span>
+            <span>ออกจากระบบ</span>
+            <span class="tlw-icon" style="margin-left:4px;display:inline-flex;align-items:center"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
           </button>
         </div>
 
@@ -239,13 +264,15 @@
             <span class="persona-label">ตัวตนนินามของคุณ</span>
             <span class="persona-name" id="header-user-name">PhantomEcho #402</span>
           </div>
-          <span class="persona-edit-hint">🎲</span>
+          <span class="persona-edit-hint tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="16" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="16" r="1.5" fill="currentColor"/><circle cx="16" cy="16" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></span>
         </div>
 
 
         <!-- New Post CTA -->
         <button id="btn-open-compose-modal" class="btn btn-primary glow-button">
-          <span class="btn-icon">✍️</span>
+          <span class="btn-icon tlw-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </span>
           <span>โพสต์ใหม่</span>
         </button>
       </div>
@@ -261,37 +288,37 @@
         <div class="section-label">ห้องสนทนาชุมชน (5 ห้อง)</div>
         <nav class="channel-nav" id="channel-nav-list">
           <button class="channel-item active" data-channel="all">
-            <span class="channel-icon">🌐</span>
+            <span class="channel-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
             <span class="channel-name">กระทู้ทั้งหมด</span>
             <span class="channel-badge" id="badge-count-all">...</span>
           </button>
           <button class="channel-item" data-channel="announcements">
-            <span class="channel-icon">📢</span>
+            <span class="channel-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>
             <span class="channel-name">ห้องประกาศ</span>
             <span class="channel-badge" id="badge-count-announcements">...</span>
           </button>
           <button class="channel-item" data-channel="vent">
-            <span class="channel-icon">🌧️</span>
+            <span class="channel-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><line x1="8" y1="17" x2="8" y2="20"/><line x1="12" y1="15" x2="12" y2="20"/><line x1="16" y1="17" x2="16" y2="20"/></svg></span>
             <span class="channel-name">ห้องระบาย</span>
             <span class="channel-badge" id="badge-count-vent">...</span>
           </button>
           <button class="channel-item" data-channel="suggestions">
-            <span class="channel-icon">💡</span>
+            <span class="channel-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></span>
             <span class="channel-name">ห้องข้อเสนอแนะ</span>
             <span class="channel-badge" id="badge-count-suggestions">...</span>
           </button>
           <button class="channel-item" data-channel="requests">
-            <span class="channel-icon">📋</span>
+            <span class="channel-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></span>
             <span class="channel-name">ห้องส่งคำร้อง</span>
             <span class="channel-badge" id="badge-count-requests">...</span>
           </button>
           <button class="channel-item" data-channel="guidance">
-            <span class="channel-icon">🧭</span>
+            <span class="channel-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>
             <span class="channel-name">ห้องแนะแนว</span>
             <span class="channel-badge" id="badge-count-guidance">...</span>
           </button>
           <button class="channel-item my-posts-channel" data-channel="my_posts" id="btn-channel-my-posts" style="border-top: 1px dashed rgba(255,255,255,0.1); margin-top: 6px; padding-top: 8px;">
-            <span class="channel-icon">📝</span>
+            <span class="channel-icon tlw-icon" style="color:#fbbf24"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
             <span class="channel-name" style="color: #fbbf24; font-weight: 600;">กระทู้ของฉัน</span>
             <span class="channel-badge" id="badge-count-my-posts">0</span>
           </button>
@@ -300,7 +327,9 @@
 
       <!-- Privacy & Guarantee Card -->
       <div class="privacy-guarantee-card">
-        <div class="card-icon">🛡️</div>
+        <div class="card-icon tlw-icon" style="color: var(--accent-emerald)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:28px;height:28px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+        </div>
         <div class="card-title">100% Zero-Log Privacy</div>
         <div class="privacy-status-pill">
           <span class="status-dot"></span> End-to-End Anonymous
@@ -309,7 +338,9 @@
 
       <!-- Community Rules Button -->
       <button class="rules-guide-btn" id="btn-open-rules" title="อ่านกฎการใช้งานชุมชน">
-        <span class="rules-icon">📜</span>
+        <span class="rules-icon tlw-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:22px;height:22px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </span>
         <div class="rules-text">
           <span class="rules-title">กฎการใช้งาน TLW Connect</span>
           <span class="rules-sub">10 ข้อควรปฏิบัติเพื่อความปลอดภัย</span>
@@ -325,11 +356,13 @@
       <section class="school-hero-banner preset-hero-banner">
         <div class="hero-inner">
           <div class="hero-crest-wrap preset-crest-wrap">
-            <span class="hero-crest-icon">🏫</span>
+            <span class="hero-crest-icon tlw-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:34px;height:34px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </span>
           </div>
           <div class="hero-text-wrap">
-            <div class="hero-badge-tag preset-hero-tag">🟡 ประกาศ • แนะนำ</div>
-            <h2 class="hero-title">ยินดีต้อนรับสู่ TLW Connect! 👋</h2>
+            <div class="hero-badge-tag preset-hero-tag">ประกาศ • แนะนำ</div>
+            <h2 class="hero-title">ยินดีต้อนรับสู่ TLW Connect!</h2>
             <p class="hero-desc">พื้นที่ออนไลน์สำหรับนักเรียนและครูโรงเรียนท่าลี่วิทยา แลกเปลี่ยนความคิดเห็น พูดคุย แบ่งปันไอเดีย และสร้างสังคมที่ดีไปด้วยกัน</p>
           </div>
         </div>
@@ -338,40 +371,42 @@
       <!-- NOTICE HIGHLIGHT STRIP (Sub-Banner) -->
       <div class="notice-highlight-strip" id="notice-highlight-strip">
         <div class="strip-left">
-          <div class="strip-avatar">🔮</div>
-          <span class="strip-text">นี่คือช่องไฮไลต์กระทู้ยอดนิยม ไปติดตามดูได้เลยในเมนูด้านซ้าย ✨</span>
+          <div class="strip-avatar tlw-icon" style="display:inline-flex;align-items:center;justify-content:center;color:var(--accent-gold)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <span class="strip-text">นี่คือช่องไฮไลต์กระทู้ยอดนิยม ไปติดตามดูได้เลยในเมนูด้านซ้าย</span>
         </div>
         <button class="btn-strip-action" type="button" id="btn-strip-open-popular">เปิดเพิ่มเติม</button>
       </div>
 
-      <!-- MOBILE HORIZONTAL CHANNELS BAR (เลื่อนแนวนอนบนโทรศัพท์) -->
+      <!-- MOBILE HORIZONTAL CHANNELS BAR -->
       <div class="mobile-channels-bar" id="mobile-channels-bar">
         <button class="mobile-channel-pill active" data-channel="all">
-          <span class="pill-icon">🌐</span>
+          <span class="pill-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
           <span>ทั้งหมด</span>
         </button>
         <button class="mobile-channel-pill" data-channel="announcements">
-          <span class="pill-icon">📢</span>
+          <span class="pill-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>
           <span>ประกาศ</span>
         </button>
         <button class="mobile-channel-pill" data-channel="vent">
-          <span class="pill-icon">🌧️</span>
+          <span class="pill-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
           <span>ห้องระบาย</span>
         </button>
         <button class="mobile-channel-pill" data-channel="suggestions">
-          <span class="pill-icon">💡</span>
+          <span class="pill-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></span>
           <span>ข้อเสนอแนะ</span>
         </button>
         <button class="mobile-channel-pill" data-channel="requests">
-          <span class="pill-icon">📋</span>
+          <span class="pill-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></span>
           <span>ส่งคำร้อง</span>
         </button>
         <button class="mobile-channel-pill" data-channel="guidance">
-          <span class="pill-icon">🧭</span>
+          <span class="pill-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>
           <span>แนะแนว</span>
         </button>
         <button class="mobile-channel-pill my-posts-mobile-pill" data-channel="my_posts">
-          <span class="pill-icon">📝</span>
+          <span class="pill-icon tlw-icon" style="color:#fbbf24"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
           <span style="color: #fbbf24; font-weight: 600;">กระทู้ของฉัน</span>
         </button>
       </div>
@@ -379,19 +414,30 @@
       <!-- FEED FILTER / SORT BAR -->
       <div class="feed-controls">
         <div class="feed-current-channel">
-          <span id="active-channel-icon">🌐</span>
+          <span id="active-channel-icon" class="tlw-icon" style="display:inline-flex;align-items:center">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:20px;height:20px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </span>
           <h2 id="active-channel-title">กระทู้ทั้งหมด</h2>
         </div>
 
         <div class="feed-sort-tabs">
           <button class="sort-tab active" data-sort="latest">
-            <span>⚡ ล่าสุด</span>
+            <span class="tlw-icon" style="display:inline-flex;align-items:center;gap:5px">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:13px;height:13px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              ล่าสุด
+            </span>
           </button>
           <button class="sort-tab" data-sort="hot">
-            <span>🔥 ยอดนิยม</span>
+            <span class="tlw-icon" style="display:inline-flex;align-items:center;gap:5px">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:13px;height:13px"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+              ยอดนิยม
+            </span>
           </button>
           <button class="sort-tab" data-sort="top">
-            <span>👑 คะแนนสูงสุด</span>
+            <span class="tlw-icon" style="display:inline-flex;align-items:center;gap:5px">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:13px;height:13px"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z"/><line x1="5" y1="20" x2="19" y2="20"/></svg>
+              คะแนนสูงสุด
+            </span>
           </button>
         </div>
       </div>
@@ -409,7 +455,9 @@
       <div id="load-more-container" class="load-more-container hidden">
         <button id="btn-load-more" class="btn-load-more preset-load-more" type="button" title="กดเพื่อโหลดโพสต์เพิ่มเติม">
           <div class="load-more-main-row">
-            <span class="load-more-arrow">⏬</span>
+            <span class="load-more-arrow tlw-icon" style="display:inline-flex;align-items:center;margin-right:6px">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
             <span id="load-more-text" class="load-more-title">อ่านเพิ่มเติม</span>
           </div>
           <div class="load-more-sub-row">
@@ -417,14 +465,18 @@
           </div>
         </button>
         <div id="load-more-finished" class="load-more-finished hidden">
-          <span class="finished-icon">✨</span>
+          <span class="finished-icon tlw-icon" style="color:var(--accent-gold);display:inline-flex;align-items:center;margin-right:6px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </span>
           <span id="load-more-finished-text">คุณอ่านครบทุกโพสต์แล้ว</span>
         </div>
       </div>
 
       <!-- EMPTY STATE -->
       <div id="empty-feed-state" class="empty-state hidden">
-        <div class="empty-icon">📭</div>
+        <div class="empty-icon tlw-icon" style="color:var(--accent-gold);opacity:0.7">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+        </div>
         <h3>ยังไม่มีกระทู้ในห้องนี้</h3>
         <p>เป็นคนแรกที่เปิดประเด็นสนทนาโดยไม่เปิดเผยตัวตน</p>
         <button class="btn btn-primary" id="btn-empty-compose">เปิดกระทู้แรก</button>
@@ -450,13 +502,18 @@
 
         <form id="shoutbox-form" class="shoutbox-input-wrap">
           <input type="text" id="shoutbox-input" placeholder="พิมพ์ข้อความสั้น (กด Enter)..." maxlength="140" autocomplete="off" required>
-          <button type="submit" id="btn-send-shout" class="send-shout-btn" title="ส่งข้อความ">➤</button>
+          <button type="submit" id="btn-send-shout" class="send-shout-btn tlw-icon" title="ส่งข้อความ">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
         </form>
       </div>
 
       <!-- TRENDING TAGS -->
       <div class="trending-tags-card">
-        <h3>แฮชแท็กยอดฮิต 🏷️</h3>
+        <h3 style="display:flex;align-items:center;gap:6px">
+          <span>แฮชแท็กยอดฮิต</span>
+          <span class="tlw-icon" style="color:var(--accent-gold);display:inline-flex;align-items:center"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span>
+        </h3>
         <div class="tags-cloud" id="tags-cloud-container">
           <span class="tag-pill" data-tag="ระบาย">#ระบาย</span>
           <span class="tag-pill" data-tag="ข้อเสนอแนะ">#ข้อเสนอแนะ</span>
@@ -477,7 +534,9 @@
       <div class="footer-col footer-col-brand">
         <div class="footer-brand-box">
           <div class="footer-brand-icon-wrap">
-            <span class="footer-brand-icon">🏫</span>
+            <span class="footer-brand-icon tlw-icon" style="color:var(--accent-gold);display:inline-flex;align-items:center;justify-content:center">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </span>
           </div>
           <div class="footer-brand-text">
             <h3 class="footer-brand-name">TLW<span>Connect</span></h3>
@@ -489,20 +548,20 @@
       <!-- Col 2: Contact -->
       <div class="footer-col footer-col-contact">
         <div class="footer-col-header">
-          <span class="footer-header-icon">👤</span>
+          <span class="footer-header-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:20px;height:20px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
           <h4>ช่องทางติดต่อ</h4>
         </div>
         <p class="footer-col-desc">ติดต่อทีมงานเมื่อพบปัญหาหรือมีข้อเสนอแนะ</p>
         <div class="footer-social-links">
           <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="footer-social-link fb-link" title="Facebook Page โรงเรียน">
-            <span class="social-icon">📘</span>
+            <span class="social-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>
             <span>Facebook Page</span>
-            <span class="social-ext-icon">↗</span>
+            <span class="social-ext-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:12px;height:12px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>
           </a>
           <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="footer-social-link ig-link" title="Instagram ชุมชน">
-            <span class="social-icon">📸</span>
+            <span class="social-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></span>
             <span>Instagram</span>
-            <span class="social-ext-icon">↗</span>
+            <span class="social-ext-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:12px;height:12px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>
           </a>
         </div>
       </div>
@@ -510,7 +569,7 @@
       <!-- Col 3: About -->
       <div class="footer-col footer-col-about">
         <div class="footer-col-header">
-          <span class="footer-header-icon">📄</span>
+          <span class="footer-header-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:20px;height:20px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
           <h4>เกี่ยวกับ</h4>
         </div>
         <p class="footer-about-text">
@@ -533,7 +592,9 @@
           <h2>สร้างกระทู้นิรนาม</h2>
           <span class="modal-subtitle">ข้อมูลของคุณจะไม่ถูกเปิดเผยอย่างเด็ดขาด</span>
         </div>
-        <button class="modal-close-btn" id="btn-close-compose">✕</button>
+        <button class="modal-close-btn tlw-icon-btn" id="btn-close-compose" title="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
 
       <form id="compose-form" class="compose-form">
@@ -543,18 +604,21 @@
             <span id="compose-badge-preview">👻</span>
             <span id="compose-name-preview">PhantomEcho #402</span>
           </div>
-          <button type="button" id="btn-reroll-in-modal" class="btn-reroll-small">🎲 สุ่มชื่อใหม่</button>
+          <button type="button" id="btn-reroll-in-modal" class="btn-reroll-small" style="display:inline-flex;align-items:center;gap:5px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="16" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="16" r="1.5" fill="currentColor"/><circle cx="16" cy="16" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+            <span>สุ่มชื่อใหม่</span>
+          </button>
         </div>
 
         <!-- Room selector (5 ห้อง) -->
         <div class="form-group">
           <label for="compose-channel-select">เลือกห้องสนทนา</label>
           <select id="compose-channel-select" required>
-            <option value="vent">🌧️ ห้องระบาย (ระบายความรู้สึก / ความในใจ)</option>
-            <option value="suggestions">💡 ห้องข้อเสนอแนะ (ไอเดียและข้อเสนอแนะ)</option>
-            <option value="requests">📋 ห้องส่งคำร้อง (ส่งคำร้อง / แจ้งเรื่อง)</option>
-            <option value="guidance">🧭 ห้องแนะแนว (แนะแนวการเรียนรู้ / พัฒนาทักษะ)</option>
-            <option value="announcements" disabled>📢 ห้องประกาศ (🔒 เฉพาะผู้ดูแล Manager โพสต์ผ่านหน้าจัดการ)</option>
+            <option value="vent">ห้องระบาย (ระบายความรู้สึก / ความในใจ)</option>
+            <option value="suggestions">ห้องข้อเสนอแนะ (ไอเดียและข้อเสนอแนะ)</option>
+            <option value="requests">ห้องส่งคำร้อง (ส่งคำร้อง / แจ้งเรื่อง)</option>
+            <option value="guidance">ห้องแนะแนว (แนะแนวการเรียนรู้ / พัฒนาทักษะ)</option>
+            <option value="announcements" disabled>ห้องประกาศ (🔒 เฉพาะผู้ดูแล Manager โพสต์ผ่านหน้าจัดการ)</option>
           </select>
         </div>
 
@@ -585,7 +649,10 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="btn-cancel-compose">ยกเลิก</button>
           <button type="submit" class="btn btn-primary glow-button" id="btn-submit-post">
-            <span>🚀 โพสต์สู่ TLWconnect</span>
+            <span style="display:inline-flex;align-items:center;gap:6px">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              โพสต์สู่ TLWconnect
+            </span>
           </button>
         </div>
       </form>
@@ -597,10 +664,15 @@
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-title-group">
-          <h2>✏️ แก้ไขกระทู้ของคุณ</h2>
+          <h2 style="display:inline-flex;align-items:center;gap:8px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:var(--accent-gold)"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span>แก้ไขกระทู้ของคุณ</span>
+          </h2>
           <span class="modal-subtitle">แก้ไขเนื้อหาและแท็กของกระทู้ที่คุณสร้าง</span>
         </div>
-        <button class="modal-close-btn" id="btn-close-edit">✕</button>
+        <button class="modal-close-btn tlw-icon-btn" id="btn-close-edit" title="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
 
       <form id="edit-form" class="compose-form">
@@ -723,13 +795,15 @@
       <div class="modal-header rules-header">
         <div class="modal-title-group">
           <div class="rules-header-badge">
-            <span class="icon">📜</span>
+            <span class="icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
             <span>ข้อตกลงร่วมกัน</span>
           </div>
           <h2>กฎการใช้งาน TLW Connect</h2>
           <span class="modal-subtitle">โปรดอ่านและทำความเข้าใจข้อตกลงเพื่อสร้างพื้นที่ปลอดภัยและสร้างสรรค์</span>
         </div>
-        <button class="modal-close-btn" id="btn-close-rules">✕</button>
+        <button class="modal-close-btn tlw-icon-btn" id="btn-close-rules" title="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
 
       <div class="rules-modal-body">
@@ -738,7 +812,7 @@
           <div class="rule-card">
             <div class="rule-num">1</div>
             <div class="rule-content">
-              <h4>🤝 เคารพผู้อื่น</h4>
+              <h4>เคารพผู้อื่น</h4>
               <p>ห้ามใช้คำหยาบ ดูหมิ่น เหยียด ด่าทอ ข่มขู่ หรือโจมตีบุคคลอื่น</p>
             </div>
           </div>
@@ -746,7 +820,7 @@
           <div class="rule-card">
             <div class="rule-num">2</div>
             <div class="rule-content">
-              <h4>🚫 ห้ามกลั่นแกล้ง (Bullying)</h4>
+              <h4>ห้ามกลั่นแกล้ง (Bullying)</h4>
               <p>ห้ามโพสต์เพื่อประจาน ล้อเลียน ทำให้อับอาย หรือสร้างความเสียหายแก่ผู้อื่น ไม่ว่าจะเป็นนักเรียน ครู หรือบุคลากร</p>
             </div>
           </div>
@@ -754,7 +828,7 @@
           <div class="rule-card">
             <div class="rule-num">3</div>
             <div class="rule-content">
-              <h4>🔒 เคารพความเป็นส่วนตัว</h4>
+              <h4>เคารพความเป็นส่วนตัว</h4>
               <p>ห้ามเผยแพร่ข้อมูลส่วนตัวของผู้อื่น เช่น เบอร์โทรศัพท์ ที่อยู่ รูปภาพ หรือข้อมูลอื่น ๆ โดยไม่ได้รับอนุญาต</p>
             </div>
           </div>
@@ -762,7 +836,7 @@
           <div class="rule-card">
             <div class="rule-num">4</div>
             <div class="rule-content">
-              <h4>🗣️ แสดงความคิดเห็นอย่างสร้างสรรค์</h4>
+              <h4>แสดงความคิดเห็นอย่างสร้างสรรค์</h4>
               <p>สามารถวิจารณ์หรือไม่เห็นด้วยได้ แต่ควรพูดถึง<strong>ปัญหาและเหตุผล</strong> ไม่โจมตีตัวบุคคล</p>
             </div>
           </div>
@@ -770,7 +844,7 @@
           <div class="rule-card">
             <div class="rule-num">5</div>
             <div class="rule-content">
-              <h4>📝 ใช้ห้องให้ถูกประเภท</h4>
+              <h4>ใช้ห้องให้ถูกประเภท</h4>
               <p>โปรดตั้งกระทู้ในห้องที่ตรงกับเนื้อหา เช่น คำร้อง → ห้องคำร้อง, ข้อเสนอแนะ → ห้องข้อเสนอแนะ เพื่อให้จัดการข้อมูลได้ง่าย</p>
             </div>
           </div>
@@ -778,7 +852,7 @@
           <div class="rule-card">
             <div class="rule-num">6</div>
             <div class="rule-content">
-              <h4>🚫 ห้าม Spam / Flood</h4>
+              <h4>ห้าม Spam / Flood</h4>
               <p>ห้ามโพสต์ข้อความซ้ำ ๆ โพสต์จำนวนมากโดยไม่มีเหตุผล หรือทำให้ระบบ/การสนทนารบกวนผู้อื่น</p>
             </div>
           </div>
@@ -786,7 +860,7 @@
           <div class="rule-card">
             <div class="rule-num">7</div>
             <div class="rule-content">
-              <h4>❌ ห้ามเผยแพร่เนื้อหาไม่เหมาะสม</h4>
+              <h4>ห้ามเผยแพร่เนื้อหาไม่เหมาะสม</h4>
               <p>ห้ามเผยแพร่เนื้อหาทางเพศ ความรุนแรง การพนัน ยาเสพติด หรือเนื้อหาที่ผิดกฎหมาย/ไม่เหมาะสมกับสถานศึกษา</p>
             </div>
           </div>
@@ -794,7 +868,7 @@
           <div class="rule-card">
             <div class="rule-num">8</div>
             <div class="rule-content">
-              <h4>🎭 ห้ามแอบอ้างเป็นบุคคลอื่น</h4>
+              <h4>ห้ามแอบอ้างเป็นบุคคลอื่น</h4>
               <p>ห้ามแอบอ้างเป็นนักเรียน ครู บุคลากร หรือบุคคลอื่นเพื่อสร้างความเข้าใจผิดหรือก่อให้เกิดความเสียหาย</p>
             </div>
           </div>
@@ -802,7 +876,7 @@
           <div class="rule-card">
             <div class="rule-num">9</div>
             <div class="rule-content">
-              <h4>📰 ตรวจสอบข้อมูลก่อนโพสต์</h4>
+              <h4>ตรวจสอบข้อมูลก่อนโพสต์</h4>
               <p>ห้ามจงใจเผยแพร่ข่าวลือหรือข้อมูลเท็จที่อาจสร้างความเข้าใจผิดหรือทำให้ผู้อื่นเสียหาย</p>
             </div>
           </div>
@@ -810,14 +884,16 @@
           <div class="rule-card">
             <div class="rule-num">10</div>
             <div class="rule-content">
-              <h4>⚖️ เคารพการดูแลระบบ</h4>
+              <h4>เคารพการดูแลระบบ</h4>
               <p>ผู้ดูแลมีสิทธิ์ลบ ซ่อน หรือระงับเนื้อหาที่ละเมิดกฎ และอาจจำกัดการใช้งานของบัญชีที่ทำผิดซ้ำ</p>
             </div>
           </div>
 
           <!-- SCHOOL COMMUNITY PLEDGE -->
           <div class="school-community-pledge">
-            <div class="pledge-icon">🏫</div>
+            <div class="pledge-icon tlw-icon" style="color:var(--accent-gold);display:inline-flex;align-items:center;justify-content:center">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
             <div class="pledge-text">
               <h4 class="pledge-title">TLW Connect คือพื้นที่สำหรับการสื่อสารและแลกเปลี่ยนความคิดเห็นของชาวท่าลี่วิทยา</h4>
               <p class="pledge-desc">กรุณาใช้พื้นที่นี้ด้วยความสุภาพ เคารพผู้อื่น และช่วยกันสร้าง Community ที่ปลอดภัยสำหรับทุกคน</p>
@@ -829,10 +905,16 @@
 
       <div class="rules-modal-footer">
         <div class="rules-footer-note">
-          <span>🛡️ พื้นที่สนทนานี้ปลอดภัยและไร้ตัวตน โปรดร่วมกันรักษาบรรยากาศที่ดี</span>
+          <span style="display:inline-flex;align-items:center;gap:6px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;color:var(--accent-gold)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+            พื้นที่สนทนานี้ปลอดภัยและไร้ตัวตน โปรดร่วมกันรักษาบรรยากาศที่ดี
+          </span>
         </div>
         <button type="button" class="btn btn-primary btn-accept-rules" id="btn-accept-rules">
-          <span>✅ รับทราบและยอมรับกฎการใช้งาน</span>
+          <span style="display:inline-flex;align-items:center;gap:6px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polyline points="20 6 9 17 4 12"/></svg>
+            รับทราบและยอมรับกฎการใช้งาน
+          </span>
         </button>
       </div>
     </div>
@@ -843,10 +925,15 @@
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-title-group">
-          <h2 style="color: #f87171;">🚨 รายงานกระทู้ไปยังผู้ดูแล</h2>
+          <h2 style="color: #f87171; display:flex; align-items:center; gap:8px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>รายงานกระทู้ไปยังผู้ดูแล</span>
+          </h2>
           <span class="modal-subtitle">รายงานของคุณจะเป็นความลับและส่งตรงถึงศูนย์ผู้ดูแล (Manager) ทันที</span>
         </div>
-        <button class="modal-close-btn" id="btn-close-report-modal">✕</button>
+        <button class="modal-close-btn tlw-icon-btn" id="btn-close-report-modal" title="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
 
       <form id="report-form" class="report-form">
@@ -857,16 +944,16 @@
         <div class="form-group">
           <label for="report-reason-select">เลือกข้อที่ละเมิด (อ้างอิงกฎ TLW Connect):</label>
           <select id="report-reason-select" required>
-            <option value="🤝 ข้อ 1: ใช้คำหยาบ ดูหมิ่น ด่าทอ ข่มขู่ หรือโจมตีบุคคลอื่น">🤝 ข้อ 1: ใช้คำหยาบ ดูหมิ่น ด่าทอ ข่มขู่ หรือโจมตีผู้อื่น</option>
-            <option value="🚫 ข้อ 2: กลั่นแกล้ง (Bullying) ประจาน ล้อเลียน ทำให้อับอาย">🚫 ข้อ 2: กลั่นแกล้ง (Bullying) ประจาน ล้อเลียน</option>
-            <option value="🔒 ข้อ 3: เผยแพร่ข้อมูลส่วนบุคคล (เบอร์/ที่อยู่/รูปภาพ)">🔒 ข้อ 3: เผยแพร่ข้อมูลส่วนบุคคลโดยไม่ได้รับอนุญาต</option>
-            <option value="🗣️ ข้อ 4: แสดงความคิดเห็นโจมตีตัวบุคคล ไม่สร้างสรรค์">🗣️ ข้อ 4: แสดงความคิดเห็นโจมตีตัวบุคคล</option>
-            <option value="📝 ข้อ 5: ใช้ห้องผิดประเภทหรือไม่ตรงเนื้อหา">📝 ข้อ 5: ใช้ห้องผิดประเภท</option>
-            <option value="🚫 ข้อ 6: Spam / Flood โพสต์ซ้ำ ๆ รบกวนผู้อื่น">🚫 ข้อ 6: Spam / Flood โพสต์ซ้ำ ๆ รบกวน</option>
-            <option value="❌ ข้อ 7: เนื้อหาไม่เหมาะสม (ความรุนแรง/เพศ/การพนัน/ยาเสพติด)">❌ ข้อ 7: เนื้อหาไม่เหมาะสมกับสถานศึกษา</option>
-            <option value="🎭 ข้อ 8: แอบอ้างเป็นบุคคลอื่น (นักเรียน/ครู/บุคลากร)">🎭 ข้อ 8: แอบอ้างเป็นบุคคลอื่น</option>
-            <option value="📰 ข้อ 9: จงใจเผยแพร่ข่าวลือหรือข้อมูลเท็จ">📰 ข้อ 9: จงใจเผยแพร่ข่าวลือหรือข้อมูลเท็จ</option>
-            <option value="⚠️ อื่นๆ ที่ไม่เหมาะสม">⚠️ อื่นๆ ที่ไม่เหมาะสม</option>
+            <option value="ข้อ 1: ใช้คำหยาบ ดูหมิ่น ด่าทอ ข่มขู่ หรือโจมตีบุคคลอื่น">ข้อ 1: ใช้คำหยาบ ดูหมิ่น ด่าทอ ข่มขู่ หรือโจมตีผู้อื่น</option>
+            <option value="ข้อ 2: กลั่นแกล้ง (Bullying) ประจาน ล้อเลียน ทำให้อับอาย">ข้อ 2: กลั่นแกล้ง (Bullying) ประจาน ล้อเลียน</option>
+            <option value="ข้อ 3: เผยแพร่ข้อมูลส่วนบุคคล (เบอร์/ที่อยู่/รูปภาพ)">ข้อ 3: เผยแพร่ข้อมูลส่วนบุคคลโดยไม่ได้รับอนุญาต</option>
+            <option value="ข้อ 4: แสดงความคิดเห็นโจมตีตัวบุคคล ไม่สร้างสรรค์">ข้อ 4: แสดงความคิดเห็นโจมตีตัวบุคคล</option>
+            <option value="ข้อ 5: ใช้ห้องผิดประเภทหรือไม่ตรงเนื้อหา">ข้อ 5: ใช้ห้องผิดประเภท</option>
+            <option value="ข้อ 6: Spam / Flood โพสต์ซ้ำ ๆ รบกวนผู้อื่น">ข้อ 6: Spam / Flood โพสต์ซ้ำ ๆ รบกวน</option>
+            <option value="ข้อ 7: เนื้อหาไม่เหมาะสม (ความรุนแรง/เพศ/การพนัน/ยาเสพติด)">ข้อ 7: เนื้อหาไม่เหมาะสมกับสถานศึกษา</option>
+            <option value="ข้อ 8: แอบอ้างเป็นบุคคลอื่น (นักเรียน/ครู/บุคลากร)">ข้อ 8: แอบอ้างเป็นบุคคลอื่น</option>
+            <option value="ข้อ 9: จงใจเผยแพร่ข่าวลือหรือข้อมูลเท็จ">ข้อ 9: จงใจเผยแพร่ข่าวลือหรือข้อมูลเท็จ</option>
+            <option value="อื่นๆ ที่ไม่เหมาะสม">อื่นๆ ที่ไม่เหมาะสม</option>
           </select>
         </div>
 
@@ -878,8 +965,12 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="btn-cancel-report">ยกเลิก</button>
           <button type="submit" class="btn btn-danger" id="btn-submit-report">
-            <span>🚨 ส่งรายงานให้ผู้ดูแล</span>
+            <span style="display:inline-flex;align-items:center;gap:6px">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              ส่งรายงานให้ผู้ดูแล
+            </span>
           </button>
+        </div>
         </div>
       </form>
     </div>
@@ -888,28 +979,28 @@
   <!-- ================= MOBILE BOTTOM NAVIGATION BAR ================= -->
   <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
     <button class="bottom-nav-item active" id="btn-bottom-nav-feed" title="หน้าแรก">
-      <span class="nav-icon">🏠</span>
+      <span class="nav-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
       <span class="nav-label">หน้าแรก</span>
     </button>
     <button class="bottom-nav-item" id="btn-bottom-nav-shoutbox" title="คุยสด (Shoutbox)">
-      <span class="nav-icon">💬</span>
+      <span class="nav-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg></span>
       <span class="nav-label">คุยสด</span>
       <span class="bottom-nav-dot hidden" id="bottom-shoutbox-dot"></span>
     </button>
     <button class="bottom-nav-item bottom-nav-fab" id="btn-bottom-nav-compose" title="เขียนกระทู้ใหม่">
       <div class="fab-circle">
-        <span>✍️</span>
+        <span class="tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:20px;height:20px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
       </div>
       <span class="nav-label">โพสต์</span>
     </button>
     <button class="bottom-nav-item" id="btn-bottom-nav-rules" title="กฎชุมชน">
-      <span class="nav-icon">📜</span>
+      <span class="nav-icon tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
       <span class="nav-label">กฎชุมชน</span>
     </button>
     <!-- Notification Bell (mobile) -->
     <button class="bottom-nav-item" id="btn-bottom-nav-notify" title="การแจ้งเตือน">
       <span class="nav-icon" id="mobile-bell-icon-wrap" style="position: relative; display: inline-flex; align-items: center; justify-content: center;">
-        <span id="mobile-bell-icon">🔔</span>
+        <span id="mobile-bell-icon" class="tlw-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
         <span class="mobile-bell-badge" id="mobile-bell-badge"></span>
       </span>
       <span class="nav-label">แจ้งเตือน</span>
@@ -929,7 +1020,9 @@
           <div class="live-dot-pulse"></div>
           <h3>Live Shoutbox • แชทสดชาว ท.ล.ว.</h3>
         </div>
-        <button class="drawer-close-btn" id="btn-close-mobile-shoutbox">✕</button>
+        <button class="drawer-close-btn tlw-icon-btn" id="btn-close-mobile-shoutbox" title="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
       <div class="mobile-drawer-body">
         <div class="shoutbox-messages" id="mobile-shoutbox-list">
@@ -938,7 +1031,9 @@
       </div>
       <form id="mobile-shoutbox-form" class="shoutbox-input-wrap mobile-shoutbox-footer">
         <input type="text" id="mobile-shoutbox-input" placeholder="พิมพ์ข้อความสั้น... (กดส่ง)" maxlength="140" autocomplete="off" required>
-        <button type="submit" id="btn-send-mobile-shout" class="send-shout-btn" title="ส่งข้อความ">➤</button>
+        <button type="submit" id="btn-send-mobile-shout" class="send-shout-btn tlw-icon" title="ส่งข้อความ">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
       </form>
     </div>
   </div>
@@ -948,10 +1043,15 @@
     <div class="modal-card" style="max-width: 540px;">
       <div class="modal-header">
         <div class="modal-title-group">
-          <h2>📱 วิธีเข้าใช้งานผ่านโทรศัพท์มือถือ</h2>
+          <h2 style="display:flex;align-items:center;gap:8px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:var(--accent-gold)"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <span>วิธีเข้าใช้งานผ่านโทรศัพท์มือถือ</span>
+          </h2>
           <span class="modal-sub">เลือกวิธีที่สะดวกเพื่อเปิดหน้าเว็บเวอร์ชันมือถือทันที</span>
         </div>
-        <button class="modal-close-btn" id="btn-close-mobile-modal">✕</button>
+        <button class="modal-close-btn tlw-icon-btn" id="btn-close-mobile-modal" title="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
 
       <div class="modal-body" style="padding: 1rem 0;">
@@ -1000,6 +1100,8 @@
 
   <!-- Socket.io client -->
   <script src="/socket.io/socket.io.js"></script>
+  <!-- SVG Icon System -->
+  <script src="icons.js"></script>
   <!-- Sound synthesizer using Web Audio API -->
   <script src="sound.js"></script>
   <!-- Notification system (banners + browser push) -->

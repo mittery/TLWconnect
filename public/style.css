@@ -3455,6 +3455,322 @@ body {
   }
 }
 
+/* ================================================================
+   TLWconnect SVG Icon System — Preset Style (Red-Gold Theme)
+   ================================================================ */
+
+/* Base SVG icon sizing */
+.tlw-icon svg,
+.search-icon svg,
+.btn-icon svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Inline-flex wrapper for icons in text contexts */
+.tlw-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- Header Brand Icon ---- */
+.brand-svg-icon {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border: 2px solid #fbbf24;
+  border-radius: 10px;
+  color: #fff;
+  box-shadow: 0 0 18px rgba(220, 38, 38, 0.45);
+}
+
+/* ---- Search Icon ---- */
+.search-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.45);
+}
+
+.search-icon svg { width: 17px; height: 17px; }
+
+/* ---- Sound Icon Button ---- */
+.tlw-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#sound-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.7);
+}
+
+#sound-icon svg { width: 20px; height: 20px; }
+
+/* ---- Channel Nav Icons (Sidebar Left) ---- */
+.channel-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, rgba(220,38,38,0.2), rgba(185,28,28,0.15));
+  border: 1.5px solid rgba(251,191,36,0.25);
+  border-radius: 7px;
+  color: #fca5a5;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.channel-item.active .channel-icon,
+.channel-item:hover .channel-icon {
+  background: linear-gradient(135deg, rgba(220,38,38,0.5), rgba(185,28,28,0.4));
+  border-color: rgba(251,191,36,0.65);
+  color: #fef3c7;
+  box-shadow: 0 0 10px rgba(220,38,38,0.3);
+}
+
+.channel-icon svg { width: 15px; height: 15px; }
+
+/* ---- Mobile Channel Pill Icons ---- */
+.pill-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: rgba(255,255,255,0.7);
+}
+
+.pill-icon svg { width: 14px; height: 14px; }
+
+.mobile-channel-pill.active .pill-icon {
+  color: #fbbf24;
+}
+
+/* ---- Privacy / Shield Card Icon ---- */
+.card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+/* ---- Rules Button Icon ---- */
+.rules-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, rgba(220,38,38,0.25), rgba(185,28,28,0.2));
+  border: 1.5px solid rgba(251,191,36,0.35);
+  border-radius: 9px;
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+
+/* ---- Active Channel Header Icon ---- */
+#active-channel-icon {
+  margin-right: 6px;
+  color: rgba(255,255,255,0.7);
+}
+
+/* ---- Sort Tab Icons ---- */
+.sort-tab .tlw-icon svg { width: 13px; height: 13px; }
+.sort-tab.active .tlw-icon { color: #fbbf24; }
+
+/* ---- Shoutbox Send Button ---- */
+.send-shout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.send-shout-btn svg { width: 16px; height: 16px; }
+
+/* ---- Footer Header Icons ---- */
+.footer-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, rgba(220,38,38,0.2), rgba(185,28,28,0.15));
+  border: 1.5px solid rgba(251,191,36,0.25);
+  border-radius: 7px;
+  color: #fca5a5;
+  flex-shrink: 0;
+}
+.footer-header-icon svg { width: 15px; height: 15px; }
+
+/* ---- Footer Social Link Icons ---- */
+.social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 7px;
+  color: rgba(255,255,255,0.8);
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
+}
+
+.footer-social-link:hover .social-icon {
+  background: rgba(220,38,38,0.25);
+  color: #fca5a5;
+}
+
+.social-ext-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.35);
+  margin-left: auto;
+}
+
+/* ---- Mobile Bottom Nav Icons ---- */
+.mobile-bottom-nav .nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.55);
+  transition: color 0.2s;
+}
+
+.mobile-bottom-nav .nav-icon svg { width: 22px; height: 22px; }
+.mobile-bottom-nav .bottom-nav-item.active .nav-icon { color: #fbbf24; }
+.mobile-bottom-nav .bottom-nav-item:hover .nav-icon { color: #fca5a5; }
+
+/* FAB icon */
+.fab-circle .tlw-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+/* Mobile bell icon */
+#mobile-bell-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#mobile-bell-icon svg { width: 22px; height: 22px; }
+
+/* ---- Compose/Edit button icon ---- */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- Modal close button ---- */
+.modal-close-btn svg { width: 16px; height: 16px; }
+
+/* ---- Clear search button ---- */
+.clear-search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- Post Card SVG Icons & Actions ---- */
+.post-channel-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.post-channel-pill .tlw-icon svg,
+.post-channel-pill svg {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.vote-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.vote-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.comments-toggle-btn .tlw-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.post-report-btn .tlw-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.btn-owner-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-owner-action .tlw-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ---- Input Icons & Password Toggle ---- */
+.input-with-icon .input-icon.tlw-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-gold);
+}
+.input-with-icon .input-icon.tlw-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-toggle-pwd.tlw-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.45);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+.btn-toggle-pwd.tlw-icon:hover {
+  color: var(--accent-gold);
+}
+.btn-toggle-pwd.tlw-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---- Active Channel Header Icon ---- */
+#active-channel-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+
+
 
 
 
