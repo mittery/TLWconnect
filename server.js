@@ -190,7 +190,7 @@ function getLocalIp() {
       }
     }
   }
-  return '192.168.1.48';
+  return '127.0.0.1';
 }
 
 const DATA_DIR = path.join(__dirname, 'data');
@@ -1500,7 +1500,8 @@ server.listen(PORT, '0.0.0.0', async () => {
   const localIp = getLocalIp();
   console.log(`🚀 TLWconnect server running at:`);
   console.log(`   - Local PC:       http://localhost:${PORT}`);
-  console.log(`   - Phone (Wi-Fi):  http://${localIp}:${PORT}`);
-  console.log(`   - Direct Online:  https://closely-assure-sit-lines.trycloudflare.com (Direct, No Password, 4G/5G)`);
+  if (process.env.PUBLIC_URL) {
+    console.log(`   - Direct Online:  ${process.env.PUBLIC_URL}`);
+  }
   console.log(`🛡️ Manager Portal:  http://${localIp}:${PORT}/manager.html`);
 });
