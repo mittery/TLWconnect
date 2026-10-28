@@ -2027,13 +2027,20 @@ body {
     display: none;
   }
 
-  /* Header — compact but clear */
+  /* ---- Header: สมมาตร ซ้าย=โลโก้ ขวา=ไอคอน ---- */
   .app-header {
-    padding: 0.5rem 0.75rem;
+    padding: 0.45rem 0.85rem;
   }
 
   .header-inner {
     gap: 0.5rem;
+    justify-content: space-between;
+  }
+
+  /* Brand ซ้าย: flex-shrink ไม่หด */
+  .header-brand {
+    flex-shrink: 0;
+    gap: 0.6rem;
   }
 
   .header-search {
@@ -2041,8 +2048,8 @@ body {
   }
 
   .brand-logo-glow {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     font-size: 1.1rem;
     border-radius: 10px;
   }
@@ -2059,6 +2066,14 @@ body {
     display: none;
   }
 
+  /* Header actions: compact icon row ขวา */
+  .header-actions {
+    gap: 0.45rem;
+    flex-shrink: 0;
+    align-items: center;
+  }
+
+  /* Persona badge: แสดงแค่ avatar */
   .persona-info {
     display: none;
   }
@@ -2068,7 +2083,44 @@ body {
   }
 
   .user-persona-badge {
-    padding: 0.25rem;
+    padding: 0.2rem;
+    border-radius: 50%;
+    background: rgba(220, 38, 38, 0.15);
+  }
+
+  /* Student badge: compact — เอา meta และ logout ออก เหลือแค่ avatar + id */
+  .student-account-badge {
+    padding: 0.2rem 0.45rem 0.2rem 0.25rem;
+    gap: 0.35rem;
+    border-radius: var(--radius-full);
+  }
+
+  .student-meta {
+    display: flex;
+  }
+
+  .student-realname {
+    display: none;
+  }
+
+  .student-id-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #fbbf24;
+  }
+
+  .btn-student-logout span:first-child {
+    display: none;
+  }
+
+  .btn-student-logout {
+    padding: 0.2rem 0.35rem;
+    font-size: 0;
+    min-width: 24px;
+    min-height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .btn-primary .btn-icon + span {
@@ -2079,10 +2131,24 @@ body {
     display: none;
   }
 
-  /* Mobile Bottom Nav visible */
+  /* ---- Mobile Bottom Nav: สมมาตร flex เท่ากันทุกปุ่ม ---- */
   .mobile-bottom-nav {
     display: flex;
-    padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+    padding: 0.25rem 0;
+    padding-bottom: calc(0.25rem + env(safe-area-inset-bottom, 0px));
+    justify-content: stretch;
+  }
+
+  .bottom-nav-item {
+    flex: 1;
+    padding: 0.3rem 0.25rem;
+    min-width: 0;
+  }
+
+  /* FAB ยังนูนขึ้นมา แต่ไม่ดัน item อื่น */
+  .bottom-nav-item.bottom-nav-fab {
+    margin-top: -14px;
+    flex: 1;
   }
 
   /* Mobile Channels Bar visible */
@@ -2134,15 +2200,21 @@ body {
 
   /* Feed Controls */
   .feed-controls {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 0.4rem;
+  }
+
+  .feed-current-channel {
+    flex-shrink: 0;
   }
 
   .feed-sort-tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    margin-left: auto;
   }
 
   .feed-sort-tabs::-webkit-scrollbar {
@@ -2151,8 +2223,8 @@ body {
 
   /* Sort tabs bigger touch targets */
   .sort-tab {
-    padding: 0.45rem 0.95rem;
-    font-size: 0.82rem;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
   }
 
   /* Quick Compose */
@@ -2212,13 +2284,13 @@ body {
   }
 
   .header-actions {
-    gap: 0.4rem;
+    gap: 0.3rem;
   }
 
   .icon-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 1.05rem;
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
     border-radius: 10px;
   }
 
@@ -2246,19 +2318,42 @@ body {
 
   /* Mobile channel pills — more thumb-friendly */
   .mobile-channel-pill {
-    padding: 0.5rem 0.95rem;
-    font-size: 0.78rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.76rem;
     border-radius: 12px;
   }
 
-  /* Bottom nav items bigger */
+  /* Bottom nav: เท่ากันทุกปุ่ม แต่ label เล็กลง */
   .bottom-nav-item {
-    font-size: 0.68rem;
-    padding: 0.35rem 0;
+    flex: 1;
+    padding: 0.28rem 0.1rem;
+    font-size: 0.6rem;
   }
 
   .bottom-nav-item .nav-icon {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
+  }
+
+  .bottom-nav-item .nav-label {
+    font-size: 0.58rem;
+    letter-spacing: 0;
+  }
+
+  /* FAB ยังโดดเด่น */
+  .bottom-nav-item.bottom-nav-fab {
+    margin-top: -12px;
+  }
+
+  .bottom-nav-item .fab-circle {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* student badge จิ๋วมาก */
+  .student-avatar-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.85rem;
   }
 }
 
@@ -2953,21 +3048,7 @@ body {
   box-shadow: 0 0 10px rgba(220, 38, 38, 0.4);
 }
 
-@media (max-width: 768px) {
-  .student-account-badge {
-    padding: 0.25rem 0.55rem;
-  }
-  .student-realname {
-    max-width: 90px;
-    font-size: 0.75rem;
-  }
-  .student-id-tag {
-    font-size: 0.62rem;
-  }
-  .btn-student-logout span {
-    font-size: 0.65rem;
-  }
-}
+/* student-account-badge mobile overrides — handled in main 768px block above */
 
 /* ================= REQUEST STATUS & SCHOOL FEEDBACK ================= */
 .request-status-row {
