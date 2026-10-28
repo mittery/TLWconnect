@@ -526,7 +526,7 @@ app.post('/api/auth/verify-role', (req, res) => {
 
 // Public API endpoints
 app.get('/api/posts', (req, res) => {
-  const { channel, sort, search } = req.query;
+  const { channel, sort, search, limit, offset } = req.query;
   let filtered = [...posts];
 
   if (channel && channel !== 'all') {
@@ -548,6 +548,19 @@ app.get('/api/posts', (req, res) => {
     filtered.sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes));
   } else {
     filtered.sort((a, b) => b.timestamp - a.timestamp);
+  }
+
+  // Pagination support
+  if (limit) {
+    const lim = Math.max(1, parseInt(limit, 10) || 6);
+    const off = Math.max(0, parseInt(offset, 10) || 0);
+    const paginated = filtered.slice(off, off + lim);
+    return res.json({
+      posts: paginated,
+      total: filtered.length,
+      hasMore: off + lim < filtered.length,
+      nextOffset: off + lim
+    });
   }
 
   res.json(filtered);
