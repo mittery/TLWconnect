@@ -875,9 +875,8 @@ function getFilteredPosts() {
 function renderFeed(newArrivalId = null) {
   const filtered = getFilteredPosts();
 
-  postsContainer.innerHTML = '';
-
   if (filtered.length === 0) {
+    postsContainer.innerHTML = '';
     emptyFeedState.classList.remove('hidden');
     if (loadMoreContainer) loadMoreContainer.classList.add('hidden');
     return;
@@ -886,13 +885,29 @@ function renderFeed(newArrivalId = null) {
   emptyFeedState.classList.add('hidden');
 
   // Render first batch up to visiblePostsCount
+  // สร้างการ์ดทั้งหมดก่อน แล้วค่อยแทนที่ของเดิม — ถ้าการ์ดใบไหนมีปัญหา จะข้ามใบนั้น
+  // ไม่ทำให้ฟีดว่างทั้งหน้า
   const displayed = filtered.slice(0, visiblePostsCount);
+  const frag = document.createDocumentFragment();
   displayed.forEach(post => {
-    const card = createPostCard(post, post.id === newArrivalId);
-    postsContainer.appendChild(card);
+    const card = safeCreatePostCard(post, post.id === newArrivalId);
+    if (card) frag.appendChild(card);
   });
 
+  postsContainer.innerHTML = '';
+  postsContainer.appendChild(frag);
+
   updateLoadMoreUI(filtered.length);
+}
+
+// สร้างการ์ดแบบกัน error: ถ้าข้อมูลโพสต์ผิดรูป จะ log แล้วคืน null แทนที่จะ throw
+function safeCreatePostCard(post, isNew = false) {
+  try {
+    return createPostCard(post, isNew);
+  } catch (err) {
+    console.error('createPostCard failed for post', post && post.id, err);
+    return null;
+  }
 }
 
 function updateLoadMoreUI(totalCount) {
@@ -944,27 +959,42 @@ function loadMorePosts() {
 
   // Smooth micro-delay for debounce and natural feedback
   setTimeout(() => {
-    const startIdx = visiblePostsCount;
-    const endIdx = startIdx + POSTS_PER_PAGE;
-    const nextChunk = filtered.slice(startIdx, endIdx);
+    try {
+      // คำนวณรายการใหม่ ณ ตอนนี้ (อาจมีโพสต์ใหม่เข้ามา/ถูกลบระหว่างรอ 160ms)
+      const latest = getFilteredPosts();
+      const startIdx = visiblePostsCount;
+      const endIdx = startIdx + POSTS_PER_PAGE;
+      const nextChunk = latest.slice(startIdx, endIdx);
 
-    nextChunk.forEach(post => {
-      // Deduplicate check
-      if (!document.getElementById(`card-${post.id}`)) {
-        const card = createPostCard(post, false);
-        card.classList.add('anim-fade-in');
-        postsContainer.appendChild(card);
-      }
-    });
+      nextChunk.forEach(post => {
+        // Deduplicate check
+        if (!document.getElementById(`card-${post.id}`)) {
+          const card = safeCreatePostCard(post, false);
+          if (card) {
+            card.classList.add('anim-fade-in');
+            postsContainer.appendChild(card);
+          }
+        }
+      });
 
-    visiblePostsCount = endIdx;
-    isLoadingMore = false;
-    updateLoadMoreUI(total);
-    if (window.soundEngine) window.soundEngine.playClick();
+      visiblePostsCount = endIdx;
+      updateLoadMoreUI(latest.length);
+      if (window.soundEngine) window.soundEngine.playClick();
+    } catch (err) {
+      console.error('loadMorePosts failed', err);
+      // ถ้าพลาด ให้วาดฟีดใหม่ทั้งหมดจากข้อมูลที่มี แทนที่จะปล่อยให้หน้าค้าง/ว่าง
+      try { renderFeed(); } catch (e2) { console.error(e2); }
+    } finally {
+      isLoadingMore = false;
+      if (btnLoadMore) btnLoadMore.disabled = false;
+    }
   }, 160);
 }
 
 function createPostCard(post, isNew = false) {
+  if (!post.author || typeof post.author !== 'object') {
+    post = Object.assign({}, post, { author: { name: 'นิรนาม' } });
+  }
   const card = document.createElement('article');
   card.className = `post-card ${isNew ? 'new-pulse' : ''}`;
   card.id = `card-${post.id}`;
@@ -978,7 +1008,7 @@ function createPostCard(post, isNew = false) {
   let tagsHtml = '';
   if (post.tags && post.tags.length > 0) {
     tagsHtml = `<div class="post-tags-row">
-      ${post.tags.map(tag => `<span class="post-tag" data-filter-tag="${tag}">#${tag}</span>`).join('')}
+      ${post.tags.map(tag => `<span class="post-tag" data-filter-tag="${escapeHtml(String(tag))}">#${escapeHtml(String(tag))}</span>`).join('')}
     </div>`;
   }
 
@@ -2152,7 +2182,7 @@ function initAmbientParticles() {
 // ================= HELPERS =================
 function escapeHtml(str) {
   if (!str) return '';
-  return str
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
