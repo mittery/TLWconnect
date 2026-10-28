@@ -884,8 +884,8 @@ function updateLoadMoreUI(totalCount) {
     if (btnLoadMore) {
       btnLoadMore.classList.remove('hidden');
       btnLoadMore.disabled = false;
-      if (loadMoreText) loadMoreText.textContent = 'โหลดโพสต์เพิ่มเติม';
-      if (loadMoreBadge) loadMoreBadge.textContent = `+${nextBatch} (เหลืออีก ${remaining})`;
+      if (loadMoreText) loadMoreText.textContent = 'อ่านเพิ่มเติม';
+      if (loadMoreBadge) loadMoreBadge.textContent = `${nextBatch}`;
     }
     if (loadMoreFinished) loadMoreFinished.classList.add('hidden');
   } else {
@@ -912,8 +912,7 @@ function loadMorePosts() {
   isLoadingMore = true;
   if (btnLoadMore) {
     btnLoadMore.disabled = true;
-    if (loadMoreText) loadMoreText.textContent = 'กำลังโหลดโพสต์...';
-    if (loadMoreBadge) loadMoreBadge.textContent = '⏳';
+    if (loadMoreText) loadMoreText.textContent = 'กำลังโหลด...';
   }
 
   // Smooth micro-delay for debounce and natural feedback
@@ -1418,6 +1417,20 @@ function setupEventListeners() {
   if (btnLoadMore) {
     btnLoadMore.addEventListener('click', () => {
       loadMorePosts();
+    });
+  }
+
+  // Notice highlight strip action button
+  const btnStripOpenPopular = document.getElementById('btn-strip-open-popular');
+  if (btnStripOpenPopular) {
+    btnStripOpenPopular.addEventListener('click', () => {
+      document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+      const hotTab = document.querySelector('.sort-tab[data-sort="hot"]');
+      if (hotTab) hotTab.classList.add('active');
+      currentSort = 'hot';
+      visiblePostsCount = POSTS_PER_PAGE;
+      if (window.soundEngine) window.soundEngine.playClick();
+      renderFeed();
     });
   }
 

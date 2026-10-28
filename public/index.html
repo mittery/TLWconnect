@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TLWconnect</title>
-  <link rel="icon" type="image/png" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" href="/favicon-32x32.png">
   <meta name="description" content="TLWconnect พื้นที่สนทนานิรนามแบบเรียลไทม์ ปลอดภัย ไร้ตัวตน แชร์เรื่องราว ระบาย ส่งข้อเสนอแนะ และคำร้องได้อย่างอิสระ">
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -321,28 +321,28 @@
     <!-- CENTER: Main Feed -->
     <main class="main-content">
 
-      <!-- MODERN SCHOOL HERO BANNER -->
-      <section class="school-hero-banner">
+      <!-- MODERN SCHOOL HERO BANNER (Preset Style) -->
+      <section class="school-hero-banner preset-hero-banner">
         <div class="hero-inner">
-          <div class="hero-crest-wrap">
+          <div class="hero-crest-wrap preset-crest-wrap">
             <span class="hero-crest-icon">🏫</span>
           </div>
           <div class="hero-text-wrap">
-            <div class="hero-badge-tag">🟡 สีเหลือง-แดง เอกลักษณ์ท่าลี่วิทยา • THALIWITTAYA COMMUNITY</div>
-            <h2 class="hero-title">ยินดีต้อนรับสู่ TLW Connect 🤝</h2>
-            <p class="hero-desc">พื้นที่ออนไลน์นิรนามสำหรับชาวท่าลี่วิทยา แลกเปลี่ยนความคิดเห็น ระบาย ส่งข้อเสนอแนะ และคำร้องได้อย่างอิสระ ปลอดภัย ไร้ตัวตน</p>
+            <div class="hero-badge-tag preset-hero-tag">🟡 ประกาศ • แนะนำ</div>
+            <h2 class="hero-title">ยินดีต้อนรับสู่ TLW Connect! 👋</h2>
+            <p class="hero-desc">พื้นที่ออนไลน์สำหรับนักเรียนและครูโรงเรียนท่าลี่วิทยา แลกเปลี่ยนความคิดเห็น พูดคุย แบ่งปันไอเดีย และสร้างสังคมที่ดีไปด้วยกัน</p>
           </div>
         </div>
       </section>
 
-      <!-- QUICK COMPOSE BANNER -->
-      <section class="quick-compose-bar" id="quick-compose-trigger">
-        <div class="compose-avatar" id="quick-compose-avatar">👻</div>
-        <div class="compose-placeholder">
-          <span>มีเรื่องอะไรอยากระบายแบบไม่ต้องระบุตัวตนไหม? คลิกเพื่อเขียนกระทู้...</span>
+      <!-- NOTICE HIGHLIGHT STRIP (Sub-Banner) -->
+      <div class="notice-highlight-strip" id="notice-highlight-strip">
+        <div class="strip-left">
+          <div class="strip-avatar">🔮</div>
+          <span class="strip-text">นี่คือช่องไฮไลต์กระทู้ยอดนิยม ไปติดตามดูได้เลยในเมนูด้านซ้าย ✨</span>
         </div>
-        <button class="btn btn-sm btn-subtle">เขียนโพสต์</button>
-      </section>
+        <button class="btn-strip-action" type="button" id="btn-strip-open-popular">เปิดเพิ่มเติม</button>
+      </div>
 
       <!-- MOBILE HORIZONTAL CHANNELS BAR (เลื่อนแนวนอนบนโทรศัพท์) -->
       <div class="mobile-channels-bar" id="mobile-channels-bar">
@@ -405,12 +405,16 @@
         </div>
       </section>
 
-      <!-- LOAD MORE POSTS SECTION (โหลดทีละ 5-6 รายการตาม Roadmap) -->
+      <!-- LOAD MORE POSTS SECTION (โหลดทีละ 5-6 รายการตาม Preset) -->
       <div id="load-more-container" class="load-more-container hidden">
-        <button id="btn-load-more" class="btn-load-more" type="button" title="กดเพื่อโหลดโพสต์เพิ่มเติม">
-          <span class="load-more-icon">📥</span>
-          <span id="load-more-text">โหลดโพสต์เพิ่มเติม</span>
-          <span id="load-more-badge" class="load-more-badge"></span>
+        <button id="btn-load-more" class="btn-load-more preset-load-more" type="button" title="กดเพื่อโหลดโพสต์เพิ่มเติม">
+          <div class="load-more-main-row">
+            <span class="load-more-arrow">⏬</span>
+            <span id="load-more-text" class="load-more-title">อ่านเพิ่มเติม</span>
+          </div>
+          <div class="load-more-sub-row">
+            <span id="load-more-subtext">โหลดโพสต์ชุดถัดไป (อีก <span id="load-more-badge">6</span> โพสต์)</span>
+          </div>
         </button>
         <div id="load-more-finished" class="load-more-finished hidden">
           <span class="finished-icon">✨</span>
@@ -465,6 +469,61 @@
 
     </aside>
   </div>
+
+  <!-- ================= MODERN WEB FOOTER (Preset Style) ================= -->
+  <footer class="site-footer" id="site-footer">
+    <div class="footer-inner">
+      <!-- Col 1: Brand -->
+      <div class="footer-col footer-col-brand">
+        <div class="footer-brand-box">
+          <div class="footer-brand-icon-wrap">
+            <span class="footer-brand-icon">🏫</span>
+          </div>
+          <div class="footer-brand-text">
+            <h3 class="footer-brand-name">TLW<span>Connect</span></h3>
+            <p class="footer-brand-tagline">เชื่อมโยงกัน... เพื่อท่าลี่วิทยา</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Col 2: Contact -->
+      <div class="footer-col footer-col-contact">
+        <div class="footer-col-header">
+          <span class="footer-header-icon">👤</span>
+          <h4>ช่องทางติดต่อ</h4>
+        </div>
+        <p class="footer-col-desc">ติดต่อทีมงานเมื่อพบปัญหาหรือมีข้อเสนอแนะ</p>
+        <div class="footer-social-links">
+          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="footer-social-link fb-link" title="Facebook Page โรงเรียน">
+            <span class="social-icon">📘</span>
+            <span>Facebook Page</span>
+            <span class="social-ext-icon">↗</span>
+          </a>
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="footer-social-link ig-link" title="Instagram ชุมชน">
+            <span class="social-icon">📸</span>
+            <span>Instagram</span>
+            <span class="social-ext-icon">↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Col 3: About -->
+      <div class="footer-col footer-col-about">
+        <div class="footer-col-header">
+          <span class="footer-header-icon">📄</span>
+          <h4>เกี่ยวกับ</h4>
+        </div>
+        <p class="footer-about-text">
+          TLW Connect คือพื้นที่กลางสำหรับนักเรียนและครู เพื่อแลกเปลี่ยนความคิดเห็น สร้างสังคมที่ดี และพัฒนาไปด้วยกัน ที่โรงเรียนท่าลี่วิทยา
+        </p>
+      </div>
+    </div>
+
+    <!-- Bottom Copyright Line -->
+    <div class="footer-bottom-bar">
+      <p class="footer-bottom-text">TLW Connect — เชื่อมโยงกัน... เพื่อท่าลี่วิทยา</p>
+    </div>
+  </footer>
 
   <!-- MODAL: CREATE / COMPOSE POST -->
   <div id="compose-modal" class="modal-overlay hidden">
