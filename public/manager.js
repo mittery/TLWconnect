@@ -148,8 +148,10 @@ function initSocket() {
 
   socket.on('post_deleted', ({ postId, reason }) => {
     currentPosts = currentPosts.filter(p => p.id !== postId);
+    resolveOrphanReports();
     updateMetrics();
     renderPostsTable();
+    renderReportsTable();
   });
 
   socket.on('comment_deleted', ({ postId, commentId }) => {
@@ -197,6 +199,18 @@ function initSocket() {
   });
 }
 
+// รายงานที่ยังรอดำเนินการแต่กระทู้ถูกลบไปแล้ว ไม่มีอะไรให้ตัดสินอีก จึงปิดให้อัตโนมัติ
+// (ใช้ได้กับรายงานหลายใบของกระทู้เดียวกัน ที่เดิมค้างอยู่หลังลบกระทู้จากรายงานใบเดียว)
+function resolveOrphanReports() {
+  const livePostIds = new Set(currentPosts.map(p => p.id));
+  reportsList.forEach(r => {
+    if (r.status === 'pending' && !livePostIds.has(r.postId)) {
+      r.status = 'resolved';
+      r.resolvedAction = r.resolvedAction || 'post_deleted';
+    }
+  });
+}
+
 // ================= API CALLS =================
 async function fetchOverviewData() {
   try {
@@ -216,6 +230,7 @@ async function fetchOverviewData() {
     reportsList = data.reports || [];
     usersList = data.users || [];
     registeredStudentsCount = data.registeredStudentsCount || usersList.length;
+    resolveOrphanReports();
 
     updateMetrics();
     renderPostsTable();
@@ -625,8 +640,8 @@ function openDeleteModal(postId, postTitle, authorName) {
   pendingDeletePostId = postId;
   pendingDeletePostAuthor = authorName;
   deletePreviewContent.innerHTML = `
-    <strong>หัวข้อ:</strong> ${postTitle}<br>
-    <strong>ผู้โพสต์:</strong> ${authorName}
+    <strong>หัวข้อ:</strong> ${escapeHtml(postTitle)}<br>
+    <strong>ผู้โพสต์:</strong> ${escapeHtml(authorName)}
   `;
   checkBanAuthorToo.checked = false;
   deleteModal.classList.remove('hidden');
@@ -1008,7 +1023,7 @@ function showToast(message) {
 
 function escapeHtml(str) {
   if (!str) return '';
-  return str
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -1141,4 +1156,3 @@ if (btnExportPosts) {
     }
   });
 }
-
