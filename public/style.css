@@ -1394,7 +1394,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  z-index: 200;
+  z-index: 400;
   transition: opacity 0.2s ease;
 }
 
@@ -1411,6 +1411,7 @@ body {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), var(--shadow-glow);
   padding: 1.75rem;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   animation: modal-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -2127,7 +2128,9 @@ body {
     display: none;
   }
 
-  .glow-button {
+  /* ซ่อนเฉพาะปุ่มโพสต์ที่ header (มี FAB ใน bottom nav แทน)
+     ห้ามซ่อน .glow-button ทั้งหมด เพราะปุ่มส่งโพสต์/แก้ไขในโมดัลใช้คลาสเดียวกัน */
+  #btn-open-compose-modal {
     display: none;
   }
 
@@ -3884,10 +3887,3 @@ body {
 .footer-brand-box:hover .footer-school-logo {
   transform: scale(1.08);
 }
-
-
-
-
-
-
-
