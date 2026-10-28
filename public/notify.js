@@ -279,30 +279,30 @@ class TLWNotify {
           bottom: 80px;
         }
         /* Mobile bell in bottom nav */
+        #btn-bottom-nav-notify,
         #btn-notify-bell-mobile {
-          background: transparent;
-          border: none;
-          color: #94a3b8;
-          font-size: 1.2rem;
           position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%; height: 100%;
-          cursor: pointer;
-          transition: color 0.2s;
         }
-        #btn-notify-bell-mobile.enabled { color: #4ade80; }
-        #btn-notify-bell-mobile.denied  { color: #f87171; opacity: 0.6; }
+        #btn-bottom-nav-notify.enabled,
+        #btn-notify-bell-mobile.enabled {
+          color: #4ade80;
+        }
+        #btn-bottom-nav-notify.denied,
+        #btn-notify-bell-mobile.denied {
+          color: #f87171;
+          opacity: 0.6;
+        }
         .mobile-bell-badge {
           position: absolute;
-          top: 2px; right: calc(50% - 18px);
+          top: -4px;
+          right: -8px;
           background: #ef4444;
           color: #fff;
           border-radius: 9999px;
           font-size: 0.52rem;
           font-weight: 800;
-          min-width: 14px; height: 14px;
+          min-width: 14px;
+          height: 14px;
           display: none;
           align-items: center;
           justify-content: center;
@@ -440,14 +440,21 @@ class TLWNotify {
       }
     }
     // Mobile
-    const mobileBtn = document.getElementById('btn-notify-bell-mobile');
+    const mobileBtn = document.getElementById('btn-bottom-nav-notify') || document.getElementById('btn-notify-bell-mobile');
+    const mobileIcon = document.getElementById('mobile-bell-icon');
     if (mobileBtn) {
       mobileBtn.classList.remove('enabled', 'denied');
       if (this._permissionState === 'granted') {
         mobileBtn.classList.add('enabled');
         mobileBtn.title = 'การแจ้งเตือนเปิดอยู่ ✅';
+        if (mobileIcon) mobileIcon.textContent = '🔔';
       } else if (this._permissionState === 'denied') {
         mobileBtn.classList.add('denied');
+        mobileBtn.title = 'การแจ้งเตือนถูกบล็อก — คลิกเพื่อดูวิธีแก้ไข';
+        if (mobileIcon) mobileIcon.textContent = '🔕';
+      } else {
+        mobileBtn.title = 'คลิกเพื่อเปิดรับการแจ้งเตือนประกาศ';
+        if (mobileIcon) mobileIcon.textContent = '🔔';
       }
     }
   }
@@ -646,6 +653,24 @@ class TLWNotify {
   // MOBILE BELL BUTTON (call after DOM is ready)
   // ---------------------------------------------------------------
   setupMobileBell(slotId = 'notify-mobile-bell-slot') {
+    // 1. If standard bottom-nav button exists in DOM
+    const navBtn = document.getElementById('btn-bottom-nav-notify');
+    if (navBtn) {
+      navBtn.addEventListener('click', () => {
+        this._clearBadge();
+        if (this._permissionState === 'granted') {
+          if (window.showToast) showToast('✅ เปิดรับการแจ้งเตือนประกาศอยู่แล้ว', 'success');
+        } else if (this._permissionState === 'denied') {
+          if (window.showToast) showToast('🚫 ถูกบล็อก — ไปเปิดสิทธิ์ในการตั้งค่าเบราว์เซอร์', 'info');
+        } else {
+          this.requestPermission();
+        }
+      });
+      this._updateBellUI();
+      return;
+    }
+
+    // 2. Legacy fallback if slot element exists
     const slot = document.getElementById(slotId);
     if (!slot || document.getElementById('btn-notify-bell-mobile')) return;
 
@@ -661,9 +686,9 @@ class TLWNotify {
     btn.addEventListener('click', () => {
       this._clearBadge();
       if (this._permissionState === 'granted') {
-        if (window.showToast) showToast('✅ เปิดรับการแจ้งเตือนอยู่แล้ว', 'success');
+        if (window.showToast) showToast('✅ เปิดรับการแจ้งเตือนประกาศอยู่แล้ว', 'success');
       } else if (this._permissionState === 'denied') {
-        if (window.showToast) showToast('🚫 ถูกบล็อก — ไปยกเลิกในการตั้งค่าเบราว์เซอร์', 'info');
+        if (window.showToast) showToast('🚫 ถูกบล็อก — ไปเปิดสิทธิ์ในการตั้งค่าเบราว์เซอร์', 'info');
       } else {
         this.requestPermission();
       }

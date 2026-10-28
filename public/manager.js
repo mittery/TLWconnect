@@ -925,33 +925,6 @@ function setupEventListeners() {
   // Comments Modal Events
   btnDoneComments.addEventListener('click', () => commentsModal.classList.add('hidden'));
   btnCloseCommentsModal.addEventListener('click', () => commentsModal.classList.add('hidden'));
-
-  // Mobile Connect QR Modal
-  const mobileConnectModal = document.getElementById('mobile-connect-modal');
-  const btnOpenMobileConnect = document.getElementById('btn-open-mobile-connect');
-  const btnCloseMobileModal = document.getElementById('btn-close-mobile-modal');
-  const btnCloseMobileModalFooter = document.getElementById('btn-close-mobile-modal-footer');
-
-  if (btnOpenMobileConnect && mobileConnectModal) {
-    btnOpenMobileConnect.addEventListener('click', () => {
-      mobileConnectModal.classList.remove('hidden');
-    });
-  }
-  if (btnCloseMobileModal && mobileConnectModal) {
-    btnCloseMobileModal.addEventListener('click', () => {
-      mobileConnectModal.classList.add('hidden');
-    });
-  }
-  if (btnCloseMobileModalFooter && mobileConnectModal) {
-    btnCloseMobileModalFooter.addEventListener('click', () => {
-      mobileConnectModal.classList.add('hidden');
-    });
-  }
-  if (mobileConnectModal) {
-    mobileConnectModal.addEventListener('click', (e) => {
-      if (e.target === mobileConnectModal) mobileConnectModal.classList.add('hidden');
-    });
-  }
 }
 
 // ================= HELPERS =================

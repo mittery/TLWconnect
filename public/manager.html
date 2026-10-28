@@ -55,9 +55,6 @@
         </div>
 
         <div class="header-actions">
-          <button id="btn-open-mobile-connect" class="btn btn-sm btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); border: none; box-shadow: 0 2px 10px rgba(16,185,129,0.3);">
-            <span>📱 สแกนเข้าบนมือถือ (QR)</span>
-          </button>
           <a href="/" target="_blank" class="btn btn-outline btn-sm">
             <span>🌐 ดูหน้าเว็บจริง</span>
           </a>
@@ -451,61 +448,7 @@
     </div>
   </div>
 
-  <!-- ================= MODAL: MOBILE CONNECT & QR CODE ================= -->
-  <div id="mobile-connect-modal" class="modal-overlay hidden">
-    <div class="modal-card" style="max-width: 540px;">
-      <div class="modal-header">
-        <div class="modal-title-group">
-          <h2>📱 วิธีเข้าใช้งานผ่านโทรศัพท์มือถือ</h2>
-          <span class="modal-sub">เลือกวิธีที่สะดวกเพื่อเปิดหน้าเว็บเวอร์ชันมือถือทันที</span>
-        </div>
-        <button class="modal-close-btn" id="btn-close-mobile-modal">✕</button>
-      </div>
 
-      <div class="modal-body" style="padding: 1rem 0;">
-        <!-- Option 1: Direct Zero-Friction Cloudflare URL (ขอแค่มีเน็ต เข้าได้ทันที ไม่มีเงื่อนไข) -->
-        <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.4); border-radius: var(--radius-md); padding: 1.15rem; margin-bottom: 1rem;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-            <div style="font-weight: 700; color: #34d399; font-size: 0.95rem;">
-              🚀 ลิงก์ออนไลน์โดยตรง (ขอแค่มีอินเทอร์เน็ต เข้าได้ทันที 100%)
-            </div>
-            <span style="font-size: 0.72rem; background: rgba(16,185,129,0.25); color: #6ee7b7; padding: 2px 8px; border-radius: 9999px; font-weight: 600;">แนะนำ • ไม่มีรหัสผ่าน</span>
-          </div>
-          <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 0.75rem;">
-            ไม่ต้องอยู่วง Wi-Fi เดียวกัน ใช้ 4G / 5G / เน็ตมือถือได้เลย ไม่ต้องกรอกรหัสใดๆ ทั้งสิ้น:
-          </p>
-          <div style="display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://closely-assure-sit-lines.trycloudflare.com/manager.html" alt="Cloudflare QR" style="width: 130px; height: 130px; border-radius: 8px; background: #fff; padding: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-            <div style="flex: 1; min-width: 200px;">
-              <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">🛡️ ลิงก์เปิดหน้า Manager บนมือถือ:</div>
-              <a href="https://closely-assure-sit-lines.trycloudflare.com/manager.html" target="_blank" style="display: block; font-size: 0.82rem; color: #34d399; background: rgba(0,0,0,0.4); padding: 0.45rem 0.65rem; border-radius: 6px; word-break: break-all; margin-bottom: 0.5rem; font-weight: 700; text-decoration: none; border: 1px solid rgba(52,211,153,0.3);">
-                https://closely-assure-sit-lines.trycloudflare.com/manager.html
-              </a>
-              <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">🌐 ลิงก์ฟอรัมหลัก (นักเรียน):</div>
-              <a href="https://closely-assure-sit-lines.trycloudflare.com" target="_blank" style="display: block; font-size: 0.78rem; color: #a78bfa; background: rgba(0,0,0,0.4); padding: 0.4rem 0.6rem; border-radius: 6px; word-break: break-all; text-decoration: none; border: 1px solid rgba(167,139,250,0.3);">
-                https://closely-assure-sit-lines.trycloudflare.com
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Option 2: Local Wi-Fi (ถ้าอยู่ในบ้าน/รร. เดียวกัน) -->
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem 1rem;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
-            <div style="font-weight: 600; color: #94a3b8; font-size: 0.82rem;">
-              📶 สำรอง: ลิงก์ Wi-Fi ภายในบ้าน/โรงเรียน
-            </div>
-            <span style="font-size: 0.68rem; color: var(--text-muted);">IP ภายใน</span>
-          </div>
-          <code style="font-size: 0.78rem; color: #38bdf8;">http://192.168.1.48:3000/manager.html</code>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="btn-close-mobile-modal-footer">ปิดหน้าต่าง</button>
-      </div>
-    </div>
-  </div>
 
   <!-- ================= MODAL: UPDATE REQUEST STATUS ================= -->
   <div id="update-request-modal" class="modal-overlay hidden">

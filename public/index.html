@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TLWconnect</title>
-  <link rel="icon" type="image/png" href="/favicon-32x32.png">
+  <title>TLWconnect — Real-Time Anonymous Forum</title>
   <meta name="description" content="TLWconnect พื้นที่สนทนานิรนามแบบเรียลไทม์ ปลอดภัย ไร้ตัวตน แชร์เรื่องราว ระบาย ส่งข้อเสนอแนะ และคำร้องได้อย่างอิสระ">
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -834,11 +833,14 @@
       <span class="nav-icon">📜</span>
       <span class="nav-label">กฎชุมชน</span>
     </button>
-    <!-- Notification Bell (mobile) — icon injected by notify.js into #mobile-bell-icon-wrap -->
-    <div class="bottom-nav-item" id="notify-mobile-bell-slot">
-      <span class="nav-icon" id="mobile-bell-icon-wrap">🔔</span>
+    <!-- Notification Bell (mobile) -->
+    <button class="bottom-nav-item" id="btn-bottom-nav-notify" title="การแจ้งเตือน">
+      <span class="nav-icon" id="mobile-bell-icon-wrap" style="position: relative; display: inline-flex; align-items: center; justify-content: center;">
+        <span id="mobile-bell-icon">🔔</span>
+        <span class="mobile-bell-badge" id="mobile-bell-badge"></span>
+      </span>
       <span class="nav-label">แจ้งเตือน</span>
-    </div>
+    </button>
     <button class="bottom-nav-item" id="btn-bottom-nav-persona" title="ตัวตนของคุณ">
       <span class="nav-icon" id="bottom-nav-persona-badge">👻</span>
       <span class="nav-label">ตัวตน</span>
