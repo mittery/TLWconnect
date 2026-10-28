@@ -7,6 +7,16 @@ import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import os from 'os';
 import cors from 'cors';
+import * as db from './db.js';
+
+// Auto-load .env in development if present
+if (fs.existsSync('.env')) {
+  try {
+    process.loadEnvFile('.env');
+  } catch (e) {
+    // Ignore error if already loaded
+  }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -289,75 +299,90 @@ let auditLogs = [];
 let reports = [];
 let users = [];
 
-// Load persisted data
-try {
-  if (fs.existsSync(POSTS_FILE)) {
-    posts = JSON.parse(fs.readFileSync(POSTS_FILE, 'utf-8'));
-  } else {
-    posts = initialSeedPosts;
-    fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2));
-  }
-} catch (e) {
-  posts = initialSeedPosts;
-}
+// Initialize and sync data from Supabase (fallback to local JSON if offline)
+async function initData() {
+  const isConnected = await db.testConnection();
+  if (isConnected) {
+    console.log('🔄 [DB] Synchronizing with Supabase...');
+    const [dbUsers, dbPosts, dbReports, dbBanned, dbShouts, dbLogs] = await Promise.all([
+      db.dbGetUsers(),
+      db.dbGetPosts(),
+      db.dbGetReports(),
+      db.dbGetBannedUsers(),
+      db.dbGetShouts(50),
+      db.dbGetAuditLogs(100)
+    ]);
 
-try {
-  if (fs.existsSync(SHOUTS_FILE)) {
-    shouts = JSON.parse(fs.readFileSync(SHOUTS_FILE, 'utf-8'));
-  } else {
-    shouts = [
+    users = dbUsers || [];
+    if (dbPosts && dbPosts.length > 0) {
+      posts = dbPosts;
+    } else {
+      // Database empty: populate initial seed posts
+      posts = initialSeedPosts;
+      for (const p of initialSeedPosts) {
+        await db.dbInsertPost(p);
+        if (p.comments && p.comments.length > 0) {
+          for (const c of p.comments) {
+            await db.dbInsertComment(p.id, c);
+          }
+        }
+      }
+    }
+    reports = dbReports || [];
+    bannedUsers = dbBanned || [];
+    shouts = (dbShouts && dbShouts.length > 0) ? dbShouts : [
       { id: 's1', author: 'Vortex #11', text: 'ยินดีต้อนรับสู่ TLWconnect 🤝 พื้นที่สื่อสารนิรนามแบบเรียลไทม์', time: Date.now() - 60000 },
       { id: 's2', author: 'EchoGuide #88', text: 'สวัสดีทุกคน! วันนี้เป็นอย่างไรบ้างครับ 👋', time: Date.now() - 20000 }
     ];
-    fs.writeFileSync(SHOUTS_FILE, JSON.stringify(shouts, null, 2));
+    auditLogs = dbLogs || [];
+
+    // Also mirror to local JSON for offline caching
+    savePosts();
+    saveUsers();
+    saveReports();
+    saveBanned();
+    saveShouts();
+    console.log(`✅ [DB] Loaded from Supabase: ${users.length} users, ${posts.length} posts, ${reports.length} reports, ${bannedUsers.length} banned, ${shouts.length} shouts`);
+  } else {
+    console.warn('⚠️ [DB] Using local JSON files cache.');
+    loadLocalFallbackData();
   }
-} catch (e) {
-  shouts = [];
 }
 
-try {
-  if (fs.existsSync(BANNED_FILE)) {
-    bannedUsers = JSON.parse(fs.readFileSync(BANNED_FILE, 'utf-8'));
-  } else {
-    bannedUsers = [];
-    fs.writeFileSync(BANNED_FILE, JSON.stringify(bannedUsers, null, 2));
-  }
-} catch (e) {
-  bannedUsers = [];
+function loadLocalFallbackData() {
+  try {
+    if (fs.existsSync(POSTS_FILE)) posts = JSON.parse(fs.readFileSync(POSTS_FILE, 'utf-8'));
+    else posts = initialSeedPosts;
+  } catch (e) { posts = initialSeedPosts; }
+
+  try {
+    if (fs.existsSync(SHOUTS_FILE)) shouts = JSON.parse(fs.readFileSync(SHOUTS_FILE, 'utf-8'));
+    else shouts = [];
+  } catch (e) { shouts = []; }
+
+  try {
+    if (fs.existsSync(BANNED_FILE)) bannedUsers = JSON.parse(fs.readFileSync(BANNED_FILE, 'utf-8'));
+    else bannedUsers = [];
+  } catch (e) { bannedUsers = []; }
+
+  try {
+    if (fs.existsSync(AUDIT_FILE)) auditLogs = JSON.parse(fs.readFileSync(AUDIT_FILE, 'utf-8'));
+    else auditLogs = [];
+  } catch (e) { auditLogs = []; }
+
+  try {
+    if (fs.existsSync(REPORTS_FILE)) reports = JSON.parse(fs.readFileSync(REPORTS_FILE, 'utf-8'));
+    else reports = [];
+  } catch (e) { reports = []; }
+
+  try {
+    if (fs.existsSync(USERS_FILE)) users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+    else users = [];
+  } catch (e) { users = []; }
 }
 
-try {
-  if (fs.existsSync(AUDIT_FILE)) {
-    auditLogs = JSON.parse(fs.readFileSync(AUDIT_FILE, 'utf-8'));
-  } else {
-    auditLogs = [];
-    fs.writeFileSync(AUDIT_FILE, JSON.stringify(auditLogs, null, 2));
-  }
-} catch (e) {
-  auditLogs = [];
-}
-
-try {
-  if (fs.existsSync(REPORTS_FILE)) {
-    reports = JSON.parse(fs.readFileSync(REPORTS_FILE, 'utf-8'));
-  } else {
-    reports = [];
-    fs.writeFileSync(REPORTS_FILE, JSON.stringify(reports, null, 2));
-  }
-} catch (e) {
-  reports = [];
-}
-
-try {
-  if (fs.existsSync(USERS_FILE)) {
-    users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
-  } else {
-    users = [];
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-  }
-} catch (e) {
-  users = [];
-}
+// Initial fallback load synchronously so variables are never null
+loadLocalFallbackData();
 
 function savePosts() {
   try {
@@ -411,6 +436,7 @@ function addAuditLog(action, detail) {
     auditLogs.unshift(log);
     if (auditLogs.length > 100) auditLogs = auditLogs.slice(0, 100);
     fs.writeFileSync(AUDIT_FILE, JSON.stringify(auditLogs, null, 2));
+    db.dbInsertAuditLog(log);
   } catch (err) {
     console.error('Failed to save audit log:', err);
   }
@@ -592,6 +618,7 @@ app.post('/api/auth/register', (req, res) => {
 
   users.push(newUser);
   saveUsers();
+  db.dbInsertUser(newUser);
 
   addAuditLog('USER_REGISTER', `นักเรียนลงทะเบียนใหม่ (รหัส: ${cleanStudentId})`);
 
@@ -647,6 +674,7 @@ app.post('/api/auth/login', (req, res) => {
     user.token = 'stu_' + crypto.randomBytes(24).toString('hex');
   }
   saveUsers();
+  db.dbUpdateUserLastLogin(user.token, user.lastLogin);
 
   addAuditLog('USER_LOGIN', `นักเรียนเข้าสู่ระบบ (รหัส: ${user.studentId})`);
 
@@ -677,6 +705,7 @@ app.post('/api/auth/verify-session', (req, res) => {
 
   user.lastLogin = Date.now();
   saveUsers();
+  db.dbUpdateUserLastLogin(user.token, user.lastLogin);
 
   res.json({
     success: true,
@@ -840,6 +869,7 @@ app.post('/api/manager/create-announcement', requireAdmin, (req, res) => {
 
   posts.unshift(announcementPost);
   savePosts();
+  db.dbInsertPost(announcementPost);
 
   addAuditLog('CREATE_ANNOUNCEMENT', `Created announcement "${cleanTitle.slice(0, 35)}" by ${cleanAuthor}`);
 
@@ -857,6 +887,7 @@ app.post('/api/manager/delete-post', requireAdmin, (req, res) => {
   const deletedPost = posts[idx];
   posts.splice(idx, 1);
   savePosts();
+  db.dbDeletePost(postId);
 
   // Auto-resolve associated reports
   reports.forEach(r => {
@@ -864,6 +895,7 @@ app.post('/api/manager/delete-post', requireAdmin, (req, res) => {
       r.status = 'resolved';
       r.resolvedAction = 'post_deleted';
       r.resolvedAt = Date.now();
+      db.dbUpdateReport(r.id, r.status, r.resolvedAction, r.resolvedAt);
     }
   });
   saveReports();
@@ -885,6 +917,7 @@ app.post('/api/manager/resolve-report', requireAdmin, (req, res) => {
   rep.resolvedAction = action || 'dismissed';
   rep.resolvedAt = Date.now();
   saveReports();
+  db.dbUpdateReport(rep.id, rep.status, rep.resolvedAction, rep.resolvedAt);
 
   addAuditLog('RESOLVE_REPORT', `Report ${reportId} resolved with action: ${action || 'dismissed'}`);
   io.emit('report_resolved', { reportId, action });
@@ -903,6 +936,7 @@ app.post('/api/manager/delete-comment', requireAdmin, (req, res) => {
   const deletedC = post.comments[cIdx];
   post.comments.splice(cIdx, 1);
   savePosts();
+  db.dbDeleteComment(commentId);
 
   addAuditLog('DELETE_COMMENT', `Deleted comment by ${deletedC.author.name} on post ${postId}. Reason: ${reason || 'ละเมิดกฎ'}`);
 
@@ -928,6 +962,7 @@ app.post('/api/manager/update-request-status', requireAdmin, (req, res) => {
   }
   post.statusUpdatedAt = Date.now();
   savePosts();
+  db.dbUpdatePostStatus(post.id, post.status, post.officialResponse, post.statusUpdatedAt);
 
   addAuditLog('UPDATE_REQUEST_STATUS', `Updated post ${postId} status to ${post.status}`);
 
@@ -1002,16 +1037,17 @@ app.post('/api/manager/ban-user', requireAdmin, (req, res) => {
       resolvedUserId = matchingPost.authorInternal.userId;
     }
   }
-
   if (!isBanned(authorName, resolvedStudentId, resolvedUserId)) {
-    bannedUsers.push({
+    const banEntry = {
       name: authorName || 'Unknown',
       studentId: resolvedStudentId,
       userId: resolvedUserId,
       reason: reason || 'ละเมิดกฎการใช้งาน',
       bannedAt: Date.now()
-    });
+    };
+    bannedUsers.push(banEntry);
     saveBanned();
+    db.dbInsertBannedUser(banEntry);
     addAuditLog('BAN_USER', `Banned user ${authorName || ''} (Student ID: ${resolvedStudentId || 'N/A'}). Reason: ${reason || 'ละเมิดกฎ'}`);
 
     io.emit('author_banned', { authorName, studentId: resolvedStudentId, reason: reason || 'ละเมิดกฎการใช้งาน' });
@@ -1028,6 +1064,7 @@ app.post('/api/manager/unban-user', requireAdmin, (req, res) => {
     return true;
   });
   saveBanned();
+  db.dbDeleteBannedUser({ authorName, studentId });
 
   addAuditLog('UNBAN_USER', `Unbanned user ${authorName || studentId}`);
   res.json({ success: true, bannedUsers });
@@ -1137,6 +1174,7 @@ io.on('connection', (socket) => {
 
     posts.unshift(newPost);
     savePosts();
+    db.dbInsertPost(newPost);
 
     // Broadcast to everyone (anonymized, no studentId/userId or authorKey in public socket payload)
     const broadcastPost = { ...newPost };
@@ -1184,6 +1222,7 @@ io.on('connection', (socket) => {
     }
     post.editedAt = Date.now();
     savePosts();
+    db.dbUpdatePost(post);
 
     addAuditLog('USER_EDIT_POST', `เจ้าของแก้ไขกระทู้ ID: ${postId}`);
 
@@ -1222,6 +1261,7 @@ io.on('connection', (socket) => {
     // Remove post
     posts.splice(postIndex, 1);
     savePosts();
+    db.dbDeletePost(postId);
 
     addAuditLog('USER_DELETE_POST', `เจ้าของลบกระทู้ ID: ${postId}`);
 
@@ -1260,6 +1300,7 @@ io.on('connection', (socket) => {
       post.downvotes = (post.downvotes || 0) + 1;
     }
     savePosts();
+    db.dbUpdatePostVotes(postId, post.upvotes, post.downvotes);
 
     io.emit('post_voted', {
       postId,
@@ -1280,6 +1321,7 @@ io.on('connection', (socket) => {
     if (!post.reactions) post.reactions = {};
     post.reactions[safeEmoji] = (post.reactions[safeEmoji] || 0) + 1;
     savePosts();
+    db.dbUpdatePostReactions(postId, post.reactions);
 
     io.emit('post_reacted', {
       postId,
@@ -1343,6 +1385,7 @@ io.on('connection', (socket) => {
 
     post.comments.push(newComment);
     savePosts();
+    db.dbInsertComment(postId, newComment);
 
     io.emit('new_comment', {
       postId,
@@ -1390,6 +1433,7 @@ io.on('connection', (socket) => {
 
     shouts.push(shout);
     saveShouts();
+    db.dbInsertShout(shout);
 
     io.emit('new_shout', shout);
   });
@@ -1421,6 +1465,7 @@ io.on('connection', (socket) => {
 
     reports.unshift(newReport);
     saveReports();
+    db.dbInsertReport(newReport);
 
     addAuditLog('REPORT_POST', `Post "${post.title.slice(0, 30)}" reported by ${reporterName || 'Anon'}. Reason: ${reason}`);
 
@@ -1437,7 +1482,8 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', async () => {
+  await initData();
   const localIp = getLocalIp();
   console.log(`🚀 TLWconnect server running at:`);
   console.log(`   - Local PC:       http://localhost:${PORT}`);
