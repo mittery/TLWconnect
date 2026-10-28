@@ -2059,37 +2059,7 @@ function setupEventListeners() {
     });
   });
 
-  // 8. Mobile QR Connect Modal
-  const mobileConnectModal = document.getElementById('mobile-connect-modal');
-  const btnOpenMobileQrMain = document.getElementById('btn-open-mobile-qr-main');
-  const btnCloseMobileModal = document.getElementById('btn-close-mobile-modal');
-  const btnCloseMobileModalFooter = document.getElementById('btn-close-mobile-modal-footer');
 
-  if (btnOpenMobileQrMain && mobileConnectModal) {
-    btnOpenMobileQrMain.addEventListener('click', () => {
-      mobileConnectModal.classList.remove('hidden');
-      window.soundEngine.playClick();
-    });
-  }
-  if (btnCloseMobileModal && mobileConnectModal) {
-    btnCloseMobileModal.addEventListener('click', () => {
-      mobileConnectModal.classList.add('hidden');
-      window.soundEngine.playClick();
-    });
-  }
-  if (btnCloseMobileModalFooter && mobileConnectModal) {
-    btnCloseMobileModalFooter.addEventListener('click', () => {
-      mobileConnectModal.classList.add('hidden');
-      window.soundEngine.playClick();
-    });
-  }
-  if (mobileConnectModal) {
-    mobileConnectModal.addEventListener('click', (e) => {
-      if (e.target === mobileConnectModal) {
-        mobileConnectModal.classList.add('hidden');
-      }
-    });
-  }
 }
 
 function renderComposedTags() {
