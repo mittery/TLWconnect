@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TLWconnect</title>
+  <title>TLWconnect — Real-Time Anonymous Forum</title>
   <meta name="description" content="TLWconnect พื้นที่สนทนานิรนามแบบเรียลไทม์ ปลอดภัย ไร้ตัวตน แชร์เรื่องราว ระบาย ส่งข้อเสนอแนะ และคำร้องได้อย่างอิสระ">
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -403,6 +403,19 @@
           <p>กำลังเชื่อมต่อสัญญาณนิรนาม...</p>
         </div>
       </section>
+
+      <!-- LOAD MORE POSTS SECTION (โหลดทีละ 5-6 รายการตาม Roadmap) -->
+      <div id="load-more-container" class="load-more-container hidden">
+        <button id="btn-load-more" class="btn-load-more" type="button" title="กดเพื่อโหลดโพสต์เพิ่มเติม">
+          <span class="load-more-icon">📥</span>
+          <span id="load-more-text">โหลดโพสต์เพิ่มเติม</span>
+          <span id="load-more-badge" class="load-more-badge"></span>
+        </button>
+        <div id="load-more-finished" class="load-more-finished hidden">
+          <span class="finished-icon">✨</span>
+          <span id="load-more-finished-text">คุณอ่านครบทุกโพสต์แล้ว</span>
+        </div>
+      </div>
 
       <!-- EMPTY STATE -->
       <div id="empty-feed-state" class="empty-state hidden">

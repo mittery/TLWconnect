@@ -57,6 +57,18 @@ try {
 // DOM Elements
 const postsContainer = document.getElementById('posts-container');
 const emptyFeedState = document.getElementById('empty-feed-state');
+
+// Load More Posts System (Roadmap Phase 2)
+const POSTS_PER_PAGE = 6;
+let visiblePostsCount = POSTS_PER_PAGE;
+let isLoadingMore = false;
+const loadMoreContainer = document.getElementById('load-more-container');
+const btnLoadMore = document.getElementById('btn-load-more');
+const loadMoreText = document.getElementById('load-more-text');
+const loadMoreBadge = document.getElementById('load-more-badge');
+const loadMoreFinished = document.getElementById('load-more-finished');
+const loadMoreFinishedText = document.getElementById('load-more-finished-text');
+
 const headerOnlineCount = document.getElementById('header-online-count');
 const headerUserName = document.getElementById('header-user-name');
 const headerUserBadge = document.getElementById('header-user-badge');
@@ -633,6 +645,7 @@ function setupSocket() {
 
     // If matches current filter, render with pulse
     if (currentChannel === 'all' || currentChannel === post.channel) {
+      visiblePostsCount++;
       renderFeed(post.id);
     }
   });
@@ -798,8 +811,8 @@ function setupSocket() {
 }
 
 
-// ================= FEED RENDERING =================
-function renderFeed(newArrivalId = null) {
+// ================= FEED RENDERING (5-6 Items per Batch) =================
+function getFilteredPosts() {
   let filtered = [...allPosts];
 
   // Channel filter
@@ -829,19 +842,100 @@ function renderFeed(newArrivalId = null) {
     filtered.sort((a, b) => b.timestamp - a.timestamp);
   }
 
+  return filtered;
+}
+
+function renderFeed(newArrivalId = null) {
+  const filtered = getFilteredPosts();
+
   postsContainer.innerHTML = '';
 
   if (filtered.length === 0) {
     emptyFeedState.classList.remove('hidden');
+    if (loadMoreContainer) loadMoreContainer.classList.add('hidden');
     return;
   }
 
   emptyFeedState.classList.add('hidden');
 
-  filtered.forEach(post => {
+  // Render first batch up to visiblePostsCount
+  const displayed = filtered.slice(0, visiblePostsCount);
+  displayed.forEach(post => {
     const card = createPostCard(post, post.id === newArrivalId);
     postsContainer.appendChild(card);
   });
+
+  updateLoadMoreUI(filtered.length);
+}
+
+function updateLoadMoreUI(totalCount) {
+  if (!loadMoreContainer) return;
+
+  if (totalCount === 0) {
+    loadMoreContainer.classList.add('hidden');
+    return;
+  }
+
+  loadMoreContainer.classList.remove('hidden');
+
+  if (visiblePostsCount < totalCount) {
+    const remaining = totalCount - visiblePostsCount;
+    const nextBatch = Math.min(remaining, POSTS_PER_PAGE);
+    if (btnLoadMore) {
+      btnLoadMore.classList.remove('hidden');
+      btnLoadMore.disabled = false;
+      if (loadMoreText) loadMoreText.textContent = 'โหลดโพสต์เพิ่มเติม';
+      if (loadMoreBadge) loadMoreBadge.textContent = `+${nextBatch} (เหลืออีก ${remaining})`;
+    }
+    if (loadMoreFinished) loadMoreFinished.classList.add('hidden');
+  } else {
+    if (btnLoadMore) btnLoadMore.classList.add('hidden');
+    if (loadMoreFinished) {
+      loadMoreFinished.classList.remove('hidden');
+      if (loadMoreFinishedText) {
+        loadMoreFinishedText.textContent = `คุณอ่านครบทุกโพสต์แล้ว (${totalCount} รายการ)`;
+      }
+    }
+  }
+}
+
+function loadMorePosts() {
+  if (isLoadingMore) return;
+  const filtered = getFilteredPosts();
+  const total = filtered.length;
+
+  if (visiblePostsCount >= total) {
+    updateLoadMoreUI(total);
+    return;
+  }
+
+  isLoadingMore = true;
+  if (btnLoadMore) {
+    btnLoadMore.disabled = true;
+    if (loadMoreText) loadMoreText.textContent = 'กำลังโหลดโพสต์...';
+    if (loadMoreBadge) loadMoreBadge.textContent = '⏳';
+  }
+
+  // Smooth micro-delay for debounce and natural feedback
+  setTimeout(() => {
+    const startIdx = visiblePostsCount;
+    const endIdx = startIdx + POSTS_PER_PAGE;
+    const nextChunk = filtered.slice(startIdx, endIdx);
+
+    nextChunk.forEach(post => {
+      // Deduplicate check
+      if (!document.getElementById(`card-${post.id}`)) {
+        const card = createPostCard(post, false);
+        card.classList.add('anim-fade-in');
+        postsContainer.appendChild(card);
+      }
+    });
+
+    visiblePostsCount = endIdx;
+    isLoadingMore = false;
+    updateLoadMoreUI(total);
+    if (window.soundEngine) window.soundEngine.playClick();
+  }, 160);
 }
 
 function createPostCard(post, isNew = false) {
@@ -1272,6 +1366,7 @@ function setupEventListeners() {
       activeChannelIcon.textContent = info.icon;
       activeChannelTitle.textContent = info.name;
 
+      visiblePostsCount = POSTS_PER_PAGE;
       window.soundEngine.playClick();
       renderFeed();
     });
@@ -1293,6 +1388,7 @@ function setupEventListeners() {
       tab.classList.add('active');
       currentSort = tab.dataset.sort;
 
+      visiblePostsCount = POSTS_PER_PAGE;
       window.soundEngine.playClick();
       renderFeed();
     });
@@ -1306,6 +1402,7 @@ function setupEventListeners() {
     } else {
       btnClearSearch.classList.add('hidden');
     }
+    visiblePostsCount = POSTS_PER_PAGE;
     renderFeed();
   });
 
@@ -1313,8 +1410,16 @@ function setupEventListeners() {
     globalSearchInput.value = '';
     searchQuery = '';
     btnClearSearch.classList.add('hidden');
+    visiblePostsCount = POSTS_PER_PAGE;
     renderFeed();
   });
+
+  // Load More Posts button listener
+  if (btnLoadMore) {
+    btnLoadMore.addEventListener('click', () => {
+      loadMorePosts();
+    });
+  }
 
   // Trending tag pills
   document.querySelectorAll('.tag-pill').forEach(pill => {
@@ -1323,6 +1428,7 @@ function setupEventListeners() {
       globalSearchInput.value = tag;
       searchQuery = tag;
       btnClearSearch.classList.remove('hidden');
+      visiblePostsCount = POSTS_PER_PAGE;
       window.soundEngine.playClick();
       renderFeed();
     });
@@ -1876,6 +1982,7 @@ function setupEventListeners() {
       activeChannelIcon.textContent = info.icon;
       activeChannelTitle.textContent = info.name;
 
+      visiblePostsCount = POSTS_PER_PAGE;
       window.soundEngine.playClick();
       renderFeed();
     });
