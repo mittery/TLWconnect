@@ -3769,6 +3769,42 @@ body {
   height: 20px;
 }
 
+/* ---- Official School Emblem / Logo Images ---- */
+.brand-school-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.45));
+  transition: transform 0.25s ease;
+}
+
+.brand-icon:hover .brand-school-logo {
+  transform: scale(1.08);
+}
+
+.hero-school-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.5));
+  transition: transform 0.3s ease;
+}
+
+.preset-crest-wrap:hover .hero-school-logo {
+  transform: scale(1.08);
+}
+
+.footer-school-logo {
+  transition: transform 0.25s ease;
+}
+
+.footer-brand-box:hover .footer-school-logo {
+  transform: scale(1.08);
+}
+
+
 
 
 
