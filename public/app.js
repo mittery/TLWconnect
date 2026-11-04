@@ -3,22 +3,56 @@
 // =====================================================================
 
 // --- Anonymous Names & Archetypes (School Community) ---
-const ADJECTIVES = ['Thali', 'Scholar', 'Campus', 'Silent', 'Cosmic', 'Bright', 'Brave', 'Kind', 'Clever', 'Junior', 'Senior', 'Neon', 'Shadow', 'Solar', 'Noble'];
-const NOUNS = ['Student', 'Fox', 'Owl', 'Panda', 'Drifter', 'Mentor', 'Hawk', 'Star', 'Wolf', 'Echo', 'Writer', 'Dreamer', 'Seeker', 'Phoenix', 'Guardian'];
+const ADJECTIVES = [
+  'Thali', 'Astral', 'Cyber', 'Neon', 'Silent', 'Velvet', 'Mystic', 'Golden',
+  'Shadow', 'Quantum', 'Echo', 'Midnight', 'Emerald', 'Solar', 'Starlight', 'Frost',
+  'Obsidian', 'Crimson', 'Aero', 'Glitch', 'Prism', 'Nova', 'Cosmic', 'Lunar',
+  'Vivid', 'Bright', 'Brave', 'Clever', 'Noble', 'Swift', 'Hidden', 'Amber',
+  'Crystal', 'Zenith', 'Radiant', 'Phantom', 'Holo', 'Abyssal', 'Arcane', 'Serene',
+  'Chrono', 'Ethereal', 'Vortex', 'Cobalt', 'Pixel', 'Hyper', 'Mirage', 'Vesper',
+  'Spectral', 'Ignite', 'Pulse', 'Blaze', 'Zephyr', 'Zen', 'Titan', 'Vector',
+  'Sonic', 'Iron', 'Aura', 'Apex', 'Campus', 'Junior', 'Senior', 'Scholar'
+];
+
+const NOUNS = [
+  'Student', 'Falcon', 'Drifter', 'Nomad', 'Phoenix', 'Scholar', 'Vortex', 'Stargazer',
+  'Cipher', 'Prowler', 'Sphinx', 'Oracle', 'Voyager', 'Sentinel', 'Hunter', 'Raven',
+  'Pilot', 'Seeker', 'Wolf', 'Fox', 'Owl', 'Guardian', 'Specter', 'Alchemist',
+  'Spark', 'Comet', 'Ronin', 'Architect', 'Nexus', 'Knight', 'Navigator', 'Ranger',
+  'Shadow', 'Ghost', 'Wanderer', 'Pioneer', 'Scribe', 'Dragon', 'Lynx', 'Titan',
+  'Sage', 'Scout', 'Cyborg', 'Striker', 'Runner', 'Valkyrie', 'Chaser', 'Beacon',
+  'Horizon', 'Spectra', 'Matrix', 'Warden', 'Panda', 'Hawk', 'Otter', 'Meteor',
+  'Echo', 'Writer', 'Dreamer', 'Mentor', 'Star', 'Samurai', 'Beast', 'Aero'
+];
+
+const AVATAR_ICONS = [
+  'ghost', 'falcon', 'cat', 'fox', 'owl', 'wolf', 'phoenix', 'dragon',
+  'robot', 'terminal', 'cpu', 'gamepad', 'spark', 'star', 'moon', 'planet',
+  'flame', 'shield', 'crown', 'compass', 'crystal', 'mask', 'headphones', 'rocket', 'scholar'
+];
+
 const EMOJIS = ['🎓', '🎒', '📚', '🦉', '⚡', '🌟', '🦊', '🎨', '🤖', '💎', '🌱', '🔮'];
-const COLORS = ['#2563eb', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+
+const COLORS = [
+  '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1',
+  '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
+  '#f43f5e', '#ef4444', '#f97316', '#f59e0b',
+  '#eab308', '#84cc16', '#10b981', '#14b8a6'
+];
 
 function generateRandomPersona() {
   const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
   const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
   const num = Math.floor(100 + Math.random() * 900);
-  const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+  // Pick random vector icon from AVATAR_ICONS
+  const icon = AVATAR_ICONS[Math.floor(Math.random() * AVATAR_ICONS.length)];
   const color = COLORS[Math.floor(Math.random() * COLORS.length)];
 
   return {
     name: `${adj}${noun} #${num}`,
-    badge: emoji,
-    color: color
+    badge: icon,
+    color: color,
+    role: 'student'
   };
 }
 
@@ -599,44 +633,98 @@ const btnCloseMobileShoutbox = document.getElementById('btn-close-mobile-shoutbo
 const mobileChannelsBar = document.getElementById('mobile-channels-bar');
 
 function updatePersonaDisplay() {
-  headerUserName.textContent = currentPersona.name;
-  headerUserBadge.textContent = currentPersona.badge;
-  headerAvatarWrap.style.background = `${currentPersona.color}25`;
+  if (!currentPersona) return;
+  const badge = currentPersona.badge || 'ghost';
+  const color = currentPersona.color || '#3b82f6';
+  const name = currentPersona.name || 'นิรนาม';
 
-  if (bottomNavPersonaBadge) {
-    bottomNavPersonaBadge.textContent = currentPersona.badge;
+  // 1. Header Persona Badge
+  if (headerUserName) headerUserName.textContent = name;
+  if (headerAvatarWrap) {
+    headerAvatarWrap.innerHTML = window.renderAvatarBadge ? window.renderAvatarBadge(badge, color, 32) : (headerUserBadge ? (headerUserBadge.textContent = badge) : '');
+    headerAvatarWrap.style.background = 'transparent';
+    headerAvatarWrap.style.border = 'none';
   }
 
+  // 2. Mobile Bottom Nav Persona
+  if (bottomNavPersonaBadge) {
+    bottomNavPersonaBadge.innerHTML = window.renderAvatarBadge ? window.renderAvatarBadge(badge, color, 24) : badge;
+  }
+
+  // 3. Quick Compose Bar Avatar
   const quickAvatar = document.getElementById('quick-compose-avatar');
   if (quickAvatar) {
-    quickAvatar.textContent = currentPersona.badge;
-    quickAvatar.style.background = `${currentPersona.color}30`;
+    quickAvatar.innerHTML = window.renderAvatarBadge ? window.renderAvatarBadge(badge, color, 28) : badge;
+    quickAvatar.style.background = 'transparent';
+    quickAvatar.style.border = 'none';
   }
 
-  composeBadgePreview.textContent = currentPersona.badge;
-  composeNamePreview.textContent = currentPersona.name;
+  // 4. Compose Modal Preview
+  if (composeBadgePreview) {
+    composeBadgePreview.innerHTML = window.renderAvatarBadge ? window.renderAvatarBadge(badge, color, 24) : badge;
+  }
+  if (composeNamePreview) composeNamePreview.textContent = name;
   const composeAuthorTag = document.getElementById('compose-author-tag');
   if (composeAuthorTag) {
-    composeAuthorTag.style.borderLeft = `3px solid ${currentPersona.color}`;
+    composeAuthorTag.style.borderLeft = `3px solid ${color}`;
+    composeAuthorTag.style.boxShadow = `0 0 12px ${color}22`;
   }
 
-  customAvatarPreview.textContent = currentPersona.badge;
-  customAvatarPreview.style.borderColor = currentPersona.color;
-  customAvatarPreview.style.background = `${currentPersona.color}25`;
-  customNamePreview.textContent = currentPersona.name;
+  // 5. Persona Customizer Modal Preview
+  if (customAvatarPreview) {
+    customAvatarPreview.innerHTML = window.renderAvatarBadge ? window.renderAvatarBadge(badge, color, 76) : badge;
+    customAvatarPreview.style.border = 'none';
+    customAvatarPreview.style.background = 'transparent';
+  }
+  if (customNamePreview) customNamePreview.textContent = name;
+
+  // 6. Update active states and real-time color highlights in modal
+  if (typeof updateModalPickerActiveStates === 'function') {
+    updateModalPickerActiveStates();
+  }
 }
 
 // ================= SOCKET.IO CONNECTION =================
 function setupSocket() {
-  socket = io();
+  socket = io({
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 20000
+  });
+
+  let isInitialConnect = true;
 
   socket.on('connect', () => {
     console.log('⚡ Connected to TLWconnect Real-time network');
+    if (!isInitialConnect) {
+      showToast('🟢 สัญญาณกลับมาแล้ว เชื่อมต่อและซิงค์ข้อมูลล่าสุดเรียบร้อย', 'success');
+      if (window.soundEngine) window.soundEngine.playPublish();
+    }
+    isInitialConnect = false;
+
     socket.emit('get_my_post_ids', {
       studentToken: currentStudentUser?.token || null,
       localKeys: myPostKeys
     });
   });
+
+  socket.on('disconnect', (reason) => {
+    console.warn('⚠️ Disconnected from server:', reason);
+    if (headerOnlineCount) {
+      headerOnlineCount.textContent = '🔴 หลุดการเชื่อมต่อ (กำลังต่อใหม่...)';
+    }
+    showToast('⚠️ สัญญาณหลุด ระบบกำลังเชื่อมต่อใหม่อัตโนมัติ...', 'warning');
+  });
+
+  if (socket.io) {
+    socket.io.on('reconnect_attempt', (attempt) => {
+      if (headerOnlineCount) {
+        headerOnlineCount.textContent = `🔄 กำลังต่อเน็ตใหม่ (#${attempt})...`;
+      }
+    });
+  }
 
   socket.on('online_count', (count) => {
     headerOnlineCount.textContent = `${count} Anon Online`;
@@ -1178,9 +1266,7 @@ function createPostCard(post, isNew = false) {
   card.innerHTML = `
     <div class="post-header">
       <div class="post-author-info">
-        <div class="author-badge" style="background: ${post.author.color || '#8b5cf6'}25; border: 1px solid ${post.author.color || '#8b5cf6'}50">
-          ${post.author.badge || '👤'}
-        </div>
+        ${window.renderAvatarBadge ? window.renderAvatarBadge(post.author.badge, post.author.color, 36) : `<div class="author-badge" style="background: ${post.author.color || '#8b5cf6'}25; border: 1px solid ${post.author.color || '#8b5cf6'}50">${post.author.badge || '👤'}</div>`}
         <div class="author-meta">
           <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
             <span class="author-name-text">${escapeHtml(post.author.name)}</span>
@@ -1399,11 +1485,12 @@ function closeReportModal() {
 
 function createCommentElementHtml(c) {
   const time = formatRelativeTime(c.timestamp);
+  const avatarBadge = window.renderAvatarBadge ? window.renderAvatarBadge(c.author?.badge, c.author?.color, 22) : `<span style="font-size: 0.9rem;">${c.author?.badge || '💬'}</span>`;
   return `
     <div class="comment-item" data-comment-id="${c.id}">
-      <div class="comment-header">
-        <span style="font-size: 0.9rem;">${c.author.badge || '💬'}</span>
-        <span class="comment-author-name">${escapeHtml(c.author.name)}</span>
+      <div class="comment-header" style="display:flex;align-items:center;gap:6px;">
+        ${avatarBadge}
+        <span class="comment-author-name">${escapeHtml(c.author?.name || 'นิรนาม')}</span>
         <span class="comment-time">${time}</span>
       </div>
       <p class="comment-body">${escapeHtml(c.content)}</p>
@@ -1423,10 +1510,12 @@ function createCommentElement(c) {
     commentRoleBadge = ' <span class="role-pill-badge mod-pill" style="font-size: 0.65rem; background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.5); color: #fde047; padding: 1px 6px; border-radius: 9999px; font-weight: 600;">🛡️ สภานักเรียน</span>';
   }
 
+  const avatarBadge = window.renderAvatarBadge ? window.renderAvatarBadge(c.author?.badge, c.author?.color, 22) : `<span style="font-size: 0.9rem;">${c.author?.badge || '💬'}</span>`;
+
   div.innerHTML = `
-    <div class="comment-header">
-      <span style="font-size: 0.9rem;">${c.author.badge || '💬'}</span>
-      <span class="comment-author-name">${escapeHtml(c.author.name)}${commentRoleBadge}</span>
+    <div class="comment-header" style="display:flex;align-items:center;gap:6px;">
+      ${avatarBadge}
+      <span class="comment-author-name">${escapeHtml(c.author?.name || 'นิรนาม')}${commentRoleBadge}</span>
       <span class="comment-time">${formatRelativeTime(c.timestamp)}</span>
     </div>
     <p class="comment-body">${escapeHtml(c.content)}</p>
@@ -1448,9 +1537,13 @@ function appendShout(shout, autoScroll = true) {
     const item = document.createElement('div');
     item.className = 'shout-item';
     item.style.borderLeftColor = shout.color || '#a855f7';
+    const avatarBadge = window.renderAvatarBadge ? window.renderAvatarBadge(shout.badge, shout.color, 20) : (shout.badge || '👤');
     item.innerHTML = `
       <div class="shout-meta">
-        <span class="shout-author">${shout.badge || '👤'} ${escapeHtml(shout.author)}</span>
+        <span class="shout-author" style="display:inline-flex;align-items:center;gap:4px;">
+          ${avatarBadge}
+          <span>${escapeHtml(shout.author)}</span>
+        </span>
         <span class="shout-time">${formatTimeShort(shout.time)}</span>
       </div>
       <div class="shout-text">${escapeHtml(shout.text)}</div>
@@ -1955,34 +2048,148 @@ function setupEventListeners() {
     });
   }
 
-  btnRerollPersonaName.addEventListener('click', () => {
-    const fresh = generateRandomPersona();
-    currentPersona.name = fresh.name;
-    updatePersonaDisplay();
-    window.soundEngine.playClick();
-  });
+  // Persona Avatar & Color Customizer Setup
+  const avatarVectorPicker = document.getElementById('avatar-vector-picker');
+  const avatarEmojiPicker = document.getElementById('avatar-emoji-picker');
+  const tabAvatarVector = document.getElementById('tab-avatar-vector');
+  const tabAvatarEmoji = document.getElementById('tab-avatar-emoji');
+  const btnRandomizeAllPersona = document.getElementById('btn-randomize-all-persona');
+  const selectedColorLabel = document.getElementById('selected-color-label');
+  const personaPreviewBox = document.getElementById('persona-preview-box');
 
-  // Emoji picker
-  document.querySelectorAll('.emoji-pick-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.emoji-pick-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      currentPersona.badge = btn.dataset.emoji;
-      updatePersonaDisplay();
-      window.soundEngine.playClick();
+  window.updateModalPickerActiveStates = function() {
+    if (!currentPersona) return;
+    const curBadge = currentPersona.badge || 'ghost';
+    const curColor = currentPersona.color || '#3b82f6';
+
+    if (selectedColorLabel) {
+      selectedColorLabel.textContent = curColor;
+      selectedColorLabel.style.color = curColor;
+    }
+
+    if (personaPreviewBox) {
+      personaPreviewBox.style.setProperty('--preview-color', curColor);
+    }
+
+    // Update color picker buttons
+    document.querySelectorAll('.color-pick-btn').forEach(btn => {
+      if (btn.dataset.color && btn.dataset.color.toLowerCase() === curColor.toLowerCase()) {
+        btn.classList.add('selected');
+      } else {
+        btn.classList.remove('selected');
+      }
     });
-  });
 
-  // Color picker
+    // Update vector avatar buttons & dynamically tint SVGs in grid
+    if (avatarVectorPicker) {
+      avatarVectorPicker.style.setProperty('--preview-color', curColor);
+      avatarVectorPicker.querySelectorAll('.avatar-pick-btn').forEach(btn => {
+        if (btn.dataset.icon === curBadge) {
+          btn.classList.add('selected');
+        } else {
+          btn.classList.remove('selected');
+        }
+      });
+    }
+
+    // Update emoji buttons
+    if (avatarEmojiPicker) {
+      avatarEmojiPicker.querySelectorAll('.avatar-pick-btn').forEach(btn => {
+        if (btn.dataset.emoji === curBadge) {
+          btn.classList.add('selected');
+        } else {
+          btn.classList.remove('selected');
+        }
+      });
+    }
+  };
+
+  // Populate Vector Avatar Picker Grid
+  if (avatarVectorPicker) {
+    avatarVectorPicker.innerHTML = '';
+    const icons = window.TLWAvatarIcons || {};
+    Object.keys(icons).forEach(key => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'avatar-pick-btn';
+      btn.dataset.icon = key;
+      btn.title = `เลือกไอคอน ${key}`;
+      btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          ${icons[key]}
+        </svg>
+      `;
+      btn.addEventListener('click', () => {
+        currentPersona.badge = key;
+        updatePersonaDisplay();
+        if (window.soundEngine) window.soundEngine.playClick();
+      });
+      avatarVectorPicker.appendChild(btn);
+    });
+  }
+
+  // Emoji pick buttons
+  if (avatarEmojiPicker) {
+    avatarEmojiPicker.querySelectorAll('.avatar-pick-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentPersona.badge = btn.dataset.emoji;
+        updatePersonaDisplay();
+        if (window.soundEngine) window.soundEngine.playClick();
+      });
+    });
+  }
+
+  // Color pick buttons
   document.querySelectorAll('.color-pick-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.color-pick-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
       currentPersona.color = btn.dataset.color;
       updatePersonaDisplay();
-      window.soundEngine.playClick();
+      if (window.soundEngine) window.soundEngine.playClick();
     });
   });
+
+  // Avatar category tab switching (Vector Icons vs Emoji)
+  if (tabAvatarVector && tabAvatarEmoji) {
+    tabAvatarVector.addEventListener('click', () => {
+      tabAvatarVector.classList.add('active');
+      tabAvatarEmoji.classList.remove('active');
+      if (avatarVectorPicker) avatarVectorPicker.classList.remove('hidden');
+      if (avatarEmojiPicker) avatarEmojiPicker.classList.add('hidden');
+      if (window.soundEngine) window.soundEngine.playClick();
+    });
+
+    tabAvatarEmoji.addEventListener('click', () => {
+      tabAvatarEmoji.classList.add('active');
+      tabAvatarVector.classList.remove('active');
+      if (avatarEmojiPicker) avatarEmojiPicker.classList.remove('hidden');
+      if (avatarVectorPicker) avatarVectorPicker.classList.add('hidden');
+      if (window.soundEngine) window.soundEngine.playClick();
+    });
+  }
+
+  // Reroll persona name only
+  if (btnRerollPersonaName) {
+    btnRerollPersonaName.addEventListener('click', () => {
+      const fresh = generateRandomPersona();
+      currentPersona.name = fresh.name;
+      updatePersonaDisplay();
+      if (window.soundEngine) window.soundEngine.playClick();
+      showToast(`สุ่มชื่อใหม่: ${fresh.name}`, 'info');
+    });
+  }
+
+  // Randomize ALL (Name, Avatar Icon, Color)
+  if (btnRandomizeAllPersona) {
+    btnRandomizeAllPersona.addEventListener('click', () => {
+      const fresh = generateRandomPersona();
+      currentPersona.name = fresh.name;
+      currentPersona.badge = fresh.badge;
+      currentPersona.color = fresh.color;
+      updatePersonaDisplay();
+      if (window.soundEngine) window.soundEngine.playPublish();
+      showToast(`สุ่มตัวตนใหม่สำเร็จ!`, 'success');
+    });
+  }
 
   // Rules Modal Triggers
   if (btnAcceptRules) {

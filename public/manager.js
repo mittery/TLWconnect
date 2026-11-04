@@ -129,11 +129,27 @@ function showDashboard() {
 // ================= SOCKET.IO =================
 function initSocket() {
   if (socket) return;
-  socket = io();
+  socket = io({
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000
+  });
 
   socket.on('connect', () => {
     dashOnlineStatus.textContent = 'ระบบ Real-time เชื่อมต่อแล้ว';
   });
+
+  socket.on('disconnect', () => {
+    dashOnlineStatus.textContent = '🔴 หลุดการเชื่อมต่อ (กำลังต่อใหม่...)';
+  });
+
+  if (socket.io) {
+    socket.io.on('reconnect', () => {
+      dashOnlineStatus.textContent = '🟢 เชื่อมต่อระบบสำเร็จ';
+      fetchOverview();
+    });
+  }
 
   socket.on('online_count', (count) => {
     dashOnlineStatus.textContent = `ออนไลน์ ${count} คน (Real-time)`;
@@ -343,9 +359,7 @@ function renderPostsTable() {
       </td>
       <td>
         <div class="author-cell">
-          <div class="author-badge-sm" style="background: ${post.author.color || '#a855f7'}25; border: 1px solid ${post.author.color || '#a855f7'}50;">
-            ${post.author.badge || '👤'}
-          </div>
+          ${window.renderAvatarBadge ? window.renderAvatarBadge(post.author.badge, post.author.color, 28) : `<div class="author-badge-sm" style="background: ${post.author.color || '#a855f7'}25; border: 1px solid ${post.author.color || '#a855f7'}50;">${post.author.badge || '👤'}</div>`}
           <div>
             <div class="author-name-sm">${escapeHtml(post.author.name)}</div>
             ${post.author.role === 'teacher' ? '<span style="color: #60a5fa; font-size: 0.65rem; font-weight: 700;">[ครู ท.ล.ว.] </span>' : ''}
@@ -813,7 +827,7 @@ function renderModalComments(post) {
     div.className = 'comment-manage-item';
     div.innerHTML = `
       <div class="comment-manage-info">
-        <div class="comment-manage-author">${c.author.badge || '💬'} ${escapeHtml(c.author.name)} <span style="font-weight: 400; color: var(--text-muted); font-size: 0.72rem;">${formatRelativeTime(c.timestamp)}</span></div>
+        <div class="comment-manage-author" style="display:flex;align-items:center;gap:6px;">${window.renderAvatarBadge ? window.renderAvatarBadge(c.author.badge, c.author.color, 22) : (c.author.badge || '💬')} <span>${escapeHtml(c.author.name)}</span> <span style="font-weight: 400; color: var(--text-muted); font-size: 0.72rem;">${formatRelativeTime(c.timestamp)}</span></div>
         <div class="comment-manage-text">${escapeHtml(c.content)}</div>
       </div>
       <button class="action-btn btn-delete btn-del-comment" data-comment-id="${c.id}" title="ลบคอมเมนต์">
