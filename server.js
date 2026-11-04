@@ -626,6 +626,14 @@ app.post('/api/auth/register', (req, res) => {
     });
   }
 
+  // Strict Ban Check: Banned student cannot re-register
+  if (isBanned(cleanFullName, cleanStudentId)) {
+    return res.status(403).json({
+      success: false,
+      error: 'รหัสนักเรียนนี้ถูกระงับสิทธิ์การใช้งาน ไม่สามารถสร้างบัญชีใหม่ได้ โปรดติดต่อผู้ดูแลระบบ'
+    });
+  }
+
   const userToken = 'stu_' + crypto.randomBytes(24).toString('hex');
   const newUser = {
     id: 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
@@ -1734,3 +1742,5 @@ server.listen(PORT, '0.0.0.0', async () => {
   }
   console.log(`🛡️ Manager Portal:  http://${localIp}:${PORT}/manager.html`);
 });
+
+export { app, server };
