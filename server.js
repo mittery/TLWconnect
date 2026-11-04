@@ -142,6 +142,29 @@ function isValidRoleToken(token, expectedRole) {
   return entry.role === expectedRole;
 }
 
+// Reserved Persona Names Check (Roadmap Item 4)
+// Protect school roles and authority titles from being spoofed by students
+function isReservedName(name) {
+  if (!name || typeof name !== 'string') return false;
+  const lower = name.toLowerCase().trim();
+  const reservedPatterns = [
+    /ครู/i,
+    /อาจารย์/i,
+    /ผอ\./i,
+    /ผู้อำนวยการ/i,
+    /สภานักเรียน/i,
+    /สภาฯ/i,
+    /admin/i,
+    /administrator/i,
+    /moderator/i,
+    /ผู้ดูแล/i,
+    /ผู้ดูแลระบบ/i,
+    /tlwconnect/i,
+    /official/i
+  ];
+  return reservedPatterns.some(pattern => pattern.test(lower));
+}
+
 // PDPA Compliance: Salted SHA-256 for National Citizen ID
 function hashIdCard(idCard) {
   if (!idCard) return '';
@@ -475,7 +498,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Auth helper middleware
 function requireAdmin(req, res, next) {
-  let token = req.headers['authorization'] || req.body?.token || req.query?.token;
+  let token = req.headers['x-manager-token'] || req.headers['authorization'] || req.body?.token || req.query?.token;
   if (token && token.startsWith('Bearer ')) {
     token = token.slice(7);
   }
@@ -756,6 +779,9 @@ app.post('/api/auth/verify-session', (req, res) => {
   });
 });
 
+
+// Health check endpoint (used by automated tests)
+app.get('/health', (req, res) => res.json({ status: 'ok', port: PORT }));
 
 // MANAGER API ENDPOINTS WITH BRUTE FORCE DEFENSE
 app.post('/api/manager/login', (req, res) => {
@@ -1354,6 +1380,15 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Check reserved names (ครู, สภา, admin, etc.) for non-verified users
+    const hasRoleAuth = (data.author?.role === 'teacher' && isValidRoleToken(data.author?.roleToken, 'teacher')) ||
+                        (data.author?.role === 'moderator' && isValidRoleToken(data.author?.roleToken, 'moderator')) ||
+                        (isValidAdminToken(data.adminToken));
+    if (isReservedName(authorName) && !hasRoleAuth) {
+      socket.emit('action_blocked', { message: 'ชื่อโปรไฟล์มีคำที่สงวนไว้สำหรับบุคลากรของโรงเรียน (เช่น ครู, สภา, แอดมิน) โปรดใช้ชื่ออื่น' });
+      return;
+    }
+
     // Resolve student user if token is provided
     const studentToken = data.studentToken || data.author?.studentToken;
     const student = studentToken ? users.find(u => u.token === studentToken) : null;
@@ -1376,7 +1411,7 @@ io.on('connection', (socket) => {
     // Cryptographic role verification to prevent spoofing
     let verifiedRole = 'student';
     let isOfficial = false;
-    let verifiedBadge = sanitizeInput(data.author?.badge || '👤', 10);
+    let verifiedBadge = sanitizeInput(data.author?.badge || '👤', 50);
 
     if (data.author?.role === 'teacher' && isValidRoleToken(data.author?.roleToken, 'teacher')) {
       verifiedRole = 'teacher';
@@ -1617,6 +1652,14 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Check reserved names for non-verified users
+    const hasCommentRoleAuth = (author?.role === 'teacher' && isValidRoleToken(author?.roleToken, 'teacher')) ||
+                               (author?.role === 'moderator' && isValidRoleToken(author?.roleToken, 'moderator'));
+    if (isReservedName(authorName) && !hasCommentRoleAuth) {
+      socket.emit('action_blocked', { message: 'ชื่อโปรไฟล์มีคำที่สงวนไว้สำหรับบุคลากรของโรงเรียน (เช่น ครู, สภา, แอดมิน) โปรดใช้ชื่ออื่น' });
+      return;
+    }
+
     const student = studentToken ? users.find(u => u.token === studentToken) : null;
 
     if (isBanned(authorName, student?.studentId, student?.id, studentToken)) {
@@ -1640,7 +1683,7 @@ io.on('connection', (socket) => {
     // Cryptographic role verification for comments
     let verifiedRole = 'student';
     let isOfficial = false;
-    let verifiedBadge = sanitizeInput(author?.badge || '💬', 10);
+    let verifiedBadge = sanitizeInput(author?.badge || '💬', 50);
 
     if (author?.role === 'teacher' && isValidRoleToken(author?.roleToken, 'teacher')) {
       verifiedRole = 'teacher';
@@ -1703,6 +1746,12 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Check reserved names in shoutbox
+    if (isReservedName(authorName)) {
+      socket.emit('action_blocked', { message: 'ชื่อโปรไฟล์มีคำที่สงวนไว้สำหรับบุคลากรของโรงเรียน (เช่น ครู, สภา, แอดมิน) โปรดใช้ชื่ออื่น' });
+      return;
+    }
+
     const student = studentToken ? users.find(u => u.token === studentToken) : null;
 
     if (isBanned(authorName, student?.studentId, student?.id, studentToken)) {
@@ -1723,7 +1772,7 @@ io.on('connection', (socket) => {
     const shout = {
       id: 's_' + Date.now(),
       author: authorName,
-      badge: sanitizeInput(author?.badge || '💬', 10),
+      badge: sanitizeInput(author?.badge || '💬', 50),
       color: sanitizeInput(author?.color || '#a855f7', 20),
       text: cleanText,
       time: Date.now()
