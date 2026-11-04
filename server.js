@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import os from 'os';
 import cors from 'cors';
 import * as db from './db.js';
+import * as wordFilter from './wordFilter.js';
 
 // Auto-load .env in development if present
 if (fs.existsSync('.env')) {
@@ -1347,6 +1348,12 @@ io.on('connection', (socket) => {
 
     const authorName = sanitizeInput(data.author?.name || 'Anon', 50);
 
+    // Filter profanity in author profile name
+    if (wordFilter.containsBadWords(authorName)) {
+      socket.emit('action_blocked', { message: 'ชื่อโปรไฟล์ของคุณมีคำหยาบคายหรือไม่เหมาะสม โปรดเปลี่ยนชื่อโปรไฟล์ก่อนตั้งกระทู้' });
+      return;
+    }
+
     // Resolve student user if token is provided
     const studentToken = data.studentToken || data.author?.studentToken;
     const student = studentToken ? users.find(u => u.token === studentToken) : null;
@@ -1388,6 +1395,13 @@ io.on('connection', (socket) => {
     const cleanTitle = sanitizeInput(data.title, 150);
     const cleanContent = sanitizeInput(data.content, 3000);
     if (!cleanTitle || !cleanContent) return;
+
+    // Filter profanity in post title and content
+    if (wordFilter.containsBadWords(cleanTitle) || wordFilter.containsBadWords(cleanContent)) {
+      addAuditLog('PROFANITY_BLOCKED', `บล็อกกระทู้ที่มีคำหยาบจาก ${authorName} (รหัส: ${student?.studentId || 'N/A'})`);
+      socket.emit('action_blocked', { message: 'หัวข้อหรือเนื้อหากระทู้มีคำหยาบคายหรือไม่เหมาะสม โปรดใช้ถ้อยคำสุภาพ' });
+      return;
+    }
 
     const cleanTags = Array.isArray(data.tags)
       ? data.tags.slice(0, 5).map(t => sanitizeInput(t, 30)).filter(Boolean)
@@ -1459,6 +1473,12 @@ io.on('connection', (socket) => {
     const cleanTitle = sanitizeInput(title, 150);
     const cleanContent = sanitizeInput(content, 3000);
     if (!cleanTitle || !cleanContent) return;
+
+    // Filter profanity in edited title and content
+    if (wordFilter.containsBadWords(cleanTitle) || wordFilter.containsBadWords(cleanContent)) {
+      socket.emit('action_blocked', { message: 'เนื้อหาที่แก้ไขมีคำหยาบคายหรือไม่เหมาะสม โปรดใช้ถ้อยคำสุภาพ' });
+      return;
+    }
 
     const cleanTags = Array.isArray(tags)
       ? tags.slice(0, 5).map(t => sanitizeInput(t, 30)).filter(Boolean)
@@ -1590,10 +1610,17 @@ io.on('connection', (socket) => {
     }
 
     const authorName = sanitizeInput(author?.name || 'Anon', 50);
+
+    // Filter profanity in author profile name
+    if (wordFilter.containsBadWords(authorName)) {
+      socket.emit('action_blocked', { message: 'ชื่อโปรไฟล์ของคุณมีคำหยาบคายหรือไม่เหมาะสม โปรดเปลี่ยนชื่อโปรไฟล์ก่อนแสดงความคิดเห็น' });
+      return;
+    }
+
     const student = studentToken ? users.find(u => u.token === studentToken) : null;
 
     if (isBanned(authorName, student?.studentId, student?.id, studentToken)) {
-      socket.emit('action_blocked', { message: 'บัญชีนักเรียนของคุณถูกระงับสิทธิ์การใช้งาน ไม่สามารถสร้างกระทู้ได้' });
+      socket.emit('action_blocked', { message: 'บัญชีนักเรียนของคุณถูกระงับสิทธิ์การใช้งาน ไม่สามารถแสดงความคิดเห็นได้' });
       return;
     }
 
@@ -1602,6 +1629,13 @@ io.on('connection', (socket) => {
 
     const cleanContent = sanitizeInput(content, 1000);
     if (!cleanContent) return;
+
+    // Filter profanity in comment content
+    if (wordFilter.containsBadWords(cleanContent)) {
+      addAuditLog('PROFANITY_BLOCKED', `บล็อกคอมเมนต์ที่มีคำหยาบจาก ${authorName} (รหัส: ${student?.studentId || 'N/A'})`);
+      socket.emit('action_blocked', { message: 'ความคิดเห็นของคุณมีคำหยาบคายหรือไม่เหมาะสม โปรดใช้ถ้อยคำสุภาพ' });
+      return;
+    }
 
     // Cryptographic role verification for comments
     let verifiedRole = 'student';
@@ -1662,15 +1696,29 @@ io.on('connection', (socket) => {
     }
 
     const authorName = sanitizeInput(author?.name || 'Anon', 50);
+
+    // Filter profanity in author profile name
+    if (wordFilter.containsBadWords(authorName)) {
+      socket.emit('action_blocked', { message: 'ชื่อโปรไฟล์ของคุณมีคำหยาบคายหรือไม่เหมาะสม โปรดเปลี่ยนชื่อโปรไฟล์ก่อนพิมพ์คุยสด' });
+      return;
+    }
+
     const student = studentToken ? users.find(u => u.token === studentToken) : null;
 
     if (isBanned(authorName, student?.studentId, student?.id, studentToken)) {
-      socket.emit('action_blocked', { message: 'บัญชีนักเรียนของคุณถูกระงับสิทธิ์การใช้งาน ไม่สามารถสร้างกระทู้ได้' });
+      socket.emit('action_blocked', { message: 'บัญชีนักเรียนของคุณถูกระงับสิทธิ์การใช้งาน ไม่สามารถส่งข้อความคุยสดได้' });
       return;
     }
 
     const cleanText = sanitizeInput(text, 140);
     if (!cleanText) return;
+
+    // Filter profanity in live shoutbox message
+    if (wordFilter.containsBadWords(cleanText)) {
+      addAuditLog('PROFANITY_BLOCKED', `บล็อกข้อความคุยสดที่มีคำหยาบจาก ${authorName} (รหัส: ${student?.studentId || 'N/A'})`);
+      socket.emit('action_blocked', { message: 'ข้อความในกล่องคุยสดมีคำหยาบคายหรือไม่เหมาะสม โปรดใช้ถ้อยคำสุภาพ' });
+      return;
+    }
 
     const shout = {
       id: 's_' + Date.now(),
