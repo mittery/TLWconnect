@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TLWconnect — ศูนย์จัดการสำหรับผู้ดูแล (Manager Portal)</title>
-  <link rel="icon" type="image/png" href="/manager-favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -244,8 +243,45 @@
       <!-- TAB 3: BANNED USERS -->
       <section id="tab-banned-view" class="tab-view hidden">
         <div class="section-title-bar">
-          <h3>รายชื่อตัวตนนินามที่ถูกระงับสิทธิ์ (Banned Users)</h3>
+          <h3>🚫 รายชื่อตัวตนนิรนามที่ถูกระงับสิทธิ์ (Banned Users)</h3>
           <p>ผู้ใช้ในรายชื่อนี้จะไม่สามารถโพสต์กระทู้ใหม่ คอมเมนต์ หรือส่งข้อความ shoutbox ได้</p>
+        </div>
+
+        <!-- Quick Ban Form -->
+        <div class="quick-ban-card">
+          <div class="quick-ban-header">
+            <span class="quick-ban-icon">⚡</span>
+            <div>
+              <div class="quick-ban-title">แบนผู้ใช้โดยตรง</div>
+              <div class="quick-ban-sub">ระงับสิทธิ์ด้วยชื่อนิรนาม หรือรหัสนักเรียน 5 หลัก</div>
+            </div>
+          </div>
+          <div class="quick-ban-fields">
+            <div class="quick-ban-field-group">
+              <label for="ban-persona-input">ชื่อนิรนาม (Persona)</label>
+              <input type="text" id="ban-persona-input" class="quick-ban-input" placeholder="เช่น Storm #42, Luna #07...">
+            </div>
+            <div class="quick-ban-field-group">
+              <label for="ban-studentid-input">รหัสนักเรียน (5 หลัก)</label>
+              <input type="text" id="ban-studentid-input" class="quick-ban-input" placeholder="เช่น 08497" maxlength="5" pattern="[0-9]{5}">
+            </div>
+            <div class="quick-ban-field-group" style="grid-column: 1 / -1;">
+              <label for="ban-reason-direct-select">เหตุผลการแบน</label>
+              <select id="ban-reason-direct-select" class="quick-ban-input form-select">
+                <option value="ละเมิดกฎการใช้งาน">📜 ละเมิดกฎการใช้งาน</option>
+                <option value="มีคำหยาบคาย / วาจาเกลียดชัง">🤬 มีคำหยาบคาย / วาจาเกลียดชัง</option>
+                <option value="คุกคาม / กลั่นแกล้งผู้อื่น">⚠️ คุกคาม / กลั่นแกล้งผู้อื่น</option>
+                <option value="เปิดเผยข้อมูลส่วนบุคคล">🔒 เปิดเผยข้อมูลส่วนบุคคล</option>
+                <option value="สแปม / โฆษณา">📢 สแปม / โฆษณาไม่ได้รับอนุญาต</option>
+                <option value="ข้อมูลเท็จ / สร้างความเข้าใจผิด">❌ ข้อมูลเท็จ / บิดเบือน</option>
+              </select>
+            </div>
+          </div>
+          <div class="quick-ban-actions">
+            <button id="btn-direct-ban" class="btn btn-danger" style="min-width: 160px;">
+              <span>🚫 แบนผู้ใช้นี้</span>
+            </button>
+          </div>
         </div>
 
         <div class="table-container">
@@ -302,10 +338,12 @@
           <table class="moderation-table">
             <thead>
               <tr>
-                <th style="width: 150px;">รหัสนักเรียน</th>
+                <th style="width: 130px;">รหัสนักเรียน</th>
                 <th>ชื่อ-นามสกุลจริง</th>
-                <th style="width: 180px;">วันที่ลงทะเบียน</th>
-                <th style="width: 180px;">เข้าสู่ระบบล่าสุด</th>
+                <th style="width: 150px;">สถานะ / คำเตือน</th>
+                <th style="width: 170px;">วันที่ลงทะเบียน</th>
+                <th style="width: 155px;">เข้าสู่ระบบล่าสุด</th>
+                <th style="width: 120px; text-align: center;">การจัดการ</th>
               </tr>
             </thead>
             <tbody id="students-tbody">
@@ -486,6 +524,157 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="btn-cancel-request-modal">ยกเลิก</button>
         <button type="button" class="btn btn-primary" id="btn-save-request-modal" style="background: linear-gradient(135deg, #eab308, #ca8a04); color: #000; font-weight: 700; border: none;">บันทึกสถานะ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: BAN USER CONFIRM ================= -->
+  <div id="ban-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2 style="color: #f87171;">🚫 ยืนยันการแบนผู้ใช้</h2>
+          <span class="modal-sub">ผู้ใช้นี้จะไม่สามารถโพสต์ คอมเมนต์ หรือส่งข้อความได้ทันที</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-ban-modal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="ban-target-preview" id="ban-target-preview">
+          <!-- filled by JS -->
+        </div>
+
+        <div class="form-group" style="margin-top: 1.1rem;">
+          <label for="ban-modal-reason-select">เลือกเหตุผลการแบน:</label>
+          <select id="ban-modal-reason-select" class="form-select">
+            <option value="ละเมิดกฎการใช้งาน">📜 ละเมิดกฎการใช้งาน</option>
+            <option value="มีคำหยาบคาย / วาจาเกลียดชัง">🤬 มีคำหยาบคาย / วาจาเกลียดชัง</option>
+            <option value="คุกคาม / กลั่นแกล้งผู้อื่น">⚠️ คุกคาม / กลั่นแกล้งผู้อื่น</option>
+            <option value="เปิดเผยข้อมูลส่วนบุคคล">🔒 เปิดเผยข้อมูลส่วนบุคคล</option>
+            <option value="สแปม / โฆษณา">📢 สแปม / โฆษณาไม่ได้รับอนุญาต</option>
+            <option value="ข้อมูลเท็จ / สร้างความเข้าใจผิด">❌ ข้อมูลเท็จ / บิดเบือน</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-ban-modal">ยกเลิก</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-ban-modal">
+          <span>🚫 ยืนยันแบนผู้ใช้</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: DISCORD-STYLE STUDENT MODERATION ================= -->
+  <div id="student-mod-modal" class="modal-overlay hidden">
+    <div class="modal-card modal-large" style="max-width: 620px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2 style="display:flex; align-items:center; gap: 8px;">
+            <span>⚖️</span> จัดการระเบียบวินัยนักเรียน (Moderation)
+          </h2>
+          <span class="modal-sub">ระบบตักเตือนสะสมโทษ 3 ครั้ง หรือระงับสิทธิ์บัญชีโดยตรง</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-student-mod">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Target Student Card -->
+        <div class="mod-user-card" id="mod-student-card">
+          <div class="mod-user-avatar" id="mod-student-avatar">👤</div>
+          <div class="mod-user-info">
+            <div class="mod-user-name" id="mod-student-name">นาย ...</div>
+            <div class="mod-user-meta">
+              <span class="mod-meta-item">รหัสนักเรียน: <strong id="mod-student-id">00000</strong></span>
+              <span class="mod-meta-badge" id="mod-student-status-badge">🟢 ปกติ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strike Bar (3 Warnings Indicator) -->
+        <div class="strike-tracker-box">
+          <div class="strike-tracker-header">
+            <span class="strike-label">ระดับคำเตือนสะสม:</span>
+            <span class="strike-counter" id="mod-strike-count-text">0 / 3 ครั้ง</span>
+          </div>
+          <div class="strike-bars">
+            <div class="strike-bar" id="strike-bar-1"><span class="strike-num">1</span> ตักเตือนเบา</div>
+            <div class="strike-bar" id="strike-bar-2"><span class="strike-num">2</span> ตักเตือนเข้ม</div>
+            <div class="strike-bar" id="strike-bar-3"><span class="strike-num">3</span> 🚨 แบนอัตโนมัติ</div>
+          </div>
+        </div>
+
+        <!-- Action Selection Tabs (Discord style) -->
+        <div class="form-group" style="margin-top: 1.25rem;">
+          <label style="font-weight: 700; font-size: 0.85rem; color: #f1f5f9; display: block; margin-bottom: 0.5rem;">
+            เลือกรูปแบบการลงโทษ / มาตรการ:
+          </label>
+          <div class="mod-action-chips" id="mod-action-chips">
+            <button type="button" class="mod-action-chip active" data-action="warn">
+              <span class="chip-icon">⚠️</span>
+              <span class="chip-title">ตักเตือน (+1)</span>
+            </button>
+            <button type="button" class="mod-action-chip" data-action="ban">
+              <span class="chip-icon">🔨</span>
+              <span class="chip-title">แบนทันที</span>
+            </button>
+            <button type="button" class="mod-action-chip chip-neutral" id="btn-chip-reset-warn" data-action="reset">
+              <span class="chip-icon">🔄</span>
+              <span class="chip-title">ล้างคำเตือน</span>
+            </button>
+            <button type="button" class="mod-action-chip chip-success" id="btn-chip-unban" data-action="unban">
+              <span class="chip-icon">🔓</span>
+              <span class="chip-title">ปลดแบน</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Action Impact Notice -->
+        <div class="mod-impact-notice" id="mod-impact-notice">
+          ℹ️ ผู้ใช้จะได้รับข้อความเตือนเด้งบนหน้าจอ และคำเตือนจะเพิ่มเป็น <strong>1/3</strong> (เมื่อครบ 3 ครั้ง ระบบจะระงับสิทธิ์บัญชีโดยอัตโนมัติ)
+        </div>
+
+        <!-- Reason Fields (Visible for warn & ban) -->
+        <div id="mod-reason-section">
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="student-mod-reason-select" style="font-weight: 600; font-size: 0.85rem; color: #f1f5f9; display: block; margin-bottom: 0.4rem;">
+              เหตุผลการลงโทษ:
+            </label>
+            <select id="student-mod-reason-select" class="form-select" style="width: 100%; padding: 0.65rem; border-radius: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: #fff; font-size: 0.88rem;">
+              <option value="ละเมิดกฎระเบียบของโรงเรียน">📜 ละเมิดกฎระเบียบการใช้งานทั่วไป</option>
+              <option value="ใช้คำหยาบคาย / วาจาเกลียดชัง">🤬 ใช้คำหยาบคาย / ถ้อยคำไม่สุภาพ</option>
+              <option value="กลั่นแกล้ง / ข่มขู่ผู้อื่น (Cyberbullying)">⚠️ คุกคาม / กลั่นแกล้งผู้อื่น (Cyberbullying)</option>
+              <option value="สแปมข้อความ / ก่อกวนระบบ">📢 สแปมข้อความ / ก่อกวนระบบ</option>
+              <option value="แอบอ้างเป็นครูหรือสภานักเรียน">🛡️ แอบอ้างเป็นครู บุคลากร หรือสภานักเรียน</option>
+              <option value="เปิดเผยข้อมูลส่วนบุคคลของผู้อื่น">🔒 เปิดเผยข้อมูลส่วนบุคคลผู้อื่น (PDPA Violation)</option>
+              <option value="เผยแพร่ข้อมูลเท็จ / สร้างความเข้าใจผิด">❌ เผยแพร่ข้อมูลเท็จ / สร้างความแตกแยก</option>
+              <option value="อื่นๆ (ระบุด้านล่าง)">📝 อื่นๆ (โปรดระบุรายละเอียดด้านล่าง)</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-top: 0.85rem;">
+            <label for="student-mod-details-input" style="font-weight: 600; font-size: 0.85rem; color: #f1f5f9; display: block; margin-bottom: 0.4rem;">
+              ข้อความชี้แจงถึงนักเรียน (จะแสดงในกล่องแจ้งเตือนของนักเรียน):
+            </label>
+            <textarea id="student-mod-details-input" rows="3" style="width: 100%; padding: 0.65rem; border-radius: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: #fff; font-size: 0.88rem; resize: vertical;" placeholder="ระบุเหตุการณ์ วันที่ หรือข้อความที่พบว่าละเมิดกฎ เพื่อให้นักเรียนเข้าใจ..."></textarea>
+          </div>
+        </div>
+
+        <!-- Warning History Accordion -->
+        <div class="warning-history-box hidden" id="warning-history-box">
+          <div class="warning-history-title">📋 ประวัติคำเตือนที่ผ่านมา:</div>
+          <div class="warning-history-list" id="warning-history-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-student-mod">ยกเลิก</button>
+        <button type="button" class="btn btn-warning" id="btn-submit-student-mod" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 700;">
+          <span id="mod-submit-btn-text">⚠️ ส่งคำเตือน (Warn)</span>
+        </button>
       </div>
     </div>
   </div>

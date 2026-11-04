@@ -197,6 +197,38 @@ function initSocket() {
     renderReportsTable();
     renderPostsTable();
   });
+
+  // Student Moderation Real-Time Events
+  socket.on('student_warning', ({ studentId, warningCount, reason }) => {
+    const student = usersList.find(u => u.studentId === studentId);
+    if (student) {
+      student.warningCount = warningCount;
+      if (!student.warnings) student.warnings = [];
+      student.warnings.push({ reason, timestamp: Date.now() });
+      renderStudentsTable();
+    }
+    showToast(`⚠️ นักเรียนรหัส ${studentId} ได้รับคำเตือน (${warningCount}/3)`);
+  });
+
+  socket.on('student_banned', ({ studentId, reason, autoBanned }) => {
+    fetchOverviewData();
+    showToast(`🚫 ${autoBanned ? 'ระบบอัตโนมัติแบน' : 'ระงับสิทธิ์'}นักเรียนรหัส ${studentId || ''}: ${reason || ''}`);
+  });
+
+  socket.on('student_unbanned', ({ studentId }) => {
+    fetchOverviewData();
+    showToast(`🔓 ปลดการระงับสิทธิ์นักเรียนรหัส ${studentId || ''} เรียบร้อยแล้ว`);
+  });
+
+  socket.on('student_warnings_reset', ({ studentId }) => {
+    const student = usersList.find(u => u.studentId === studentId);
+    if (student) {
+      student.warnings = [];
+      student.warningCount = 0;
+      renderStudentsTable();
+    }
+    showToast(`🔄 ล้างประวัติคำเตือนของนักเรียนรหัส ${studentId} แล้ว`);
+  });
 }
 
 // รายงานที่ยังรอดำเนินการแต่กระทู้ถูกลบไปแล้ว ไม่มีอะไรให้ตัดสินอีก จึงปิดให้อัตโนมัติ
@@ -616,7 +648,22 @@ function renderStudentsTable() {
   if (studentsEmptyMessage) studentsEmptyMessage.classList.add('hidden');
 
   usersList.forEach(u => {
+    const isBanned = u.isBanned || bannedUsersList.some(b => 
+      (b.studentId && b.studentId === u.studentId) || 
+      (b.userId && b.userId === u.id) || 
+      (b.name && b.name.toLowerCase() === u.fullName.toLowerCase())
+    );
+    const warnCount = (u.warnings && u.warnings.length) || u.warningCount || 0;
+
+    let statusBadge = '<span class="badge-status-ok">🟢 ปกติ</span>';
+    if (isBanned) {
+      statusBadge = '<span class="badge-status-banned">🚫 ถูกแบน</span>';
+    } else if (warnCount > 0) {
+      statusBadge = `<span class="badge-status-warned">⚠️ เตือน ${warnCount}/3</span>`;
+    }
+
     const tr = document.createElement('tr');
+    tr.id = `row-student-${u.studentId}`;
     tr.innerHTML = `
       <td style="font-family: var(--font-mono); font-weight: 700; color: #fbbf24; font-size: 0.88rem;">
         🎓 ${escapeHtml(u.studentId)}
@@ -624,14 +671,32 @@ function renderStudentsTable() {
       <td style="font-weight: 600; color: #f8fafc;">
         👤 ${escapeHtml(u.fullName)}
       </td>
+      <td>
+        ${statusBadge}
+      </td>
       <td style="font-size: 0.75rem; color: var(--text-muted);">
         ${u.createdAt ? new Date(u.createdAt).toLocaleString('th-TH') : '-'}
       </td>
       <td style="font-size: 0.75rem; color: var(--text-muted);">
         ${u.lastLogin ? formatRelativeTime(u.lastLogin) : '-'}
       </td>
+      <td style="text-align: center;">
+        <button class="action-btn btn-mod-student" data-student-id="${escapeHtml(u.studentId)}" title="จัดการระเบียบวินัยนักเรียน">
+          ⚙️ จัดการ
+        </button>
+      </td>
     `;
     studentsTbody.appendChild(tr);
+  });
+
+  // Attach click listeners to moderate buttons
+  studentsTbody.querySelectorAll('.btn-mod-student').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const stu = usersList.find(x => x.studentId === btn.dataset.studentId);
+      if (stu) {
+        openStudentModModal(stu);
+      }
+    });
   });
 }
 
@@ -940,6 +1005,232 @@ function setupEventListeners() {
   // Comments Modal Events
   btnDoneComments.addEventListener('click', () => commentsModal.classList.add('hidden'));
   btnCloseCommentsModal.addEventListener('click', () => commentsModal.classList.add('hidden'));
+
+  // Student Moderation Modal Events
+  if (btnCloseStudentMod) btnCloseStudentMod.addEventListener('click', closeStudentModModal);
+  if (btnCancelStudentMod) btnCancelStudentMod.addEventListener('click', closeStudentModModal);
+  if (btnSubmitStudentMod) btnSubmitStudentMod.addEventListener('click', submitStudentMod);
+  if (studentModModal) {
+    studentModModal.addEventListener('click', (e) => {
+      if (e.target === studentModModal) closeStudentModModal();
+    });
+  }
+  document.querySelectorAll('.mod-action-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      currentModAction = chip.dataset.action;
+      updateModActionUI();
+    });
+  });
+}
+
+// ================= DISCORD-STYLE STUDENT MODERATION =================
+let currentModStudent = null;
+let currentModAction = 'warn';
+
+const studentModModal = document.getElementById('student-mod-modal');
+const btnCloseStudentMod = document.getElementById('btn-close-student-mod');
+const btnCancelStudentMod = document.getElementById('btn-cancel-student-mod');
+const btnSubmitStudentMod = document.getElementById('btn-submit-student-mod');
+const modStudentName = document.getElementById('mod-student-name');
+const modStudentId = document.getElementById('mod-student-id');
+const modStudentStatusBadge = document.getElementById('mod-student-status-badge');
+const modStrikeCountText = document.getElementById('mod-strike-count-text');
+const strikeBar1 = document.getElementById('strike-bar-1');
+const strikeBar2 = document.getElementById('strike-bar-2');
+const strikeBar3 = document.getElementById('strike-bar-3');
+const modImpactNotice = document.getElementById('mod-impact-notice');
+const studentModReasonSelect = document.getElementById('student-mod-reason-select');
+const studentModDetailsInput = document.getElementById('student-mod-details-input');
+const modSubmitBtnText = document.getElementById('mod-submit-btn-text');
+const warningHistoryBox = document.getElementById('warning-history-box');
+const warningHistoryList = document.getElementById('warning-history-list');
+const btnChipResetWarn = document.getElementById('btn-chip-reset-warn');
+const btnChipUnban = document.getElementById('btn-chip-unban');
+const modReasonSection = document.getElementById('mod-reason-section');
+
+function openStudentModModal(student) {
+  currentModStudent = student;
+  if (!studentModModal) return;
+
+  const isBanned = student.isBanned || bannedUsersList.some(b => 
+    (b.studentId && b.studentId === student.studentId) || 
+    (b.userId && b.userId === student.id) || 
+    (b.name && b.name.toLowerCase() === student.fullName.toLowerCase())
+  );
+  const warnCount = (student.warnings && student.warnings.length) || student.warningCount || 0;
+
+  if (modStudentName) modStudentName.textContent = student.fullName;
+  if (modStudentId) modStudentId.textContent = student.studentId;
+
+  if (modStudentStatusBadge) {
+    if (isBanned) {
+      modStudentStatusBadge.innerHTML = '<span class="badge-status-banned">🚫 ถูกระงับสิทธิ์</span>';
+      currentModAction = 'unban';
+    } else if (warnCount > 0) {
+      modStudentStatusBadge.innerHTML = `<span class="badge-status-warned">⚠️ ติดคำเตือน ${warnCount}/3</span>`;
+      currentModAction = 'warn';
+    } else {
+      modStudentStatusBadge.innerHTML = '<span class="badge-status-ok">🟢 ปกติ (0/3)</span>';
+      currentModAction = 'warn';
+    }
+  }
+
+  // Strike bars
+  if (modStrikeCountText) modStrikeCountText.textContent = `${warnCount} / 3 ครั้ง`;
+  if (strikeBar1) strikeBar1.className = 'strike-bar' + (warnCount >= 1 ? ' active-1' : '');
+  if (strikeBar2) strikeBar2.className = 'strike-bar' + (warnCount >= 2 ? ' active-2' : '');
+  if (strikeBar3) strikeBar3.className = 'strike-bar' + (warnCount >= 3 ? ' active-3' : '');
+
+  // Chips visibility
+  if (btnChipResetWarn) {
+    if (warnCount > 0) btnChipResetWarn.classList.remove('hidden');
+    else btnChipResetWarn.classList.add('hidden');
+  }
+
+  if (btnChipUnban) {
+    if (isBanned) btnChipUnban.classList.remove('hidden');
+    else btnChipUnban.classList.add('hidden');
+  }
+
+  // Warning history
+  if (student.warnings && student.warnings.length > 0) {
+    if (warningHistoryBox) warningHistoryBox.classList.remove('hidden');
+    if (warningHistoryList) {
+      warningHistoryList.innerHTML = student.warnings.map((w, idx) => `
+        <div class="warning-history-item">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:#fbbf24;">⚠️ คำเตือนครั้งที่ ${idx + 1}:</strong>
+            <span style="font-size:0.7rem; color:var(--text-muted);">${new Date(w.timestamp).toLocaleString('th-TH')}</span>
+          </div>
+          <div style="margin-top:2px; font-weight:600; color:#f1f5f9;">${escapeHtml(w.reason)}</div>
+          ${w.details ? `<div style="font-size:0.75rem; color:#cbd5e1; margin-top:2px;">"${escapeHtml(w.details)}"</div>` : ''}
+        </div>
+      `).join('');
+    }
+  } else {
+    if (warningHistoryBox) warningHistoryBox.classList.add('hidden');
+  }
+
+  if (studentModReasonSelect) studentModReasonSelect.selectedIndex = 0;
+  if (studentModDetailsInput) studentModDetailsInput.value = '';
+
+  updateModActionUI();
+  studentModModal.classList.remove('hidden');
+}
+
+function closeStudentModModal() {
+  if (studentModModal) studentModModal.classList.add('hidden');
+  currentModStudent = null;
+}
+
+function updateModActionUI() {
+  const warnCount = currentModStudent ? ((currentModStudent.warnings && currentModStudent.warnings.length) || currentModStudent.warningCount || 0) : 0;
+  
+  document.querySelectorAll('.mod-action-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.action === currentModAction);
+  });
+
+  if (!modImpactNotice || !modSubmitBtnText || !btnSubmitStudentMod) return;
+
+  if (currentModAction === 'warn') {
+    if (modReasonSection) modReasonSection.classList.remove('hidden');
+    const nextCount = warnCount + 1;
+    if (nextCount >= 3) {
+      modImpactNotice.innerHTML = `🚨 คำเตือนจะเพิ่มเป็น <strong>3/3 ครั้ง</strong> ซึ่งจะสั่ง <strong>แบนบัญชีโดยอัตโนมัติทันที</strong>!`;
+      modSubmitBtnText.textContent = `🚨 ส่งคำเตือนครั้งที่ 3 (จะแบนอัตโนมัติ)`;
+    } else {
+      modImpactNotice.innerHTML = `ℹ️ ผู้ใช้จะได้รับกล่องข้อความเตือนบนหน้าจอ และคำเตือนสะสมจะเพิ่มเป็น <strong>${nextCount}/3 ครั้ง</strong>`;
+      modSubmitBtnText.textContent = `⚠️ ส่งคำเตือน (ครั้งที่ ${nextCount}/3)`;
+    }
+    btnSubmitStudentMod.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+    btnSubmitStudentMod.style.color = '#000';
+  } else if (currentModAction === 'ban') {
+    if (modReasonSection) modReasonSection.classList.remove('hidden');
+    modImpactNotice.innerHTML = `🔨 บัญชีนักเรียนจะถูกระงับสิทธิ์ทันที ไม่สามารถตั้งกระทู้ คอมเมนต์ หรือส่งข้อความคุยสดได้ แม้กดสุ่มชื่อใหม่ก็ตาม`;
+    modSubmitBtnText.textContent = `🔨 ยืนยันแบนบัญชีทันที (Direct Ban)`;
+    btnSubmitStudentMod.style.background = 'linear-gradient(135deg, #ef4444, #b91c1c)';
+    btnSubmitStudentMod.style.color = '#fff';
+  } else if (currentModAction === 'reset') {
+    if (modReasonSection) modReasonSection.classList.add('hidden');
+    modImpactNotice.innerHTML = `🔄 ล้างประวัติคำเตือนทั้งหมดของนักเรียนคนนี้กลับเป็น 0/3 ครั้ง และปลดสถานะติดคำเตือน`;
+    modSubmitBtnText.textContent = `🔄 ยืนยันล้างคำเตือนกลับเป็น 0`;
+    btnSubmitStudentMod.style.background = 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
+    btnSubmitStudentMod.style.color = '#fff';
+  } else if (currentModAction === 'unban') {
+    if (modReasonSection) modReasonSection.classList.add('hidden');
+    modImpactNotice.innerHTML = `🔓 ปลดการระงับสิทธิ์ ให้นักเรียนสามารถกลับมาตั้งกระทู้ แสดงความคิดเห็น และส่งข้อความได้ตามปกติ`;
+    modSubmitBtnText.textContent = `🔓 ยืนยันปลดการแบน`;
+    btnSubmitStudentMod.style.background = 'linear-gradient(135deg, #22c55e, #15803d)';
+    btnSubmitStudentMod.style.color = '#fff';
+  }
+}
+
+async function submitStudentMod() {
+  if (!currentModStudent) return;
+  const reason = studentModReasonSelect ? studentModReasonSelect.value : 'ละเมิดกฎการใช้งาน';
+  const details = studentModDetailsInput ? studentModDetailsInput.value.trim() : '';
+
+  btnSubmitStudentMod.disabled = true;
+  const originalText = modSubmitBtnText.textContent;
+  modSubmitBtnText.textContent = 'กำลังดำเนินการ...';
+
+  try {
+    let endpoint = '';
+    let body = {};
+
+    if (currentModAction === 'warn') {
+      endpoint = '/api/manager/warn-student';
+      body = {
+        studentId: currentModStudent.studentId,
+        userId: currentModStudent.id,
+        reason,
+        details
+      };
+    } else if (currentModAction === 'ban') {
+      endpoint = '/api/manager/ban-student';
+      body = {
+        studentId: currentModStudent.studentId,
+        userId: currentModStudent.id,
+        reason,
+        details
+      };
+    } else if (currentModAction === 'reset') {
+      endpoint = '/api/manager/reset-warnings';
+      body = {
+        studentId: currentModStudent.studentId,
+        userId: currentModStudent.id
+      };
+    } else if (currentModAction === 'unban') {
+      endpoint = '/api/manager/unban-student';
+      body = {
+        studentId: currentModStudent.studentId,
+        userId: currentModStudent.id
+      };
+    }
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: authToken
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(data.message || 'ดำเนินการสำเร็จ');
+      closeStudentModModal();
+      fetchOverviewData();
+    } else {
+      showToast(data.error || 'เกิดข้อผิดพลาดในการลงโทษ');
+    }
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+  } finally {
+    btnSubmitStudentMod.disabled = false;
+    modSubmitBtnText.textContent = originalText;
+  }
 }
 
 // ================= HELPERS =================

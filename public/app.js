@@ -339,8 +339,16 @@ function initStudentAuth() {
     if (studentDisplayId) studentDisplayId.textContent = `รหัส ${user.studentId}`;
     if (studentAccountBadge) studentAccountBadge.classList.remove('hidden');
 
-    if (window.soundEngine && !isAutoLogin) window.soundEngine.playPublish();
-    showToast(`ยินดีต้อนรับชาว ท.ล.ว. คุณ ${user.fullName} 👋`, 'success');
+    if (user.isBanned) {
+      const studentBanModal = document.getElementById('student-ban-modal');
+      const userBanReason = document.getElementById('user-ban-reason');
+      if (userBanReason) userBanReason.textContent = 'บัญชีของคุณถูกระงับสิทธิ์การใช้งานเนื่องจากละเมิดกฎระเบียบ';
+      if (studentBanModal) studentBanModal.classList.remove('hidden');
+      showToast('🚫 บัญชีนี้ถูกระงับสิทธิ์การใช้งาน ไม่สามารถส่งข้อความได้', 'info');
+    } else {
+      if (window.soundEngine && !isAutoLogin) window.soundEngine.playPublish();
+      showToast(`ยินดีต้อนรับชาว ท.ล.ว. คุณ ${user.fullName} 👋`, 'success');
+    }
   };
 
   // 1. Submit Login
@@ -782,6 +790,82 @@ function setupSocket() {
     if (currentPersona && currentPersona.name === authorName) {
       showToast(`⚠️ ตัวตนของคุณถูกระงับสิทธิ์: ${reason || 'ละเมิดกฎ'}`, 'info');
     }
+  });
+
+  // Real-time Student Moderation Events (Warnings & Bans)
+  socket.on('student_warning', ({ studentId, userId, studentToken, warningCount, maxWarnings, reason, details }) => {
+    const isMe = currentStudentUser && (
+      (studentId && currentStudentUser.studentId === studentId) ||
+      (studentToken && currentStudentUser.token === studentToken) ||
+      (userId && currentStudentUser.id === userId)
+    );
+    if (!isMe) return;
+
+    currentStudentUser.warningCount = warningCount;
+    if (!Array.isArray(currentStudentUser.warnings)) currentStudentUser.warnings = [];
+    currentStudentUser.warnings.push({ reason, details, timestamp: Date.now() });
+
+    const studentWarningModal = document.getElementById('student-warning-modal');
+    const userWarningStrikePill = document.getElementById('user-warning-strike-pill');
+    const userWarningReason = document.getElementById('user-warning-reason');
+    const userWarningDetails = document.getElementById('user-warning-details');
+
+    if (userWarningStrikePill) userWarningStrikePill.textContent = `⚠️ คำเตือนครั้งที่ ${warningCount} จาก ${maxWarnings || 3} ครั้ง`;
+    if (userWarningReason) userWarningReason.textContent = reason || 'ละเมิดกฎระเบียบของโรงเรียน';
+    if (userWarningDetails) userWarningDetails.textContent = details ? `"${details}"` : '';
+
+    if (studentWarningModal) studentWarningModal.classList.remove('hidden');
+    if (window.soundEngine) window.soundEngine.playClick();
+    showToast(`⚠️ คุณได้รับคำเตือนครั้งที่ ${warningCount}/3: ${reason || ''}`, 'warning');
+  });
+
+  socket.on('student_banned', ({ studentId, userId, studentToken, reason, details, autoBanned }) => {
+    const isMe = currentStudentUser && (
+      (studentId && currentStudentUser.studentId === studentId) ||
+      (studentToken && currentStudentUser.token === studentToken) ||
+      (userId && currentStudentUser.id === userId)
+    );
+    if (!isMe) return;
+
+    currentStudentUser.isBanned = true;
+
+    const studentBanModal = document.getElementById('student-ban-modal');
+    const userBanReason = document.getElementById('user-ban-reason');
+    const userBanDetails = document.getElementById('user-ban-details');
+
+    if (userBanReason) userBanReason.textContent = reason || 'ละเมิดกฎระเบียบการใช้งาน';
+    if (userBanDetails) userBanDetails.textContent = details ? `"${details}"` : (autoBanned ? 'สะสมคำเตือนครบ 3 ครั้ง ระบบจึงระงับสิทธิ์อัตโนมัติ' : '');
+
+    if (studentBanModal) studentBanModal.classList.remove('hidden');
+    if (window.soundEngine) window.soundEngine.playClick();
+    showToast(`🚫 บัญชีของคุณถูกระงับสิทธิ์การใช้งาน: ${reason || ''}`, 'info');
+  });
+
+  socket.on('student_unbanned', ({ studentId, userId, studentToken }) => {
+    const isMe = currentStudentUser && (
+      (studentId && currentStudentUser.studentId === studentId) ||
+      (studentToken && currentStudentUser.token === studentToken) ||
+      (userId && currentStudentUser.id === userId)
+    );
+    if (!isMe) return;
+
+    currentStudentUser.isBanned = false;
+    const studentBanModal = document.getElementById('student-ban-modal');
+    if (studentBanModal) studentBanModal.classList.add('hidden');
+    showToast('🔓 บัญชีของคุณได้รับการปลดการระงับสิทธิ์แล้ว สามารถใช้งานได้ตามปกติ', 'success');
+  });
+
+  socket.on('student_warnings_reset', ({ studentId, userId, studentToken }) => {
+    const isMe = currentStudentUser && (
+      (studentId && currentStudentUser.studentId === studentId) ||
+      (studentToken && currentStudentUser.token === studentToken) ||
+      (userId && currentStudentUser.id === userId)
+    );
+    if (!isMe) return;
+
+    currentStudentUser.warningCount = 0;
+    currentStudentUser.warnings = [];
+    showToast('🔄 ประวัติคำเตือนของคุณถูกล้างกลับเป็น 0/3 ครั้งแล้ว', 'info');
   });
 
   socket.on('action_blocked', ({ message }) => {
@@ -1972,6 +2056,25 @@ function setupEventListeners() {
       closeReportModal();
       window.soundEngine.playPublish();
       showToast('🚨 ส่งรายงานไปยังผู้ดูแลเรียบร้อยแล้ว ขอบคุณที่ช่วยดูแลความปลอดภัยของโรงเรียน', 'success');
+    });
+  }
+
+  // Student Warning and Ban Modal acknowledgements
+  const studentWarningModal = document.getElementById('student-warning-modal');
+  const btnAckWarning = document.getElementById('btn-ack-warning');
+  if (btnAckWarning && studentWarningModal) {
+    btnAckWarning.addEventListener('click', () => {
+      studentWarningModal.classList.add('hidden');
+      if (window.soundEngine) window.soundEngine.playClick();
+    });
+  }
+
+  const studentBanModal = document.getElementById('student-ban-modal');
+  const btnCloseBanNotice = document.getElementById('btn-close-ban-notice');
+  if (btnCloseBanNotice && studentBanModal) {
+    btnCloseBanNotice.addEventListener('click', () => {
+      studentBanModal.classList.add('hidden');
+      if (window.soundEngine) window.soundEngine.playClick();
     });
   }
 
