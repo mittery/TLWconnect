@@ -66,7 +66,9 @@ export async function dbGetUsers() {
       idCardMasked: u.id_card_masked,
       token: u.token,
       createdAt: Number(u.created_at),
-      lastLogin: Number(u.last_login)
+      lastLogin: Number(u.last_login),
+      warnings: Array.isArray(u.warnings) ? u.warnings : [],
+      warningCount: u.warning_count || (Array.isArray(u.warnings) ? u.warnings.length : 0)
     }));
   } catch (err) {
     console.error('[DB] Failed to get users from Supabase:', err.message);
@@ -103,6 +105,24 @@ export async function dbUpdateUserLastLogin(token, lastLogin) {
     if (error) throw error;
   } catch (err) {
     console.error('[DB] Failed to update user last login in Supabase:', err.message);
+  }
+}
+
+export async function dbUpdateUserWarnings(studentId, warnings) {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({
+        warnings: warnings || [],
+        warning_count: (warnings || []).length
+      })
+      .eq('student_id', studentId);
+    if (error) {
+      console.warn('[DB] Notice: Could not sync warnings to Supabase (columns might need to be added):', error.message);
+    }
+  } catch (err) {
+    console.warn('[DB] Failed to update user warnings in Supabase:', err.message);
   }
 }
 
