@@ -442,11 +442,20 @@ function addAuditLog(action, detail) {
   }
 }
 
-function isBanned(authorName, studentId = null, userId = null) {
+function isBanned(authorName, studentId = null, userId = null, studentToken = null) {
+  let resolvedStudentId = studentId;
+  let resolvedUserId = userId;
+  if ((!resolvedStudentId || !resolvedUserId) && studentToken) {
+    const u = users.find(user => user.token === studentToken);
+    if (u) {
+      if (!resolvedStudentId) resolvedStudentId = u.studentId;
+      if (!resolvedUserId) resolvedUserId = u.id;
+    }
+  }
   return bannedUsers.some(u => {
+    if (resolvedStudentId && u.studentId && u.studentId === resolvedStudentId) return true;
+    if (resolvedUserId && u.userId && u.userId === resolvedUserId) return true;
     if (authorName && u.name && u.name.toLowerCase() === authorName.toLowerCase()) return true;
-    if (studentId && u.studentId && u.studentId === studentId) return true;
-    if (userId && u.userId && u.userId === userId) return true;
     return false;
   });
 }
@@ -699,7 +708,10 @@ app.post('/api/auth/login', (req, res) => {
       fullName: user.fullName,
       studentId: user.studentId,
       idCardMasked: user.idCardMasked,
-      token: user.token
+      token: user.token,
+      isBanned: isBanned(user.fullName, user.studentId, user.id, user.token),
+      warningCount: (user.warnings && user.warnings.length) || user.warningCount || 0,
+      warnings: user.warnings || []
     }
   });
 });
@@ -727,7 +739,10 @@ app.post('/api/auth/verify-session', (req, res) => {
       fullName: user.fullName,
       studentId: user.studentId,
       idCardMasked: user.idCardMasked || '142xxxxxxx000',
-      token: user.token
+      token: user.token,
+      isBanned: isBanned(user.fullName, user.studentId, user.id, user.token),
+      warningCount: (user.warnings && user.warnings.length) || user.warningCount || 0,
+      warnings: user.warnings || []
     }
   });
 });
@@ -834,7 +849,10 @@ app.get('/api/manager/overview', requireAdmin, (req, res) => {
       fullName: u.fullName,
       studentId: u.studentId,
       createdAt: u.createdAt,
-      lastLogin: u.lastLogin
+      lastLogin: u.lastLogin,
+      warningCount: (u.warnings && u.warnings.length) || u.warningCount || 0,
+      warnings: u.warnings || [],
+      isBanned: isBanned(u.fullName, u.studentId, u.id, u.token)
     })),
     auditLogs: auditLogs.slice(0, 50)
   });
@@ -1037,7 +1055,7 @@ app.get('/api/manager/export-data', requireAdmin, (req, res) => {
 });
 
 app.post('/api/manager/ban-user', requireAdmin, (req, res) => {
-  const { authorName, studentId, userId, reason } = req.body;
+  const { authorName, studentId, userId, reason, details } = req.body;
   if (!authorName && !studentId && !userId) return res.status(400).json({ error: 'Missing target user' });
 
   // Resolve studentId from post author if not directly provided
@@ -1050,37 +1068,248 @@ app.post('/api/manager/ban-user', requireAdmin, (req, res) => {
       resolvedUserId = matchingPost.authorInternal.userId;
     }
   }
-  if (!isBanned(authorName, resolvedStudentId, resolvedUserId)) {
+
+  const studentUser = users.find(u => (resolvedStudentId && u.studentId === resolvedStudentId) || (resolvedUserId && u.id === resolvedUserId));
+  const finalName = studentUser ? studentUser.fullName : (authorName || 'Unknown');
+
+  if (!isBanned(finalName, resolvedStudentId, resolvedUserId)) {
     const banEntry = {
-      name: authorName || 'Unknown',
+      name: finalName,
       studentId: resolvedStudentId,
       userId: resolvedUserId,
       reason: reason || 'ละเมิดกฎการใช้งาน',
+      details: sanitizeInput(details || '', 500),
       bannedAt: Date.now()
     };
     bannedUsers.push(banEntry);
     saveBanned();
     db.dbInsertBannedUser(banEntry);
-    addAuditLog('BAN_USER', `Banned user ${authorName || ''} (Student ID: ${resolvedStudentId || 'N/A'}). Reason: ${reason || 'ละเมิดกฎ'}`);
+    addAuditLog('BAN_USER', `Banned user ${finalName} (Student ID: ${resolvedStudentId || 'N/A'}). Reason: ${reason || 'ละเมิดกฎ'}`);
 
-    io.emit('author_banned', { authorName, studentId: resolvedStudentId, reason: reason || 'ละเมิดกฎการใช้งาน' });
+    io.emit('author_banned', { authorName: finalName, studentId: resolvedStudentId, reason: reason || 'ละเมิดกฎการใช้งาน' });
+    io.emit('student_banned', {
+      studentId: resolvedStudentId,
+      userId: resolvedUserId,
+      studentToken: studentUser?.token,
+      reason: reason || 'ละเมิดกฎการใช้งาน'
+    });
   }
 
   res.json({ success: true, bannedUsers });
 });
 
 app.post('/api/manager/unban-user', requireAdmin, (req, res) => {
-  const { authorName, studentId } = req.body;
+  const { authorName, studentId, userId } = req.body;
   bannedUsers = bannedUsers.filter(u => {
-    if (authorName && u.name === authorName) return false;
+    if (authorName && u.name && u.name.toLowerCase() === authorName.toLowerCase()) return false;
     if (studentId && u.studentId === studentId) return false;
+    if (userId && u.userId === userId) return false;
     return true;
   });
   saveBanned();
   db.dbDeleteBannedUser({ authorName, studentId });
 
-  addAuditLog('UNBAN_USER', `Unbanned user ${authorName || studentId}`);
+  const studentUser = users.find(u => (studentId && u.studentId === studentId) || (userId && u.id === userId));
+  addAuditLog('UNBAN_USER', `Unbanned user ${authorName || studentId || userId}`);
+  io.emit('student_unbanned', {
+    authorName,
+    studentId,
+    userId,
+    studentToken: studentUser?.token
+  });
   res.json({ success: true, bannedUsers });
+});
+
+// DISCORD-STYLE MODERATION FOR REGISTERED STUDENTS
+app.post('/api/manager/warn-student', requireAdmin, (req, res) => {
+  const { studentId, userId, reason, details } = req.body;
+  if (!studentId && !userId) return res.status(400).json({ error: 'Missing student identifier' });
+
+  const student = users.find(u => (studentId && u.studentId === studentId) || (userId && u.id === userId));
+  if (!student) return res.status(404).json({ error: 'ไม่พบบัญชีนักเรียนที่ระบุ' });
+
+  if (!Array.isArray(student.warnings)) {
+    student.warnings = [];
+  }
+
+  const cleanReason = sanitizeInput(reason || 'ละเมิดกฎระเบียบการใช้งาน', 100);
+  const cleanDetails = sanitizeInput(details || '', 500);
+
+  const newWarning = {
+    id: 'warn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+    reason: cleanReason,
+    details: cleanDetails,
+    timestamp: Date.now()
+  };
+
+  student.warnings.push(newWarning);
+  student.warningCount = student.warnings.length;
+  saveUsers();
+  db.dbUpdateUserWarnings(student.studentId, student.warnings);
+
+  addAuditLog('WARN_STUDENT', `ตักเตือนนักเรียน: ${student.fullName} (รหัส: ${student.studentId}) ครั้งที่ ${student.warningCount}/3. เหตุผล: ${cleanReason}`);
+
+  // Real-time broadcast warning to client
+  io.emit('student_warning', {
+    studentId: student.studentId,
+    userId: student.id,
+    studentToken: student.token,
+    warningCount: student.warningCount,
+    maxWarnings: 3,
+    reason: cleanReason,
+    details: cleanDetails,
+    timestamp: newWarning.timestamp
+  });
+
+  // AUTO-BAN ON 3 WARNINGS
+  let autoBanned = false;
+  if (student.warningCount >= 3) {
+    autoBanned = true;
+    if (!isBanned(student.fullName, student.studentId, student.id, student.token)) {
+      const banReason = `ถูกระงับสิทธิ์อัตโนมัติเนื่องจากได้รับคำเตือนครบ 3 ครั้ง (ล่าสุด: ${cleanReason})`;
+      const banEntry = {
+        name: student.fullName,
+        studentId: student.studentId,
+        userId: student.id,
+        reason: banReason,
+        details: cleanDetails,
+        bannedAt: Date.now()
+      };
+      bannedUsers.push(banEntry);
+      saveBanned();
+      db.dbInsertBannedUser(banEntry);
+
+      addAuditLog('AUTO_BAN_STUDENT', `ระงับสิทธิ์อัตโนมัติ: นักเรียน ${student.fullName} (รหัส: ${student.studentId}) สะสมคำเตือนครบ 3 ครั้ง`);
+
+      io.emit('author_banned', { authorName: student.fullName, studentId: student.studentId, reason: banReason });
+      io.emit('student_banned', {
+        studentId: student.studentId,
+        userId: student.id,
+        studentToken: student.token,
+        reason: banReason,
+        autoBanned: true
+      });
+    }
+  }
+
+  res.json({
+    success: true,
+    message: autoBanned ? 'ส่งคำเตือนครบ 3 ครั้ง และระงับสิทธิ์การใช้งานบัญชีอัตโนมัติแล้ว' : `ส่งคำเตือนครั้งที่ ${student.warningCount}/3 เรียบร้อยแล้ว`,
+    student: {
+      id: student.id,
+      fullName: student.fullName,
+      studentId: student.studentId,
+      warningCount: student.warningCount,
+      warnings: student.warnings,
+      isBanned: isBanned(student.fullName, student.studentId, student.id, student.token)
+    },
+    autoBanned
+  });
+});
+
+app.post('/api/manager/ban-student', requireAdmin, (req, res) => {
+  const { studentId, userId, reason, details } = req.body;
+  if (!studentId && !userId) return res.status(400).json({ error: 'Missing student identifier' });
+
+  const student = users.find(u => (studentId && u.studentId === studentId) || (userId && u.id === userId));
+  if (!student) return res.status(404).json({ error: 'ไม่พบบัญชีนักเรียนที่ระบุ' });
+
+  const cleanReason = sanitizeInput(reason || 'ระงับสิทธิ์การใช้งานโดยตรงจากผู้ดูแล', 150);
+  const cleanDetails = sanitizeInput(details || '', 500);
+
+  if (!isBanned(student.fullName, student.studentId, student.id, student.token)) {
+    const banEntry = {
+      name: student.fullName,
+      studentId: student.studentId,
+      userId: student.id,
+      reason: cleanReason,
+      details: cleanDetails,
+      bannedAt: Date.now()
+    };
+    bannedUsers.push(banEntry);
+    saveBanned();
+    db.dbInsertBannedUser(banEntry);
+
+    addAuditLog('BAN_STUDENT', `แบนนักเรียนโดยตรง: ${student.fullName} (รหัส: ${student.studentId}). เหตุผล: ${cleanReason}`);
+  }
+
+  io.emit('author_banned', { authorName: student.fullName, studentId: student.studentId, reason: cleanReason });
+  io.emit('student_banned', {
+    studentId: student.studentId,
+    userId: student.id,
+    studentToken: student.token,
+    reason: cleanReason
+  });
+
+  res.json({
+    success: true,
+    message: `ระงับสิทธิ์บัญชีนักเรียน ${student.fullName} เรียบร้อยแล้ว`,
+    bannedUsers
+  });
+});
+
+app.post('/api/manager/unban-student', requireAdmin, (req, res) => {
+  const { studentId, userId } = req.body;
+  if (!studentId && !userId) return res.status(400).json({ error: 'Missing student identifier' });
+
+  const student = users.find(u => (studentId && u.studentId === studentId) || (userId && u.id === userId));
+
+  bannedUsers = bannedUsers.filter(u => {
+    if (studentId && u.studentId === studentId) return false;
+    if (userId && u.userId === userId) return false;
+    if (student && u.name && u.name.toLowerCase() === student.fullName.toLowerCase()) return false;
+    return true;
+  });
+  saveBanned();
+  db.dbDeleteBannedUser({ authorName: student ? student.fullName : null, studentId: studentId || (student ? student.studentId : null) });
+
+  addAuditLog('UNBAN_STUDENT', `ปลดแบนนักเรียน: ${student ? student.fullName : ''} (รหัส: ${studentId || student?.studentId || 'N/A'})`);
+
+  io.emit('student_unbanned', {
+    studentId: studentId || student?.studentId,
+    userId: userId || student?.id,
+    studentToken: student?.token
+  });
+
+  res.json({
+    success: true,
+    message: 'ปลดการระงับสิทธิ์เรียบร้อยแล้ว',
+    bannedUsers
+  });
+});
+
+app.post('/api/manager/reset-warnings', requireAdmin, (req, res) => {
+  const { studentId, userId } = req.body;
+  if (!studentId && !userId) return res.status(400).json({ error: 'Missing student identifier' });
+
+  const student = users.find(u => (studentId && u.studentId === studentId) || (userId && u.id === userId));
+  if (!student) return res.status(404).json({ error: 'ไม่พบบัญชีนักเรียนที่ระบุ' });
+
+  student.warnings = [];
+  student.warningCount = 0;
+  saveUsers();
+  db.dbUpdateUserWarnings(student.studentId, []);
+
+  addAuditLog('RESET_WARNINGS', `ล้างประวัติคำเตือนของนักเรียน ${student.fullName} (รหัส: ${student.studentId})`);
+
+  io.emit('student_warnings_reset', {
+    studentId: student.studentId,
+    userId: student.id,
+    studentToken: student.token
+  });
+
+  res.json({
+    success: true,
+    message: `ล้างประวัติคำเตือนของ ${student.fullName} เรียบร้อยแล้ว`,
+    student: {
+      id: student.id,
+      fullName: student.fullName,
+      studentId: student.studentId,
+      warningCount: 0,
+      warnings: [],
+      isBanned: isBanned(student.fullName, student.studentId, student.id, student.token)
+    }
+  });
 });
 
 // Socket.io Real-time connection handling
@@ -1114,8 +1343,8 @@ io.on('connection', (socket) => {
     const studentToken = data.studentToken || data.author?.studentToken;
     const student = studentToken ? users.find(u => u.token === studentToken) : null;
 
-    if (isBanned(authorName, student?.studentId, student?.id)) {
-      socket.emit('action_blocked', { message: 'ตัวตนหรือบัญชีของคุณถูกระงับสิทธิ์เนื่องจากละเมิดกฎการใช้งาน' });
+    if (isBanned(authorName, student?.studentId, student?.id, studentToken)) {
+      socket.emit('action_blocked', { message: 'บัญชีนักเรียนของคุณถูกระงับสิทธิ์การใช้งาน ไม่สามารถสร้างกระทู้ได้' });
       return;
     }
 
@@ -1355,8 +1584,8 @@ io.on('connection', (socket) => {
     const authorName = sanitizeInput(author?.name || 'Anon', 50);
     const student = studentToken ? users.find(u => u.token === studentToken) : null;
 
-    if (isBanned(authorName, student?.studentId, student?.id)) {
-      socket.emit('action_blocked', { message: 'ตัวตนหรือบัญชีของคุณถูกระงับสิทธิ์เนื่องจากละเมิดกฎการใช้งาน' });
+    if (isBanned(authorName, student?.studentId, student?.id, studentToken)) {
+      socket.emit('action_blocked', { message: 'บัญชีนักเรียนของคุณถูกระงับสิทธิ์การใช้งาน ไม่สามารถสร้างกระทู้ได้' });
       return;
     }
 
@@ -1427,8 +1656,8 @@ io.on('connection', (socket) => {
     const authorName = sanitizeInput(author?.name || 'Anon', 50);
     const student = studentToken ? users.find(u => u.token === studentToken) : null;
 
-    if (isBanned(authorName, student?.studentId, student?.id)) {
-      socket.emit('action_blocked', { message: 'ตัวตนหรือบัญชีของคุณถูกระงับสิทธิ์เนื่องจากละเมิดกฎการใช้งาน' });
+    if (isBanned(authorName, student?.studentId, student?.id, studentToken)) {
+      socket.emit('action_blocked', { message: 'บัญชีนักเรียนของคุณถูกระงับสิทธิ์การใช้งาน ไม่สามารถสร้างกระทู้ได้' });
       return;
     }
 
