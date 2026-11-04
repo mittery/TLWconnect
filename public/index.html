@@ -743,30 +743,23 @@
           </div>
         </div>
 
-        <!-- Palette Color Picker -->
-        <div class="form-group" style="margin-bottom: 0.5rem;">
-          <label style="display: flex; justify-content: space-between; align-items: center;">
-            <span>🎨 สีประจำตัวตน (Profile Accent Color)</span>
+        <!-- Color Wheel Picker -->
+        <div class="form-group color-wheel-form-group">
+          <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+            <span>🎨 สีประจำตัวตน</span>
             <span id="selected-color-label" style="font-size: 0.72rem; color: var(--text-muted); font-family: monospace;">#3b82f6</span>
           </label>
-          <div class="color-picker-grid" id="color-picker-grid">
-            <!-- 16 curated neon / dark-mode friendly colors -->
-            <button type="button" class="color-pick-btn" data-color="#06b6d4" style="background:#06b6d4; --btn-color:#06b6d4;" title="Cyber Cyan"></button>
-            <button type="button" class="color-pick-btn" data-color="#0ea5e9" style="background:#0ea5e9; --btn-color:#0ea5e9;" title="Sky Blue"></button>
-            <button type="button" class="color-pick-btn" data-color="#3b82f6" style="background:#3b82f6; --btn-color:#3b82f6;" title="Electric Blue"></button>
-            <button type="button" class="color-pick-btn" data-color="#6366f1" style="background:#6366f1; --btn-color:#6366f1;" title="Royal Indigo"></button>
-            <button type="button" class="color-pick-btn" data-color="#8b5cf6" style="background:#8b5cf6; --btn-color:#8b5cf6;" title="Neon Purple"></button>
-            <button type="button" class="color-pick-btn" data-color="#a855f7" style="background:#a855f7; --btn-color:#a855f7;" title="Mystic Violet"></button>
-            <button type="button" class="color-pick-btn" data-color="#d946ef" style="background:#d946ef; --btn-color:#d946ef;" title="Fuchsia Pink"></button>
-            <button type="button" class="color-pick-btn" data-color="#ec4899" style="background:#ec4899; --btn-color:#ec4899;" title="Hot Pink"></button>
-            <button type="button" class="color-pick-btn" data-color="#f43f5e" style="background:#f43f5e; --btn-color:#f43f5e;" title="Rose Red"></button>
-            <button type="button" class="color-pick-btn" data-color="#ef4444" style="background:#ef4444; --btn-color:#ef4444;" title="Crimson"></button>
-            <button type="button" class="color-pick-btn" data-color="#f97316" style="background:#f97316; --btn-color:#f97316;" title="Sunset Orange"></button>
-            <button type="button" class="color-pick-btn" data-color="#f59e0b" style="background:#f59e0b; --btn-color:#f59e0b;" title="Solar Gold"></button>
-            <button type="button" class="color-pick-btn" data-color="#eab308" style="background:#eab308; --btn-color:#eab308;" title="Cyber Yellow"></button>
-            <button type="button" class="color-pick-btn" data-color="#84cc16" style="background:#84cc16; --btn-color:#84cc16;" title="Lime Volt"></button>
-            <button type="button" class="color-pick-btn" data-color="#10b981" style="background:#10b981; --btn-color:#10b981;" title="Emerald Green"></button>
-            <button type="button" class="color-pick-btn" data-color="#14b8a6" style="background:#14b8a6; --btn-color:#14b8a6;" title="Mint Teal"></button>
+          <div class="color-wheel-section">
+            <!-- Left: Brightness Slider -->
+            <div class="brightness-slider-wrap" id="brightness-slider-wrap">
+              <div class="brightness-track" id="brightness-track"></div>
+              <div class="brightness-thumb" id="brightness-thumb"></div>
+            </div>
+            <!-- Right: HSL Color Wheel -->
+            <div class="hsl-wheel-wrap" id="hsl-wheel-wrap">
+              <div class="hsl-wheel" id="hsl-wheel"></div>
+              <div class="wheel-cursor" id="wheel-cursor"></div>
+            </div>
           </div>
         </div>
 

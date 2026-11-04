@@ -684,6 +684,167 @@ function updatePersonaDisplay() {
   }
 }
 
+// =====================================================
+// COLOR WHEEL HELPERS
+// =====================================================
+
+/**
+ * Convert HSV (0-360, 0-1, 0-1) → hex string '#rrggbb'
+ */
+function hsvToHex(h, s, v) {
+  const f = (n) => {
+    const k = (n + h / 60) % 6;
+    return v - v * s * Math.max(0, Math.min(k, 4 - k, 1));
+  };
+  const r = Math.round(f(5) * 255);
+  const g = Math.round(f(3) * 255);
+  const b = Math.round(f(1) * 255);
+  return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Convert hex '#rrggbb' → { h: 0-360, s: 0-1, v: 0-1 }
+ */
+function hexToHsv(hex) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const r = parseInt(hex.substring(0, 2), 16) / 255;
+  const g = parseInt(hex.substring(2, 4), 16) / 255;
+  const b = parseInt(hex.substring(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0, s = 0, v = max;
+  if (d !== 0) {
+    s = d / max;
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) * 60; break;
+      case g: h = ((b - r) / d + 2) * 60; break;
+      case b: h = ((r - g) / d + 4) * 60; break;
+    }
+  }
+  return { h, s, v };
+}
+
+/** Shared mutable wheel state (HSV) */
+const wheelState = { h: 220, s: 0.7, v: 0.9 };
+
+/**
+ * Sync cursor + slider + preview to current wheelState.
+ * Does NOT call updatePersonaDisplay — caller should do that if needed.
+ */
+function syncWheelUI() {
+  const wrap = document.getElementById('hsl-wheel-wrap');
+  const cursor = document.getElementById('wheel-cursor');
+  const thumb = document.getElementById('brightness-thumb');
+  const track = document.getElementById('brightness-track');
+  const label = document.getElementById('selected-color-label');
+
+  if (!wrap || !cursor) return;
+
+  const size = wrap.offsetWidth || 210;
+  const cx = size / 2;
+  const cy = size / 2;
+  const angle = (wheelState.h * Math.PI) / 180;
+  const r = wheelState.s * cx;
+
+  cursor.style.left = (cx + r * Math.cos(angle)) + 'px';
+  cursor.style.top  = (cy + r * Math.sin(angle)) + 'px';
+
+  if (thumb) {
+    thumb.style.top = ((1 - wheelState.v) * 100) + '%';
+  }
+
+  if (track) {
+    const hueColor = `hsl(${wheelState.h}, 100%, 50%)`;
+    track.style.background = `linear-gradient(to bottom, ${hueColor}, #000000)`;
+  }
+
+  const hex = hsvToHex(wheelState.h, wheelState.s, wheelState.v);
+  if (label) {
+    label.textContent = hex;
+    label.style.color = hex;
+  }
+}
+
+/**
+ * Wire up mouse / touch events on the color wheel and brightness slider.
+ * Safe to call multiple times — uses a data attribute to guard against double-init.
+ */
+function setupColorWheel() {
+  const wheel = document.getElementById('hsl-wheel');
+  const sliderWrap = document.getElementById('brightness-slider-wrap');
+  if (!wheel || !sliderWrap) return;
+  if (wheel.dataset.cwInit) return; // already initialised
+  wheel.dataset.cwInit = '1';
+
+  // ---- Wheel drag ----
+  let draggingWheel = false;
+
+  function applyWheelPos(clientX, clientY) {
+    const rect = wheel.getBoundingClientRect();
+    const dx = clientX - (rect.left + rect.width / 2);
+    const dy = clientY - (rect.top + rect.height / 2);
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const radius = rect.width / 2;
+    if (dist > radius) return; // outside circle — ignore
+    wheelState.h = ((Math.atan2(dy, dx) * 180 / Math.PI) + 360) % 360;
+    wheelState.s = dist / radius;
+    onWheelChange();
+  }
+
+  wheel.addEventListener('mousedown', (e) => {
+    draggingWheel = true;
+    applyWheelPos(e.clientX, e.clientY);
+  });
+  document.addEventListener('mousemove', (e) => { if (draggingWheel) applyWheelPos(e.clientX, e.clientY); });
+  document.addEventListener('mouseup', () => { draggingWheel = false; });
+
+  wheel.addEventListener('touchstart', (e) => {
+    applyWheelPos(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  wheel.addEventListener('touchmove', (e) => {
+    applyWheelPos(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+
+  // ---- Brightness slider drag ----
+  let draggingSlider = false;
+
+  function applySliderPos(clientY) {
+    const rect = sliderWrap.getBoundingClientRect();
+    const y = clientY - rect.top;
+    wheelState.v = 1 - Math.max(0, Math.min(1, y / rect.height));
+    onWheelChange();
+  }
+
+  sliderWrap.addEventListener('mousedown', (e) => {
+    draggingSlider = true;
+    applySliderPos(e.clientY);
+  });
+  document.addEventListener('mousemove', (e) => { if (draggingSlider) applySliderPos(e.clientY); });
+  document.addEventListener('mouseup', () => { draggingSlider = false; });
+
+  sliderWrap.addEventListener('touchstart', (e) => {
+    applySliderPos(e.touches[0].clientY);
+  }, { passive: true });
+  sliderWrap.addEventListener('touchmove', (e) => {
+    applySliderPos(e.touches[0].clientY);
+  }, { passive: true });
+}
+
+/** Called whenever the wheel/slider position changes */
+function onWheelChange() {
+  const hex = hsvToHex(wheelState.h, wheelState.s, wheelState.v);
+  if (currentPersona) {
+    currentPersona.color = hex;
+  }
+  syncWheelUI();
+  // Update preview box gradient immediately
+  const previewBox = document.getElementById('persona-preview-box');
+  if (previewBox) previewBox.style.setProperty('--preview-color', hex);
+  // Sync avatar stroke color across surfaces
+  if (typeof updatePersonaDisplay === 'function') updatePersonaDisplay();
+}
+
 // ================= SOCKET.IO CONNECTION =================
 function setupSocket() {
   socket = io({
@@ -1941,6 +2102,22 @@ function setupEventListeners() {
   btnPersonaProfile.addEventListener('click', () => {
     personaModal.classList.remove('hidden');
     window.soundEngine.playClick();
+    // Sync color wheel to current persona color when modal opens
+    requestAnimationFrame(() => {
+      if (currentPersona?.color) {
+        try {
+          const hsv = hexToHsv(currentPersona.color);
+          wheelState.h = hsv.h;
+          wheelState.s = hsv.s;
+          wheelState.v = hsv.v;
+        } catch (e) {}
+      }
+      setupColorWheel();
+      syncWheelUI();
+      if (typeof updateModalPickerActiveStates === 'function') {
+        updateModalPickerActiveStates();
+      }
+    });
   });
 
   btnClosePersona.addEventListener('click', () => {
@@ -2071,14 +2248,15 @@ function setupEventListeners() {
       personaPreviewBox.style.setProperty('--preview-color', curColor);
     }
 
-    // Update color picker buttons
-    document.querySelectorAll('.color-pick-btn').forEach(btn => {
-      if (btn.dataset.color && btn.dataset.color.toLowerCase() === curColor.toLowerCase()) {
-        btn.classList.add('selected');
-      } else {
-        btn.classList.remove('selected');
-      }
-    });
+    // Sync color wheel UI to current persona color
+    try {
+      const hsv = hexToHsv(curColor);
+      wheelState.h = hsv.h;
+      wheelState.s = hsv.s;
+      wheelState.v = hsv.v;
+      syncWheelUI();
+      setupColorWheel(); // safe — guards against double-init
+    } catch (e) { /* ignore invalid hex */ }
 
     // Update vector avatar buttons & dynamically tint SVGs in grid
     if (avatarVectorPicker) {
@@ -2139,14 +2317,8 @@ function setupEventListeners() {
     });
   }
 
-  // Color pick buttons
-  document.querySelectorAll('.color-pick-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentPersona.color = btn.dataset.color;
-      updatePersonaDisplay();
-      if (window.soundEngine) window.soundEngine.playClick();
-    });
-  });
+  // Color Wheel — init & wire events
+  setupColorWheel();
 
   // Avatar category tab switching (Vector Icons vs Emoji)
   if (tabAvatarVector && tabAvatarEmoji) {
@@ -2185,6 +2357,14 @@ function setupEventListeners() {
       currentPersona.name = fresh.name;
       currentPersona.badge = fresh.badge;
       currentPersona.color = fresh.color;
+      // Sync color wheel to new random color
+      try {
+        const hsv = hexToHsv(fresh.color);
+        wheelState.h = hsv.h;
+        wheelState.s = hsv.s;
+        wheelState.v = hsv.v;
+        syncWheelUI();
+      } catch (e) {}
       updatePersonaDisplay();
       if (window.soundEngine) window.soundEngine.playPublish();
       showToast(`สุ่มตัวตนใหม่สำเร็จ!`, 'success');
