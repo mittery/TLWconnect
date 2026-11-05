@@ -92,7 +92,11 @@ body {
   top: 0;
   z-index: 100;
   background: rgba(17, 17, 19, 0.96);
-  border-bottom: 1px solid rgba(212, 160, 23, 0.15);
+  /* dual stripe: gold line + red line */
+  border-bottom: none;
+  box-shadow:
+    0 2px 0 0 var(--accent-gold),
+    0 4px 0 0 var(--accent-red);
   padding: 0 24px;
   height: 56px;
   backdrop-filter: blur(12px);
@@ -853,6 +857,7 @@ body {
 .preset-hero-banner {
   background: var(--bg-card) !important;
   border: 1px solid rgba(212, 160, 23, 0.25) !important;
+  border-left: none !important;
   border-radius: var(--radius-lg) !important;
   padding: 20px 24px 16px !important;
   margin-bottom: 16px !important;
@@ -864,17 +869,19 @@ body {
   overflow: hidden;
 }
 
+/* dual-stripe left accent on hero banner */
 .school-hero-banner::before,
 .preset-hero-banner::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
-  width: 90px;
-  height: 90px;
-  background: linear-gradient(135deg, rgba(212, 160, 23, 0.18) 0%, rgba(220, 38, 38, 0.12) 50%, transparent 70%);
-  pointer-events: none;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, var(--accent-gold) 50%, var(--accent-red) 50%);
   display: block !important;
+  pointer-events: none;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
 }
 
 .school-hero-banner::after,
@@ -885,7 +892,7 @@ body {
   right: 0;
   width: 80px;
   height: 80px;
-  background: linear-gradient(315deg, rgba(212, 160, 23, 0.15) 0%, rgba(220, 38, 38, 0.08) 50%, transparent 70%);
+  background: linear-gradient(315deg, rgba(220, 38, 38, 0.08) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -3108,8 +3115,12 @@ body {
 }
 
 .footer-bottom-bar {
-  border-top: 1px solid var(--border-subtle);
-  padding: 16px 24px;
+  /* dual stripe top: gold then red */
+  border-top: none;
+  box-shadow:
+    inset 0 2px 0 0 var(--accent-gold),
+    inset 0 4px 0 0 var(--accent-red);
+  padding: 20px 24px;
   text-align: center;
 }
 
@@ -3127,7 +3138,11 @@ body {
   right: 0;
   z-index: 200;
   background: rgba(17, 17, 19, 0.96);
-  border-top: 1px solid rgba(212, 160, 23, 0.15);
+  /* dual stripe on top: gold then red */
+  border-top: none;
+  box-shadow:
+    0 -4px 0 0 var(--accent-red),
+    0 -6px 0 0 var(--accent-gold);
   padding: 4px 8px;
   padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
   justify-content: space-around;
@@ -3749,6 +3764,12 @@ body {
 }
 
 /* ================= SVG ICON & AVATAR BADGE HELPERS ================= */
+
+/* Hide particle canvas — clean background per design spec */
+#particle-canvas-container {
+  display: none !important;
+}
+
 .tlw-icon svg,
 .btn-icon svg {
   display: block;
@@ -3782,4 +3803,261 @@ body {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* ================= LIGHT MODE (prefers-color-scheme: light) =================
+   Dynamic theme: follows user's browser default.
+   Dark mode is the primary design; light mode overrides CSS variables only.
+   No logic/JS changes — pure CSS media query.
+   ========================================================================= */
+@media (prefers-color-scheme: light) {
+  :root {
+    /* Surfaces — clean white/light gray */
+    --bg-dark:    #f4f4f6;
+    --bg-surface: #eaeaee;
+    --bg-card:    #ffffff;
+    --bg-card-hover: #f0f0f4;
+    --bg-elevated: #ffffff;
+
+    /* Borders */
+    --border-subtle: rgba(0, 0, 0, 0.09);
+    --border-highlight: rgba(180, 130, 10, 0.5);
+    --border-red: rgba(185, 28, 28, 0.35);
+
+    /* Accent: keep gold & red — slightly deeper for light bg */
+    --accent-gold: #b8860b;
+    --accent-gold-light: #d4a017;
+    --accent-gold-glow: rgba(184, 134, 11, 0.2);
+
+    --accent-red: #b91c1c;
+    --accent-red-hover: #dc2626;
+    --accent-red-light: #ef4444;
+    --accent-red-glow: rgba(185, 28, 28, 0.2);
+
+    /* Typography */
+    --text-primary: #111113;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+
+    /* Shadows */
+    --shadow-subtle: 0 4px 16px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 12px var(--accent-gold-glow);
+  }
+
+  /* Header & nav — solid white, no backdrop blur needed */
+  .app-header {
+    background: rgba(244, 244, 246, 0.97);
+    box-shadow:
+      0 2px 0 0 var(--accent-gold),
+      0 4px 0 0 var(--accent-red),
+      0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Mobile bottom nav */
+  .mobile-bottom-nav {
+    background: rgba(244, 244, 246, 0.97);
+    box-shadow:
+      0 -4px 0 0 var(--accent-red),
+      0 -6px 0 0 var(--accent-gold),
+      0 -4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar-track {
+    background: #e5e5ea;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  /* Shoutbox avatar — darken bg */
+  .shout-avatar {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Footer */
+  .site-footer {
+    background: #eaeaee;
+  }
+
+  /* Auth gateway */
+  .auth-gateway-overlay {
+    background: rgba(240, 240, 244, 0.98);
+  }
+
+  /* Mobile drawer */
+  .mobile-drawer-card {
+    background: #ffffff;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  /* Modals */
+  .modal-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Inputs */
+  .form-input,
+  .form-select,
+  .form-textarea {
+    background: #f9f9fb;
+    border-color: rgba(0, 0, 0, 0.14);
+    color: var(--text-primary);
+  }
+
+  /* Post cards */
+  .post-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.07);
+  }
+
+  /* Channel active pill */
+  .channel-item.active {
+    background: var(--accent-gold);
+    color: #ffffff;
+  }
+  .channel-item.active .channel-icon,
+  .channel-item.active .channel-name {
+    color: #ffffff;
+  }
+
+  /* Sort tabs */
+  .sort-tab.active {
+    background: var(--accent-gold);
+    color: #ffffff;
+  }
+
+  /* Notice strip */
+  .notice-highlight-strip {
+    background: rgba(184, 134, 11, 0.07);
+    border-color: rgba(184, 134, 11, 0.3);
+  }
+}
+
+/* Light mode — additional element fixes */
+@media (prefers-color-scheme: light) {
+  /* Channel badge in light mode */
+  .channel-badge {
+    background: rgba(185, 28, 28, 0.15);
+    color: var(--accent-red);
+    border: 1px solid rgba(185, 28, 28, 0.25);
+  }
+
+  /* Sidebar status/privacy cards */
+  .sidebar-status-card {
+    background: #f0f0f4;
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+  .sidebar-status-card:hover {
+    background: #e8e8ec;
+  }
+
+  /* Shoutbox card */
+  .shoutbox-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  /* Shoutbox input area */
+  .shoutbox-input-wrap {
+    background: #f9f9fb;
+    border-top-color: rgba(0, 0, 0, 0.08);
+  }
+
+  /* Shoutbox message bubble border */
+  .shout-item {
+    border-left-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Right sidebar cards */
+  .trending-tags-card,
+  .online-members-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.07);
+  }
+
+  /* Tags */
+  .tag-pill {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-secondary);
+  }
+
+  /* "โพสต์ใหม่" CTA button — keep gold */
+  .btn-compose-cta {
+    background: var(--accent-gold);
+    color: #ffffff;
+  }
+
+  /* Post footer meta text */
+  .post-timestamp,
+  .post-view-count {
+    color: var(--text-muted);
+  }
+
+  /* Post channel pill */
+  .post-channel-pill {
+    background: rgba(185, 28, 28, 0.1);
+    color: var(--accent-red);
+    border-color: rgba(185, 28, 28, 0.2);
+  }
+
+  /* Reaction chips */
+  .reaction-chip {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-secondary);
+  }
+  .reaction-chip.active {
+    background: rgba(184, 134, 11, 0.12);
+    border-color: rgba(184, 134, 11, 0.3);
+    color: var(--accent-gold);
+  }
+
+  /* Comment area */
+  .comments-section {
+    background: #f7f7fa;
+    border-top-color: rgba(0, 0, 0, 0.07);
+  }
+  .comment-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.07);
+  }
+
+  /* Auth overlay */
+  .auth-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  /* Mobile channel pills */
+  .mobile-channel-pill {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--text-secondary);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+  .mobile-channel-pill.active {
+    background: var(--accent-gold);
+    color: #ffffff;
+    border-color: var(--accent-gold);
+  }
+
+  /* "อ่านเพิ่มเติม" load more */
+  .load-more-btn {
+    background: #f0f0f4;
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-secondary);
+  }
+  .load-more-btn:hover {
+    background: #e8e8ec;
+  }
+
+  /* Hero banner left stripe — darken slightly for light bg */
+  .school-hero-banner,
+  .preset-hero-banner {
+    background: #ffffff !important;
+    border-color: rgba(184, 134, 11, 0.3) !important;
+  }
 }
