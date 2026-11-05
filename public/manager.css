@@ -4,33 +4,50 @@
    ===================================================================== */
 
 :root {
-  --bg-dark: #080b12;
-  --bg-surface: #0f1422;
-  --bg-card: rgba(17, 24, 39, 0.85);
-  --bg-elevated: #161e31;
+  --bg-dark: #0c0c0e;
+  --bg-surface: #131317;
+  --bg-card: #18181d;
+  --bg-elevated: #24242d;
 
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-highlight: rgba(245, 158, 11, 0.35);
+  --border-highlight: rgba(245, 158, 11, 0.4);
 
   --accent-gold: #f59e0b;
-  --accent-gold-glow: rgba(245, 158, 11, 0.35);
+  --accent-gold-hover: #d97706;
+  --accent-gold-light: #fbbf24;
+  --accent-gold-glow: rgba(245, 158, 11, 0.25);
   --accent-red: #ef4444;
   --accent-red-hover: #dc2626;
+  --accent-red-glow: rgba(239, 68, 68, 0.25);
   --accent-cyan: #06b6d4;
   --accent-emerald: #10b981;
   --accent-purple: #8b5cf6;
 
   --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
 
   --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
 
-  --font-sans: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Prompt', 'Noto Sans Thai', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+}
+
+::selection {
+  background: rgba(245, 158, 11, 0.35);
+  color: #ffffff;
+}
+
+input, textarea, select {
+  caret-color: var(--accent-gold);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
 }
 
 * {
@@ -55,24 +72,27 @@ body {
 .login-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(4, 7, 13, 0.92);
+  background: rgba(8, 8, 10, 0.94);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 1000;
-  padding: 1.5rem;
+  padding: env(safe-area-inset-top, 2rem) 1.25rem calc(2rem + env(safe-area-inset-bottom, 1rem));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .login-card {
   background: var(--bg-surface);
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: var(--radius-lg);
   padding: 2.25rem 2rem;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(245, 158, 11, 0.15);
+  margin: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(245, 158, 11, 0.12);
   text-align: center;
   animation: pop-in 0.25s ease;
 }
@@ -181,13 +201,15 @@ body {
 
 /* ================= DASHBOARD HEADER ================= */
 .dash-header {
-  background: rgba(8, 11, 18, 0.88);
+  background: rgba(12, 12, 14, 0.92);
   border-bottom: 1px solid var(--border-subtle);
   padding: 0.85rem 2rem;
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
 .dash-header-inner {
@@ -332,9 +354,18 @@ body {
   gap: 0.5rem;
   border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 0.75rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.dash-nav-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-tab {
+  flex-shrink: 0;
+  white-space: nowrap;
   background: transparent;
   border: none;
   padding: 0.55rem 1.15rem;
@@ -533,7 +564,12 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  padding: 0.35rem 0.6rem;
+  padding: 0.4rem 0.75rem;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   font-family: inherit;
   font-size: 0.78rem;
   font-weight: 600;
