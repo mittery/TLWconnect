@@ -3409,3 +3409,315 @@ body {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+
+/* =====================================================================
+   RESPONSIVE PROPORTION & BOTTOM-TAB ICON FIX
+   Layout / sizing only — no behaviour or JS-facing selectors changed.
+   Keep this block LAST so it overrides earlier rules at equal specificity.
+   ===================================================================== */
+
+/* ---------- 1. Viewport height (mobile browser bars) ---------- */
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ---------- 2. Bottom tab: icon sizing (root cause of missing icons) ----------
+   The inline SVGs only carry a viewBox, so without an explicit size they
+   collapse. Covers: home / shoutbox / rules (span.nav-icon.tlw-icon > svg)
+   and the bell (span.nav-icon > span.tlw-icon > svg, re-rendered by notify.js).
+   The persona avatar and the FAB keep their own sizing. */
+.bottom-nav-item .nav-icon.tlw-icon > svg,
+.bottom-nav-item .nav-icon > .tlw-icon > svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+}
+
+.bottom-nav-item .nav-icon {
+  min-width: 24px;
+  min-height: 24px;
+}
+
+/* ---------- 3. Bottom tab: bar proportions & touch targets ---------- */
+.mobile-bottom-nav {
+  min-height: 56px;
+  padding: 4px 4px;
+  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(4px, env(safe-area-inset-left, 0px));
+  padding-right: max(4px, env(safe-area-inset-right, 0px));
+  justify-content: space-between;
+}
+
+.bottom-nav-item {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 48px;
+  justify-content: center;
+  padding: 4px 2px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.bottom-nav-item .nav-label {
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Keep the unread dot next to the icon now that items share width equally */
+.bottom-nav-dot {
+  top: 6px;
+  right: calc(50% - 17px);
+}
+
+/* ---------- 4. Tablet / small desktop header (stop overflow) ---------- */
+@media (max-width: 1280px) {
+  .school-tagline,
+  .brand-sub-meta .meta-dot {
+    display: none;
+  }
+
+  .persona-label {
+    display: none;
+  }
+
+  .student-realname {
+    max-width: 100px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .header-search {
+    max-width: 300px;
+    min-width: 140px;
+  }
+
+  .persona-info {
+    display: none;
+  }
+
+  .btn-student-logout > span:first-child {
+    display: none;
+  }
+
+  .btn-student-logout .tlw-icon {
+    margin-left: 0 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-header {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+
+  .header-search {
+    min-width: 120px;
+  }
+
+  .student-meta {
+    display: none;
+  }
+}
+
+/* ---------- 5. Phone layout (<= 768px) ---------- */
+@media (max-width: 768px) {
+
+  /* Header: one compact row, safe-area aware */
+  .app-header {
+    height: calc(56px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+  }
+
+  .header-inner {
+    gap: 8px;
+  }
+
+  .header-brand {
+    gap: 8px;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .brand-logo-glow {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand-school-logo {
+    width: 26px;
+    height: 26px;
+  }
+
+  .brand-text,
+  .brand-title-row {
+    min-width: 0;
+  }
+
+  .brand-title {
+    font-size: 1.1rem;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-actions {
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .header-actions .icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .student-account-badge {
+    gap: 6px;
+    padding: 2px 4px 2px 8px;
+  }
+
+  .btn-student-logout {
+    min-width: 32px;
+    min-height: 32px;
+    margin-left: 0;
+    padding: 4px;
+    justify-content: center;
+  }
+
+  .user-persona-badge {
+    gap: 0;
+    padding: 3px;
+  }
+
+  .persona-avatar-wrap {
+    width: 32px;
+    height: 32px;
+  }
+
+  .persona-info,
+  .persona-edit-hint {
+    display: none;
+  }
+
+  /* Feed controls: wrap and let sort tabs scroll sideways instead of overflowing */
+  .feed-controls,
+  .feed-controls-bar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .feed-sort-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .feed-sort-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sort-tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+
+  /* Channel pills: comfortable touch height */
+  .mobile-channel-pill {
+    min-height: 36px;
+  }
+
+  /* Toasts float above the bottom tab instead of under it */
+  .toast-container {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    right: 12px;
+    align-items: center;
+  }
+
+  .toast {
+    max-width: 100%;
+  }
+
+  /* Drawer / footer clear the bottom tab + home indicator */
+  .mobile-drawer-card {
+    max-height: 80vh;
+    max-height: 80dvh;
+  }
+
+  .site-footer {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 640px) {
+  .student-meta {
+    display: none;
+  }
+}
+
+/* ---------- 6. Small phones (<= 480px) ---------- */
+@media (max-width: 480px) {
+  .student-avatar-icon {
+    display: none;
+  }
+
+  .student-account-badge {
+    padding: 2px;
+  }
+
+  .school-hero-banner,
+  .preset-hero-banner {
+    padding: 14px 14px 12px !important;
+    margin-bottom: 12px !important;
+    gap: 8px !important;
+  }
+
+  .hero-inner {
+    gap: 12px;
+  }
+
+  .hero-crest-wrap,
+  .preset-crest-wrap {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .hero-desc {
+    font-size: 0.8rem;
+  }
+
+  .hero-arrow {
+    display: none;
+  }
+
+  .notice-highlight-strip {
+    padding: 8px 12px;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .strip-text {
+    font-size: 0.8rem;
+    min-width: 0;
+  }
+
+  #active-channel-title {
+    font-size: 1.1rem;
+  }
+
+  .post-card {
+    padding: 16px;
+  }
+}
