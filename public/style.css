@@ -3319,15 +3319,28 @@ body {
 }
 
 @media (max-width: 768px) {
-  .app-layout {
-    grid-template-columns: 1fr;
-    padding: 0 16px 80px;
-    margin-top: 16px;
+  .app-header {
+    padding: 0 12px;
+    height: 52px;
   }
 
-  .sidebar-left,
-  .sidebar-right {
-    display: none;
+  .header-inner {
+    height: 52px;
+    gap: 8px;
+  }
+
+  .brand-logo-glow {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brand-school-logo {
+    width: 24px;
+    height: 24px;
+  }
+
+  .brand-title {
+    font-size: 1.05rem;
   }
 
   .header-search {
@@ -3342,35 +3355,361 @@ body {
     display: none;
   }
 
-  .mobile-channels-bar {
-    display: flex;
+  #btn-sound-toggle {
+    display: none;
   }
 
+  .header-actions {
+    gap: 8px;
+  }
+
+  /* Compact Student Account Badge on Mobile */
+  .student-account-badge {
+    padding: 4px 6px;
+    gap: 0;
+  }
+
+  .student-meta {
+    display: none;
+  }
+
+  .btn-student-logout span {
+    display: none;
+  }
+
+  .btn-student-logout {
+    padding: 2px;
+    margin-left: 2px;
+  }
+
+  /* Compact User Persona Badge on Mobile (avatar only, opens modal on tap) */
+  .user-persona-badge {
+    padding: 2px;
+    background: transparent;
+    border: none;
+  }
+
+  .persona-info,
+  .persona-edit-hint {
+    display: none;
+  }
+
+  .persona-avatar-wrap {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Layout */
+  .app-layout {
+    grid-template-columns: 1fr;
+    padding: 0 12px 84px;
+    margin-top: 12px;
+  }
+
+  .sidebar-left,
+  .sidebar-right {
+    display: none;
+  }
+
+  /* Mobile Channels Horizontal Scroller */
+  .mobile-channels-bar {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px;
+    padding: 2px 0 10px;
+    margin-bottom: 4px;
+  }
+
+  .mobile-channels-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-channel-pill {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  /* Hero Banner Proportion on Mobile */
+  .school-hero-banner,
+  .preset-hero-banner {
+    padding: 14px 16px 12px !important;
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .hero-inner {
+    gap: 12px;
+  }
+
+  .hero-crest-wrap,
+  .preset-crest-wrap {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .hero-crest-wrap svg,
+  .preset-crest-wrap svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .hero-badge-tag,
+  .preset-hero-tag {
+    font-size: 0.68rem !important;
+    padding: 1px 8px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .hero-title {
+    font-size: 1rem;
+    line-height: 1.25;
+    margin-bottom: 2px;
+  }
+
+  .hero-desc {
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  .hero-arrow {
+    display: none;
+  }
+
+  /* Notice Highlight Strip on Mobile */
+  .notice-highlight-strip {
+    padding: 8px 12px;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .notice-highlight-strip .strip-avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  .notice-highlight-strip .strip-avatar svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .strip-text {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .btn-strip-action {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+  }
+
+  /* Feed Controls Bar on Mobile (Stack cleanly without text breakage) */
+  .feed-controls,
+  .feed-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 0 0 10px;
+    margin-bottom: 6px;
+  }
+
+  .feed-current-channel {
+    gap: 6px;
+  }
+
+  #active-channel-title {
+    font-size: 1.1rem;
+    white-space: nowrap;
+  }
+
+  .feed-sort-tabs {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px;
+    padding-bottom: 2px;
+    width: 100%;
+  }
+
+  .feed-sort-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sort-tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+  }
+
+  .sort-tab-filter {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Post Cards Proportion on Mobile */
+  .post-card {
+    padding: 14px 14px 12px;
+    margin-bottom: 10px;
+    border-radius: var(--radius-md);
+  }
+
+  .post-header {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .author-badge {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+
+  .author-name-text {
+    font-size: 0.82rem;
+  }
+
+  .post-timestamp {
+    font-size: 0.7rem;
+  }
+
+  .post-channel-pill {
+    font-size: 0.7rem;
+    padding: 2px 7px;
+  }
+
+  .post-title {
+    font-size: 0.98rem;
+    margin-bottom: 4px;
+    line-height: 1.35;
+  }
+
+  .post-body {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    margin-bottom: 10px;
+  }
+
+  .post-footer {
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  .post-karma-wrap {
+    padding: 1px 4px;
+  }
+
+  .vote-btn {
+    padding: 3px 4px;
+  }
+
+  .karma-count {
+    font-size: 0.72rem;
+    padding: 0 2px;
+  }
+
+  .post-reactions-bar {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    gap: 4px;
+    max-width: calc(100% - 90px);
+  }
+
+  .post-reactions-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .reaction-chip {
+    flex-shrink: 0;
+    padding: 2px 7px;
+    font-size: 0.7rem;
+  }
+
+  .comments-toggle-btn {
+    font-size: 0.72rem;
+    padding: 3px 6px;
+  }
+
+  .post-report-btn {
+    font-size: 0.72rem;
+    padding: 3px 6px;
+  }
+
+  /* Bottom Nav */
   .mobile-bottom-nav {
     display: flex;
+    padding: 4px 6px;
+    padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .bottom-nav-item {
+    padding: 4px 2px;
+    font-size: 0.68rem;
+  }
+
+  .bottom-nav-item .nav-label {
+    white-space: nowrap;
+    font-size: 0.65rem;
   }
 
   .footer-inner {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
   }
 
   .site-footer {
-    padding-bottom: 70px;
+    padding-bottom: 90px;
+  }
+
+  /* Modals on Mobile */
+  .modal-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  .modal-card {
+    padding: 16px 14px;
+    max-height: 85vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .modal-header {
+    margin-bottom: 12px;
+  }
+
+  .modal-header h2 {
+    font-size: 1.05rem;
   }
 }
 
 @media (max-width: 480px) {
   .app-layout {
-    padding: 0 12px 80px;
+    padding: 0 10px 84px;
   }
 
-  .hero-title {
-    font-size: 1rem;
+  .brand-title {
+    font-size: 0.95rem;
   }
 
-  .modal-card {
-    padding: 16px;
+  .post-card {
+    padding: 12px 12px 10px;
+  }
+
+  .color-wheel-section {
+    gap: 12px;
+  }
+
+  .hsl-wheel-wrap {
+    width: 200px;
+    height: 200px;
   }
 }
 
