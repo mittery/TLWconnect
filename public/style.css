@@ -4154,3 +4154,56 @@ body {
     border-color: rgba(184, 134, 11, 0.3) !important;
   }
 }
+
+/* =====================================================================
+   LIGHT MODE FIX — วางต่อท้ายสุดของ style.css (ต้องอยู่หลังสุดของไฟล์)
+   สาเหตุ: หลายคลาสเขียน color: #fff ตรง ๆ แต่บล็อก light mode ไม่ได้ override
+   ===================================================================== */
+@media (prefers-color-scheme: light) {
+
+  /* ข้อความที่เคยเป็นสีขาวตายตัว -> ใช้ตัวแปรที่สลับตามธีม */
+  .brand-title,          /* "TLW" ที่โลโก้ */
+  .hero-title,           /* หัวข้อประกาศ */
+  .post-title,           /* หัวข้อโพสต์ */
+  .load-more-title,
+  .empty-state h3,
+  .big-name,
+  .author-tag,
+  .warning-alert-reason,
+  .auth-title,
+  .rule-content h4,
+  .drawer-title-group h3,
+  .footer-brand-name,
+  .footer-col-header h4,
+  .toast {
+    color: var(--text-primary);
+  }
+
+  /* เนื้อโพสต์: #d1d5db จางเกินไปบนพื้นขาว */
+  .post-body {
+    color: var(--text-secondary);
+  }
+
+  /* จุดบอกหน้าของแบนเนอร์ประกาศ (เดิมเป็นขาวโปร่ง) */
+  .hero-dot {
+    background: rgba(0, 0, 0, 0.18);
+  }
+  .hero-dot.active {
+    background: var(--accent-gold);
+  }
+
+  /* ปุ่มหมวก/ออกจากระบบที่ header (เดิมพื้นและขอบเป็นขาวโปร่ง) */
+  .student-account-badge {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+  .icon-btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  /* ช่องกรอกที่มีไอคอน (ข้อความที่พิมพ์เดิมเป็นขาวบนพื้นขาว) */
+  .input-with-icon input {
+    background: #f9f9fb;
+    color: var(--text-primary);
+  }
+}
